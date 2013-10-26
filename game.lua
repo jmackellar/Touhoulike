@@ -1267,6 +1267,7 @@ function setup_character()
 	for i = 1, # game_characters do 
 		if game_characters[i].name == choice then
 			player = Creature:new(game_characters[i].stats)
+			player_name = game_characters[i].name
 			player_stats = game_characters[i].player_stats
 			player_spells = game_characters[i].starting_spells
 			player_spells_learn = game_characters[i].player_spells_learn

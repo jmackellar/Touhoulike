@@ -164,6 +164,15 @@ function quaff_key(key)
 		if key == alphabet[i] and player_inventory[i] and player_inventory[i].item:get_quaff() then
 			player_inventory[i].item:get_affect()()
 			message_add(player_inventory[i].item:get_message())
+			
+			local known = false
+			for k = 1, # known_potions do
+				if known_potions[k] == player_inventory[i].item:get_name() then
+					known = true
+				end
+			end
+			if not known then table.insert(known_potions, player_inventory[i].item:get_name()) end
+				
 			player_inventory[i].quantity = player_inventory[i].quantity - 1
 			inventory_open = false
 			next_turn = true
@@ -439,7 +448,7 @@ function pickup_item()
 		many_items_sorted(map[player:get_x()][player:get_y()]:get_items())
 		if # map[player:get_x()][player:get_y()]:get_items() == 1 then
 			add_item_to_inventory(map[player:get_x()][player:get_y()]:get_items()[1])
-			message_add('You picked up the ' .. map[player:get_x()][player:get_y()]:get_items()[1]:get_name() .. '.')
+			message_add('You picked up the ' .. map[player:get_x()][player:get_y()]:get_items()[1]:get_pname() .. '.')
 			map[player:get_x()][player:get_y()]:set_items(nil)
 			pickuped = true
 		else
@@ -708,9 +717,9 @@ function draw_many_item_pickup()
 		end
 		
 		if items_sorted[i].quantity == 1 then
-			message = message .. "a " .. items_sorted[i].item:get_name()
+			message = message .. "a " .. items_sorted[i].item:get_pname()
 		else
-			message = message .. tostring(items_sorted[i].quantity) .. " " .. items_sorted[i].item:get_name()
+			message = message .. tostring(items_sorted[i].quantity) .. " " .. items_sorted[i].item:get_pname()
 		end
 		
 		love.graphics.print(message, start_x + 4, start_y + (i) * 15 + 4)
@@ -823,9 +832,9 @@ function draw_inventory()
 		end
 	
 		if player_inventory[i].quantity == 1 then
-			message = message ..  "a " .. player_inventory[i].item:get_name()
+			message = message ..  "a " .. player_inventory[i].item:get_pname()
 		else
-			message = message .. tostring(player_inventory[i].quantity) .. " " .. player_inventory[i].item:get_name()
+			message = message .. tostring(player_inventory[i].quantity) .. " " .. player_inventory[i].item:get_pname()
 		end	
 		
 		love.graphics.print(message, start_x + 4, start_y + (i) * 15 + 4)
@@ -842,29 +851,29 @@ function draw_inventory()
 	
 	if inventory_action == 'remove' then message = 'a: ' 
 		else message = "Head: " end
-	if player_equipment.head then message = message .. player_equipment.head:get_name() end
+	if player_equipment.head then message = message .. player_equipment.head:get_pname() end
 	love.graphics.print(message, start_x + width + start_x + 4, start_y + 30 + 4)
 	
 	if inventory_action == 'remove' then message = 'b: ' 
 		else message = "Body: " end
-	if player_equipment.torso then message = message .. player_equipment.torso:get_name() end
+	if player_equipment.torso then message = message .. player_equipment.torso:get_pname() end
 	love.graphics.print(message, start_x + width + start_x + 4, start_y + 45 + 4)
 	
 	if inventory_action == 'remove' then message = 'c: ' 
 		else message = "Legs: " end
-	if player_equipment.legs then message = message .. player_equipment.legs:get_name() end
+	if player_equipment.legs then message = message .. player_equipment.legs:get_pname() end
 	love.graphics.print(message, start_x + width + start_x + 4, start_y + 60 + 4)
 	
 	if inventory_action == 'remove' then message = 'd: ' 
 		else message = "Feet: " end
-	if player_equipment.feet then message = message .. player_equipment.feet:get_name() end
+	if player_equipment.feet then message = message .. player_equipment.feet:get_pname() end
 	love.graphics.print(message, start_x + width + start_x + 4, start_y + 75 + 4)
 	
 	love.graphics.print("---Weapon---", start_x + width + start_x + 24, start_y + 90 + 4)
 	
 	if inventory_action == 'remove' then message = 'e: ' 
 		else message = "Hands: " end
-	if player_equipment.hand then message = message .. player_equipment.hand:get_name() end
+	if player_equipment.hand then message = message .. player_equipment.hand:get_pname() end
 	love.graphics.print(message, start_x + width + start_x + 4, start_y + 105 + 4)
 
 end
@@ -1014,7 +1023,7 @@ function Creature:move(dx, dy)
 				if map[self.x][self.y]:get_items() then
 					local items = map[self.x][self.y]:get_items()
 					if # items == 1 then
-						message_add('You see here a ' .. items[1]:get_name() .. '.')
+						message_add('You see here a ' .. items[1]:get_pname() .. '.')
 					elseif # items == 2 then
 						message_add('You see here a couple of objects')
 					elseif # items == 3 then
@@ -1144,7 +1153,10 @@ Item = Class('Item')
 function Item:initialize(arg)
 
 	self.name = arg.name or 'piece of junk'
+	self.pname = arg.pname or self.name
 	self.quaffable = arg.quaffable or false
+	self.potion = arg.potion or false
+	self.scroll = arg.scroll or false
 	self.readable = arg.readable or false
 	self.wearable = arg.wearable or false
 	self.slot = arg.slot or false
@@ -1164,6 +1176,25 @@ function Item:draw(x, y)
 	self.color()
 	love.graphics.print(self.char, ascii_draw_point(x), ascii_draw_point(y))
 	love.graphics.setColor(255, 255, 255, 255)
+	
+end
+
+function Item:get_pname() 
+	
+	if self.potion then
+		local known = false
+		for i = 1, # known_potions do
+			if known_potions[i] == self.name then
+				known = true
+			end
+		end
+		
+		if known then return self.name end
+		if not known then return 'Unknown Potion' end
+		
+	end
+	
+	return self.name
 	
 end
 

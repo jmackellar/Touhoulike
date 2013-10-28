@@ -505,8 +505,7 @@ function turn_machine()
 		take_turns()	
 		world_time_machine()	
 		if player:get_turn_cd() <= 1 then
-			map_calc_fov(player:get_x(), player:get_y(), world_see_distance)		
-			path_to_player = dijkstra_map(player:get_x(), player:get_y())						
+			map_calc_fov(player:get_x(), player:get_y(), world_see_distance)											
 			player:levelup()
 			next_turn = false
 		end
@@ -988,6 +987,11 @@ function Creature:ai_normal()
 	if self.seen_player then
 		self.seen_player_cd = self.seen_player_cd - 1
 		if self.seen_player_cd < 1 then self.seen_player = false end
+		
+		if path_to_player[player:get_x()][player:get_y()] ~= 0 then
+			path_to_player = dijkstra_map(player:get_x(), player:get_y())
+		end
+		
 		if path_to_player[self.x-1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, 0) moved = true end
 		if path_to_player[self.x+1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, 0) moved = true end
 		if path_to_player[self.x][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 0, -1) moved = true end
@@ -1211,12 +1215,15 @@ function Tile:initialize(arg)
 
 	self.name = arg.name or 'Wall'
 	self.holding = arg.holding or nil
+	self.block_move = arg.block_move or false
+	self.block_sight = arg.block_sight or false
+	self.char = arg.char or '#'
 	self.seen = arg.seen or false
 	self.lit = arg.lit or false
 	self.x = arg.x or 1
 	self.y = arg.y or 1
 	self.items = arg.items or nil
-	self.color = function () love.graphics.setColor(255, 255, 255, 255) end
+	self.color = arg.color or {r=255, g=255, b=255}
 	
 	if self.name == 'Floor' then
 		self.char = ' .'
@@ -1230,12 +1237,12 @@ function Tile:initialize(arg)
 		self.char = 'T'
 		self.block_move = true
 		self.block_sight = true
-		self.color = function () love.graphics.setColor(0, 255, 0, 255) end
+		self.color = {r=0, g=255, b=0}
 	elseif self.name == 'Water' then
 		self.char = '~'
 		self.block_move = false
 		self.block_sight = false
-		self.color = function () love.graphics.setColor(133, 249, 255, 255) end
+		self.color = {r=133, g=249, b=255}
 	elseif self.name == 'DStairs' then
 		self.char = '>' 
 		self.block_move = false
@@ -1250,7 +1257,7 @@ end
 function Tile:draw_ascii()
 
 	if self.lit then
-		self.color()
+		love.graphics.setColor(self.color.r, self.color.g, self.color.b, 255)
 		love.graphics.print(self.char, ascii_draw_point(self.x), ascii_draw_point(self.y))
 		love.graphics.setColor(255, 255, 255, 255)
 	elseif not self.lit and self.seen then

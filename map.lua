@@ -1,30 +1,10 @@
 function map_test(width, height)
-	--- Just an early test, not used
-	map_setup(width, height)
-	for x = 2, width-1 do
-		for y = 2, height-1 do
-			map[x][y] = Tile:new({name = 'Floor', x = x, y = y})
-		end
-	end
+
+	--- Testing maps created in the map editor
+	local chunk = love.filesystem.load('map/test.lua')
+	chunk()
+	map_new_place_player(3, 3)
 	
-end
-
-function map_gen_forest(width, height)
-	--- Pretty bad forest map generator.  Do not use
-	map_setup(width, height)
-	for x = 1, width do
-		for y = 1, height do
-			map[x][y] = Tile:new({name = 'Floor', x = x, y = y})
-			if math.random(1, 100) <= 30 then
-				map[x][y] = Tile:new({name = 'Tree', x = x, y = y})
-			end
-			if x == 1 then map[x][y] = Tile:new({name = 'Tree', x = x, y = y}) end
-			if x == width then map[x][y] = Tile:new({name = 'Tree', x = x, y = y}) end
-			if y == 1 then map[x][y] = Tile:new({name = 'Tree', x = x, y = y}) end
-			if y == height then map[x][y] = Tile:new({name = 'Tree', x = x, y = y}) end
-		end
-	end
-
 end
 
 function map_gen_forest_2(width, height)

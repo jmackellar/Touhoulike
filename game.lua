@@ -1045,10 +1045,22 @@ function Creature:move(dx, dy)
 			
 				player_fov()
 			
+				--- tile modifiers and message
 				if map[self.x][self.y]:get_name() == 'Water' then
 					message_add("You step into the cool water.  You get wet.")
 					add_modifier({name = 'Wet', turn = 50, armor = -2})
 				end
+				--- overworld square messages
+				if level.name == 'Overworld' then
+					if map[self.x][self.y]:get_char() == '#' then
+						for i = 1, # overworld_levels do
+							if overworld_levels[i].x == self.x and overworld_levels[i].y == self.y then
+								message_add("You are at the " .. overworld_levels[i].name)
+							end
+						end
+					end
+				end
+				--- tile item seen messages
 				if map[self.x][self.y]:get_items() then
 					local items = map[self.x][self.y]:get_items()
 					if # items == 1 then
@@ -1306,6 +1318,7 @@ function Tile:get_lit() return self.lit end
 function Tile:get_seen() return self.seen end
 function Tile:get_name() return self.name end
 function Tile:get_items() return self.items end
+function Tile:get_char() return self.char end
 
 function ascii_draw_point(num)
 

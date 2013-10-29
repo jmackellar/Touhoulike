@@ -1,4 +1,5 @@
-overworld_levels = {	{x = 41, y = 15, func = function () map_hakurei_shrine() end},
+overworld_levels = {	{x = 41, y = 15, func = function () map_hakurei_shrine() end, name = 'Hakurei Shrine'},
+						{x = 17, y = 13, func = function () map_kirisame_house() end, name = 'Marisa Kirisame\'s house'},
 					}
 
 map = {} 

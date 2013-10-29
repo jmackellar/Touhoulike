@@ -11,12 +11,12 @@ end
 function map_overworld()
 
 	local chunk = love.filesystem.load('map/overworld.lua')
-	chunk()
-	-- default player placing
-	map_new_place_player(23, 23)
+	chunk()	
 	
 	if level.name == 'Hakurei Shrine' then
 		map_new_place_player(41, 15)
+	else
+		map_new_place_player(23, 23)
 	end
 	
 	level = {name = 'Overworld', depth = 1}
@@ -32,6 +32,17 @@ function map_hakurei_shrine()
 	level = {name = 'Hakurei Shrine', depth = 1}
 	level_connection = {up = function () map_overworld() end, down = nil}
 	map_new_place_player(24, 30)
+	map_set_all_seen()
+	
+end
+
+function map_kirisame_house()
+
+	local chunk = love.filesystem.load('map/kirisame_house.lua')
+	chunk()
+	level = {name = 'Marisa Kirisame\'s house', depth = 1}
+	level_connection = {up = function () map_overworld() end, down = nil}
+	map_new_place_player(32, 31)
 	map_set_all_seen()
 	
 end

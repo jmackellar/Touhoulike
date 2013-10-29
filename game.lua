@@ -8,6 +8,7 @@ map = {}
 map_width = 46
 map_height = 33
 map_canvas = love.graphics.newCanvas(800, 600)
+map_back_canvas = love.graphics.newCanvas(800, 600)
 
 char_width = 14
 
@@ -45,6 +46,7 @@ pickup_many_items_choice = {}
 items_sorted = {}
 
 level = {name = 'Forest', depth = 1}
+level_connection = {}
 path_to_player = nil
 messages = {}
 
@@ -59,10 +61,10 @@ alphabet = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'
 function game:enter()
 		
 	setup_character()
-	map_overworld()
-	level = {name = 'Overworld', depth = 1}
+	map_hakurei_shrine()
+	map_back_canvas_draw()
 	path_to_player = dijkstra_map(player:get_x(), player:get_y())
-	map_overworld_fov(player:get_x(), player:get_y(), 1)
+	player_fov()
 
 end
 
@@ -75,6 +77,9 @@ function game:draw()
 	if inventory_open then draw_inventory() end
 	if pickup_many_items then draw_many_item_pickup() end
 	if spells_open then draw_spells() end
+	
+	--- debug coordinate drawing, remove later
+	love.graphics.setCaption(player:get_x() .. ', ' .. player:get_y())
 
 end
 
@@ -91,7 +96,7 @@ function game:keypressed(key)
 			if key == 'kp1' then player:move(-1, 1) next_turn = true end
 			if key == 'kp3' then player:move(1, 1) next_turn = true end
 			
-			if key == 'kp5' or key == '.' then next_turn = true end
+			if key == 'kp5' then next_turn = true end
 			
 			if key == 'g' then pickup_item() next_turn = true end
 			if key == 'i' then inventory_open = true inventory_action = 'look' end
@@ -125,12 +130,28 @@ end
 
 function game:update(dt)
 
-	turn_machine()
-	
+	turn_machine()	
 	stair_cd = stair_cd - 1
-	if player:get_turn_cd() <= 1 then
-		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and map[player:get_x()][player:get_y()]:get_name() == 'DStairs' then stair_machine('down') next_turn = true end
-		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown(',') and map[player:get_x()][player:get_y()]:get_name() == 'UStairs'  then stair_machine('up') next_turn = true end
+	
+	if player:get_turn_cd() <= 1 and stair_cd <= 1 then
+		--- up and down stairs in levels
+		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and map[player:get_x()][player:get_y()]:get_name() == 'DStairs' then stair_machine('down') end
+		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown(',') and map[player:get_x()][player:get_y()]:get_name() == 'UStairs'  then stair_machine('up') end
+		--- down for the overworld
+		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and level.name == 'Overworld' then overworld_down() end
+	end
+
+end
+
+function overworld_down()
+
+	for i = 1, # overworld_levels do
+		if player:get_x() == overworld_levels[i].x and player:get_y() == overworld_levels[i].y then
+			overworld_levels[i].func()
+			stair_cd = 3
+			map_back_canvas_draw()
+			player_fov()
+		end
 	end
 
 end
@@ -505,9 +526,7 @@ function turn_machine()
 	if next_turn then
 		take_turns()	
 		world_time_machine()	
-		if player:get_turn_cd() <= 1 then
-			if level.name ~= 'Overworld' then map_calc_fov(player:get_x(), player:get_y(), world_see_distance)		
-			elseif level.name == 'Overworld' then map_overworld_fov(player:get_x(), player:get_y(), 1) end
+		if player:get_turn_cd() <= 1 then		
 			player:levelup()
 			next_turn = false
 		end
@@ -615,16 +634,10 @@ end
 
 function stair_machine(dir)
 
-	if stair_cd < 1 then
-		if dir == 'down' then
-			level.depth = level.depth + 1
-			map_gen_forest_2(map_width, map_height)
-		elseif dir == 'up' then
-			level.depth = level.depth - 1
-			map_gen_forest_2(map_width, map_height)
-		end
-		stair_cd = 10
-	end
+	if level.name ~= 'Overworld' then
+		next_level(dir)
+		stair_cd = 3
+	end		
 	
 end
 
@@ -879,6 +892,13 @@ function draw_inventory()
 
 end
 
+function player_fov()
+
+	if level.name ~= 'Overworld' then map_calc_fov(player:get_x(), player:get_y(), world_see_distance)		
+	elseif level.name == 'Overworld' then map_overworld_fov(player:get_x(), player:get_y(), 2) end
+	
+end
+
 Creature = Class('Creature')
 function Creature:initialize(arg)
 
@@ -1020,8 +1040,11 @@ function Creature:move(dx, dy)
 			self.y = new_y
 			
 			--- Tile messages and modifiers for when the player
-			--- walks over them
+			--- walks over them, and also player FoV
 			if self == player then
+			
+				player_fov()
+			
 				if map[self.x][self.y]:get_name() == 'Water' then
 					message_add("You step into the cool water.  You get wet.")
 					add_modifier({name = 'Wet', turn = 50, armor = -2})
@@ -1258,16 +1281,16 @@ end
 
 function Tile:draw_ascii()
 
-	if self.lit then
-		love.graphics.setColor(self.color.r, self.color.g, self.color.b, 255)
-		love.graphics.print(self.char, ascii_draw_point(self.x), ascii_draw_point(self.y))
-		love.graphics.setColor(255, 255, 255, 255)
-	elseif not self.lit and self.seen then
-		love.graphics.setColor(75, 75, 75, 255)
-		love.graphics.print(self.char, ascii_draw_point(self.x), ascii_draw_point(self.y))
-		love.graphics.setColor(255, 255, 255, 255)
-	end
+	love.graphics.setColor(self.color.r, self.color.g, self.color.b, 255)
+	love.graphics.print(self.char, ascii_draw_point(self.x), ascii_draw_point(self.y))
+	love.graphics.setColor(255, 255, 255, 255)
 		
+end
+
+function Tile:draw_holding()
+
+	self.holding:draw_ascii(self.x, self.y)
+
 end
 
 function Tile:set_holding(foo) self.holding = foo end

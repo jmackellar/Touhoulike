@@ -1,18 +1,50 @@
+function next_level(dir)
+
+	if level_connection[dir] then
+		level_connection[dir]()
+		map_back_canvas_draw()
+		player_fov()
+	end
+
+end
+
 function map_overworld()
 
 	local chunk = love.filesystem.load('map/overworld.lua')
 	chunk()
+	-- default player placing
 	map_new_place_player(23, 23)
-
+	
+	if level.name == 'Hakurei Shrine' then
+		map_new_place_player(41, 15)
+	end
+	
+	level = {name = 'Overworld', depth = 1}
+	level_connection = {up = nil, down = nil}
+	map_set_all_seen()
+	
 end
 
-function map_test(width, height)
+function map_hakurei_shrine()
 
-	--- Testing maps created in the map editor
-	local chunk = love.filesystem.load('map/test.lua')
+	local chunk = love.filesystem.load('map/hakurei_shrine.lua')
 	chunk()
-	map_new_place_player(3, 3)
+	level = {name = 'Hakurei Shrine', depth = 1}
+	level_connection = {up = function () map_overworld() end, down = nil}
+	map_new_place_player(24, 30)
+	map_set_all_seen()
 	
+end
+
+function map_set_all_seen()
+
+	for x = 1, map_width do
+		for y = 1, map_height do
+			map[x][y]:set_unlit()
+			map[x][y]:set_seen()		
+		end
+	end
+
 end
 
 function map_gen_forest_2(width, height)
@@ -246,20 +278,56 @@ function map_draw()
 	love.graphics.setCanvas(map_canvas)
 	map_canvas:clear()
 	love.graphics.setBlendMode('alpha')
+	
 	for x = 1, map_width do
 		for y = 1, map_height do
-			if (not map[x][y]:get_holding() and not map[x][y]:get_items()) or not map[x][y]:get_lit() then 
-				map[x][y]:draw_ascii()
-			elseif map[x][y]:get_holding() and map[x][y]:get_lit() then
-				map[x][y]:get_holding():draw_ascii(x, y) 
-			elseif map[x][y]:get_items() and map[x][y]:get_lit() then
-				map[x][y]:get_items()[1]:draw(x, y)
+			
+			love.graphics.setColor(0, 0, 0, 255)
+			if not map[x][y]:get_seen() and not map[x][y]:get_lit() then
+				love.graphics.rectangle('fill', ascii_draw_point(x), ascii_draw_point(y), char_width, char_width)
 			end
+			
+			love.graphics.setColor(0, 0, 0, 210)
+			if not map[x][y]:get_lit() and map[x][y]:get_seen() then
+				love.graphics.rectangle('fill', ascii_draw_point(x), ascii_draw_point(y), char_width, char_width)
+			end
+			
+			love.graphics.setColor(255, 255, 255, 255)			
+			if map[x][y]:get_lit() then
+				if map[x][y]:get_holding() then
+					love.graphics.setColor(0, 0, 0, 255)
+					love.graphics.rectangle('fill', ascii_draw_point(x), ascii_draw_point(y), char_width, char_width)
+					love.graphics.setColor(255, 255, 255, 255)
+					map[x][y]:draw_holding()
+				elseif not map[x][y]:get_holding() and map[x][y]:get_items() then
+					map[x][y]:get_items()[1]:draw(x, y)
+				end
+			end
+		
 		end
 	end
+	
 	love.graphics.setCanvas()
+	love.graphics.draw(map_back_canvas)
 	love.graphics.draw(map_canvas)
 	
+end
+
+function map_back_canvas_draw()
+
+	love.graphics.setCanvas(map_back_canvas)
+	map_back_canvas:clear()
+	love.graphics.setBlendMode('alpha')
+	love.graphics.setColor(255, 255, 255, 255)
+	
+	for x = 1, map_width do
+		for y = 1, map_height do
+			map[x][y]:draw_ascii()
+		end
+	end
+
+	love.graphics.setCanvas()
+
 end
 
 function map_overworld_fov(x, y, range)
@@ -285,10 +353,10 @@ end
 
 function map_calc_fov(x, y, range)
 	
-	local start_x = x - range - 5
-	local start_y = y - range - 5
-	local end_x = x + range + 5
-	local end_y = y + range + 5
+	local start_x = x - range - 1
+	local start_y = y - range - 1
+	local end_x = x + range + 1
+	local end_y = y + range + 1
 	
 	if start_x < 1 then start_x = 1 end
 	if start_y < 1 then start_y = 1 end
@@ -310,7 +378,7 @@ function map_calc_fov(x, y, range)
 	-- Set the player's square to visible, because the following routine doesn't
 	map[player:get_x()][player:get_y()]:set_lit()
 	
-	for angle = 1, 360, 0.18 do
+	for angle = 1, 360, 0.50 do
 		local dist = 0
 		local x = start_x + 0.5
 		local y = start_y + 0.5

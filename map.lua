@@ -15,6 +15,10 @@ function map_overworld()
 	
 	if level.name == 'Hakurei Shrine' then
 		map_new_place_player(41, 15)
+	elseif level.name == 'Marisa Kirisame\'s house' then
+		map_new_place_player(17, 13)
+	elseif level.name == 'Alice Margatroid\'s house' then
+		map_new_place_player(24, 16)
 	else
 		map_new_place_player(23, 23)
 	end
@@ -43,6 +47,17 @@ function map_kirisame_house()
 	level = {name = 'Marisa Kirisame\'s house', depth = 1}
 	level_connection = {up = function () map_overworld() end, down = nil}
 	map_new_place_player(32, 31)
+	map_set_all_seen()
+	
+end
+
+function map_margatroid_house()
+
+	local chunk = love.filesystem.load('map/margatroid_house.lua')
+	chunk()
+	level = {name = 'Alice Margatroid\'s house', depth = 1}
+	level_connection = {up = function () map_overworld() end, down = nil}
+	map_new_place_player(22, 31)
 	map_set_all_seen()
 	
 end

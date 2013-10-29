@@ -536,13 +536,7 @@ end
 
 function world_time_machine()
 
-	world_time = world_time + 1
-	if world_time >= 8000 then world_time = 0 end
-	if world_time >= 4000 then
-		world_see_distance = 7
-	elseif world_time < 4000 then
-		world_see_distance = 4
-	end	
+	
 	
 end
 
@@ -792,7 +786,8 @@ function player_hud()
 		love.graphics.print(player_mods[i].name, start_x + 10, start_y + 215 + ((i - 1) * 15))
 	end
 	
-	love.graphics.print("Time:" .. world_time, start_x + 10, start_y + 445)
+	love.graphics.print(level.name, start_x + 10, start_y + 430)
+	love.graphics.print("Depth: " .. level.depth, start_x + 10, start_y + 445)
 	
 end
 
@@ -1052,10 +1047,10 @@ function Creature:move(dx, dy)
 				end
 				--- overworld square messages
 				if level.name == 'Overworld' then
-					if map[self.x][self.y]:get_char() == '#' then
+					if map[self.x][self.y]:get_char() == '#' or map[self.x][self.y]:get_char() == 'c' then
 						for i = 1, # overworld_levels do
 							if overworld_levels[i].x == self.x and overworld_levels[i].y == self.y then
-								message_add("You are at the " .. overworld_levels[i].name)
+								message_add("You are at " .. overworld_levels[i].name)
 							end
 						end
 					end

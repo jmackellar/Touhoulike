@@ -351,6 +351,50 @@ function map_overworld_fov(x, y, range)
 
 end
 
+function cast_light(cx, cy, row, light_start, light_end, radius, xx, xy, yx, yy, id)
+
+	if light_start < light_end then return end
+	local radius_sq = radius * radius
+	for j = row, radius do
+		local dx = -1 * j - 1
+		local dy = -1 * j
+		local blocked = false
+		while dx <= 0 do
+			dx = dx + 1
+			local mx = cx + dx * xx + dy * xy
+			local my = cy + dx * yx + dy * yy
+			local l_slope = (dx-0.5)/(dy+0.5)
+			local r_slope = (dx+0.5)/(dy-0.5)
+			if light_start < r_slope then
+				--- the ruby version this is translated from
+				--- had a next here, so yeah...
+				local foo = false
+			elseif light_end > l_slope then
+				break
+			else
+				if (dx*dx + dy*dy) < radius_sq then map[mx][my]:set_lit() end
+				if blocked then
+					if map[mx][my]:get_block_sight() then
+						new_start = r_slope
+						--- another next...
+					else
+						blocked = false
+						light_start = new_start
+					end
+				else
+					if map[mx][my]:get_block_sight() and j < radius then
+						blocked = true
+						cast_light(cx, cy, j+1, light_start, l_slope, radius, xx, xy, yx, yy, id+1)
+						new_start = r_slope
+					end
+				end
+			end
+		end
+		if blocked then break end
+	end
+
+end
+
 function map_calc_fov(x, y, range)
 	
 	local start_x = x - range - 1
@@ -375,35 +419,15 @@ function map_calc_fov(x, y, range)
 	start_x = x
 	start_y = y
 	
-	-- Set the player's square to visible, because the following routine doesn't
-	map[player:get_x()][player:get_y()]:set_lit()
-	
-	for angle = 1, 360, 0.50 do
-		local dist = 0
-		local x = start_x + 0.5
-		local y = start_y + 0.5
-		local xmove = math.cos(angle)
-		local ymove = math.sin(angle)
-		
-		if x < 1 or x > map_width+1 then break end
-		if y < 1 or y > map_height+1 then break end
-		
-		local quit = false
-		repeat
-			x = x + xmove
-			y = y + ymove
-			dist = dist + 1
-			if dist > range then quit = true end
-			if x > map_width+1 then quit = true end
-			if y > map_height+1 then quit = true end
-			if x < 1 then quit = true end
-			if y < 1 then quit = true end
-			
-			if quit then break end
-			
-			if map[math.floor(x)][math.floor(y)] then map[math.floor(x)][math.floor(y)]:set_lit() end
-			if map[math.floor(x)][math.floor(y)] then if map[math.floor(x)][math.floor(y)]:get_block_sight() then quit = true end end
-		until quit
+	local mult = {	{1, 0, 0, -1, -1, 0, 0, 1},
+					{0, 1, -1, 0, 0, -1, 1, 0},
+					{0, 1, 1, 0, 0, -1, -1, 0},
+					{1, 0, 0, 1, -1, 0, 0, -1},
+					}
+					
+	map[x][y]:set_lit()
+	for i = 1, 8 do
+		cast_light(start_x, start_y, 1, 1.0, 0.0, range, mult[1][i], mult[2][i], mult[3][i], mult[4][i], 0)
 	end
 	
 end

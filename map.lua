@@ -1,14 +1,14 @@
 function next_level(dir)
 
 	if level_connection[dir] then
-		level_connection[dir]()
+		level_connection[dir](dir)
 		map_back_canvas_draw()
 		player_fov()
 	end
 
 end
 
-function map_overworld()
+function map_overworld(dir)
 
 	local chunk = love.filesystem.load('map/overworld.lua')
 	chunk()	
@@ -19,6 +19,8 @@ function map_overworld()
 		map_new_place_player(17, 13)
 	elseif level.name == 'Alice Margatroid\'s house' then
 		map_new_place_player(24, 16)
+	elseif level.name == 'Easy Cave' then
+		map_new_place_player(39, 13)
 	else
 		map_new_place_player(23, 23)
 	end
@@ -29,7 +31,7 @@ function map_overworld()
 	
 end
 
-function map_hakurei_shrine()
+function map_hakurei_shrine(dir)
 
 	local chunk = love.filesystem.load('map/hakurei_shrine.lua')
 	chunk()
@@ -40,7 +42,7 @@ function map_hakurei_shrine()
 	
 end
 
-function map_kirisame_house()
+function map_kirisame_house(dir)
 
 	local chunk = love.filesystem.load('map/kirisame_house.lua')
 	chunk()
@@ -51,7 +53,7 @@ function map_kirisame_house()
 	
 end
 
-function map_margatroid_house()
+function map_margatroid_house(dir)
 
 	local chunk = love.filesystem.load('map/margatroid_house.lua')
 	chunk()
@@ -59,6 +61,48 @@ function map_margatroid_house()
 	level_connection = {up = function () map_overworld() end, down = nil}
 	map_new_place_player(22, 31)
 	map_set_all_seen()
+	
+end
+
+function map_easy_cave(dir)
+
+	--- moving up and down throught the cave.  I need to abstract and simplify this later for other levels
+	if level.name ~= 'Easy Cave' then
+		level = {name = 'Easy Cave', depth = 1}	
+		dir = 'down'
+		level_connection = {up = function () map_overworld() end, down = function () map_easy_cave('down') end}
+	elseif level.name == 'Easy Cave' then
+		if dir == 'down' then 
+			level.depth = level.depth + 1
+			level_connection = {up = function () map_easy_cave('up') end, down = function () map_easy_cave('down') end}
+		elseif dir == 'up' then 
+			level.depth = level.depth - 1	
+			if level.depth == 1 then
+				level_connection = {up = function () map_overworld() end, down = function () map_easy_cave('down') end}
+			else
+				level_connection = {up = function () map_easy_cave('up') end, down = function () map_easy_cave('down') end}
+			end
+		end
+	end
+	
+	--- still in the caves
+	if level.depth > 0 then
+	
+		stairs = map_gen_rogue(map_width, map_height)	
+		if dir == 'down' then
+			map_new_place_player(stairs.up.x, stairs.up.y)
+		elseif dir == 'up' then
+			map_new_place_player(stairs.down.x, stairs.down.y)
+		end
+		
+		--- now add in monsters and items to the map
+		monster_maker(math.random(7, 9))
+		item_maker(math.random(4, 7))
+	
+	--- back on the overworld
+	elseif level.depth < 1 then
+		map_overworld(dir)
+	end
 	
 end
 
@@ -73,113 +117,101 @@ function map_set_all_seen()
 
 end
 
-function map_gen_forest_2(width, height)
-	--- using DLA
-	map_setup(width, height)
+function map_gen_rogue(width, height)
+	
+	local rooms = {}
+	local rooms_placed = 0
+	local UStairs = {}
+	local DStairs = {}
+	
+	--- clear the map
 	for x = 1, width do
 		for y = 1, height do
-			map[x][y] = Tile:new({name = 'Tree', x = x, y = y})
+			map[x][y] = Tile:new({name = 'Wall', x = x, y = y})
 		end
 	end
 	
-	--- initial floor seed
-	map[math.floor(width/2)][math.floor(height/2)] = Tile:new({name = 'Floor', x = math.floor(width/2), y = math.floor(height/2)})
-	map[math.floor(width/2)-1][math.floor(height/2)] = Tile:new({name = 'Floor', x = math.floor(width/2)-1, y = math.floor(height/2)})
-	map[math.floor(width/2)+1][math.floor(height/2)] = Tile:new({name = 'Floor', x = math.floor(width/2)+1, y = math.floor(height/2)})
-	map[math.floor(width/2)][math.floor(height/2)-1] = Tile:new({name = 'Floor', x = math.floor(width/2), y = math.floor(height/2)-1})
-	map[math.floor(width/2)][math.floor(height/2)+1] = Tile:new({name = 'Floor', x = math.floor(width/2), y = math.floor(height/2)+1})
-	
-	local placed = 0
-	local continue = false
-	
-	--- placing the rest of the floor, brownian noise shit
+	--- place non overlapping rooms
 	repeat
-	
-		local x = math.random(3, width-3)
-		local y = math.random(3, height-3)
-		continue = false
-		tile_placed = false
 		
-		if not map[x][y]:get_block_move() then continue = true end
+		local w = math.random(5, 12)
+		local h = math.random(5, 12)
+		local x = math.random(2, width - w - 1)
+		local y = math.random(2, height - h - 1)
 		
-		if not continue then
-			continue = false
-			tile_placed = false
-			
-			repeat
-					
-				dx = math.random(-1, 1)
-				dy = math.random(-1, 1)
-				if not map[x+dx][y+dy]:get_block_move() then 
-					map[x][y] = Tile:new({name = 'Floor', x = x, y = y})
-					map[x-1][y] = Tile:new({name = 'Floor', x = x-1, y = y})
-					map[x+1][y] = Tile:new({name = 'Floor', x = x+1, y = y})
-					map[x][y-1] = Tile:new({name = 'Floor', x = x, y = y-1})
-					map[x][y+1] = Tile:new({name = 'Floor', x = x, y = y+1})
-					tile_placed = true
-					placed = placed + 2
-				else
-					x = x + dx
-					y = y + dy
-					if x < 3 then x = 3 end
-					if x > width-3 then x = width-3 end
-					if y < 3 then y = 3 end
-					if y > height-3 then y = height-3 end
-				end
-			
-			until tile_placed
-		end
-	
-	until placed >= math.floor((width * height) * .20)
-	
-	--- place a circular lake
-	if math.random(1, 100) <= 45 then
-		local x = math.random(8, width-8)
-		local y = math.random(8, height-8)
-		local radius = math.random(4, 7)
-		
-		for i = 1, radius do
-			local err = 1 - i
-			local err_y = 1
-			local err_x = -2 * i
-			local dx = i
-			local dy = 0
-			
-			map[x][y + i] = Tile:new({name = 'Water', x = x, y = y + i})
-			map[x][y - i] = Tile:new({name = 'Water', x = x, y = y - i})
-			map[x + i][y] = Tile:new({name = 'Water', x = x + i, y = y})
-			map[x - i][y] = Tile:new({name = 'Water', x = x - i, y = y})
-			
-			while dy < dx do
-			
-				if err > 0 then
-					dx = dx - 1
-					err_x = err_x + 2
-					err = err + err_x
-				end
-				
-				dy = dy + 1
-				err_y = err_y + 2
-				err = err + err_y
-				map[x + dx][y + dy] = Tile:new({name = 'Water', x = x + dx, y = y + dy})
-				map[x - dx][y + dy] = Tile:new({name = 'Water', x = x - dx, y = y + dy})
-				map[x + dx][y - dy] = Tile:new({name = 'Water', x = x + dx, y = y - dy})
-				map[x - dx][y - dy] = Tile:new({name = 'Water', x = x - dx, y = y - dy})
-				map[x + dy][y + dx] = Tile:new({name = 'Water', x = x + dy, y = y + dx})
-				map[x - dy][y + dx] = Tile:new({name = 'Water', x = x - dy, y = y + dx})
-				map[x + dy][y - dx] = Tile:new({name = 'Water', x = x + dy, y = y - dx})
-				map[x - dy][y - dx] = Tile:new({name = 'Water', x = x - dy, y = y - dx})
-			
+		local can_be_placed = true
+		for i = 1, # rooms do
+			if x <= rooms[i].x + rooms[i].w + 1 and x+w + 1 >= rooms[i].x
+			and y <= rooms[i].y + rooms[i].h + 1 and y+h + 1 >= rooms[i].y then
+				can_be_placed = false
 			end
 		end
+		
+		if can_be_placed then
+		
+			--- room floor
+			for dx = x, x + w do
+				for dy = y, y + h do
+					map[dx][dy] = Tile:new({name = 'Floor', x = dx, y = dy})					
+				end
+			end
+			--- room decorative walls
+			for dx = x, x + w do
+				map[dx][y] = Tile:new({name = 'Dwall', x = dx, y = y, char = '-', block_sight = true, block_move = true})
+				map[dx][y+h] = Tile:new({name = 'Dwall', x = dx, y = y+h, char = '-', block_sight = true, block_move = true})
+			end
+			for dy = y, y + h do
+				map[x][dy] = Tile:new({name = 'Dwall', x = x, y = dy, char = ' |', block_sight = true, block_move = true})
+				map[x+w][dy] = Tile:new({name = 'Dwall', x = x+w, y = dy, char = ' |', block_sight = true, block_move = true})
+			end
+			map[x][y] = Tile:new({name = 'Dwall', x = x, y = y, char = '+', block_sight = true, block_move = true})
+			map[x+w][y] = Tile:new({name = 'Dwall', x = x+w, y = y, char = '+', block_sight = true, block_move = true})
+			map[x][y+h] = Tile:new({name = 'Dwall', x = x, y = y+h, char = '+', block_sight = true, block_move = true})
+			map[x+w][y+h] = Tile:new({name = 'Dwall', x = x+w, y = y+h, char = '+', block_sight = true, block_move = true})
+			
+			table.insert(rooms, {x = x, y = y, w = w, h = h})
+			rooms_placed = rooms_placed + 1
+		end
+	
+	until rooms_placed > math.random(6, 8)
+
+	--- place corridors between rooms, and add in stairs when appropriate
+	for i = 1, # rooms - 1 do
+		--- corridors
+		local x1 = math.floor(rooms[i].x + rooms[i].w / 2)
+		local y1 = math.floor(rooms[i].y + rooms[i].h / 2)
+		local x2 = math.floor(rooms[i+1].x + rooms[i+1].w / 2)
+		local y2 = math.floor(rooms[i+1].y + rooms[i+1].h / 2)
+		for x = math.min(x1, x2), math.max(x1, x2) do
+			map[x][y1] = Tile:new({name = "Floor", x = x, y = y1})
+		end
+		for y = math.min(y1, y2), math.max(y1, y2) do
+			map[x2][y] = Tile:new({name = "Floor", x = x2, y = y})
+		end
+		
+		--- stairs
+		if i == 1 then
+			map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1})
+			UStairs = {x = x1, y = y1}
+		elseif i == # rooms - 1 and level.depth < 5 then
+			map[x1][y1] = Tile:new({name = 'DStairs', x = x1, y = y1})
+			DStairs = {x = x1, y = y1}
+		end
 	end
 	
+	local stairs = {up = UStairs, down = DStairs}
+	return stairs
+
+end
+
+function monster_maker(num)
+
 	--- Place monsters
 	local placed = 0
 	repeat
 	
-		local x = math.random(2, width-1)
-		local y = math.random(2, height-1)
+		local x = math.random(2, map_width-1)
+		local y = math.random(2, map_height-1)
 		
 		if not map[x][y]:get_block_move() then
 			local monster = map_random_monster()
@@ -189,43 +221,18 @@ function map_gen_forest_2(width, height)
 			placed = placed + 1
 		end
 	
-	until placed == math.random(8, 11)
-	
-	--- Place downstairs
-	local placed = false
-	repeat
-	
-		local x = math.random(1, width)
-		local y = math.random(1, height)
-		if not map[x][y]:get_block_move() then
-			map[x][y] = Tile:new({name = 'DStairs', x = x, y = y})
-			placed = true
-		end
-			
-	until placed
-	
-	--- Place upstairs and/or player
-	local placed = false
-	repeat
-	
-		local x = math.random(1, width)
-		local y = math.random(1, height)
-		if not map[x][y]:get_block_move() and map[x][y]:get_name() ~= 'DStairs' then			
-			if level.depth > 1 then
-				map[x][y] = Tile:new({name = 'UStairs', x = x, y = y})
-			end
-			map_new_place_player(x, y)
-			placed = true
-		end
-			
-	until placed
-	
+	until placed == num
+
+end
+
+function item_maker(num)
+
 	--- place items around the map
 	local placed = 0
 	repeat
 	
-		local x = math.random(1, width)
-		local y = math.random(1, height)
+		local x = math.random(1, map_width)
+		local y = math.random(1, map_height)
 		if not map[x][y]:get_block_move() then		
 			local item = map_random_item()
 			if item then 
@@ -235,7 +242,7 @@ function map_gen_forest_2(width, height)
 		end
 	
 	until placed > math.random(8, 10)
-	
+
 end
 
 function map_random_monster()
@@ -326,6 +333,9 @@ function map_draw()
 					love.graphics.setColor(255, 255, 255, 255)
 					map[x][y]:draw_holding()
 				elseif not map[x][y]:get_holding() and map[x][y]:get_items() then
+					love.graphics.setColor(0, 0, 0, 255)
+					love.graphics.rectangle('fill', ascii_draw_point(x), ascii_draw_point(y), char_width, char_width)
+					love.graphics.setColor(255, 255, 255, 255)
 					map[x][y]:get_items()[1]:draw(x, y)
 				end
 			end

@@ -1,6 +1,7 @@
-overworld_levels = {	{x = 41, y = 15, func = function () map_hakurei_shrine() end, name = 'Hakurei Shrine'},
-						{x = 17, y = 13, func = function () map_kirisame_house() end, name = 'Marisa Kirisame\'s house'},
-						{x = 24, y = 16, func = function () map_margatroid_house() end, name = 'Alice Margatroid\'s house'},
+overworld_levels = {	{x = 41, y = 15, func = function (dir) map_hakurei_shrine(dir) end, name = 'Hakurei Shrine'},
+						{x = 17, y = 13, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house'},
+						{x = 24, y = 16, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house'},
+						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Cave'},
 					}
 
 map = {} 
@@ -1277,7 +1278,7 @@ map[39][9] = Tile:new({char="^",x=39,name="OWmountain",y=9,block_sight=true,colo
 map[39][10] = Tile:new({char="^",x=39,name="OWmountain",y=10,block_sight=true,color={b=2,g=70,r=140},block_move=true})
 map[39][11] = Tile:new({char="T",x=39,name="OWtree",y=11,block_sight=false,color={b=35,g=133,r=1},block_move=false})
 map[39][12] = Tile:new({char="T",x=39,name="OWtree",y=12,block_sight=false,color={b=35,g=133,r=1},block_move=false})
-map[39][13] = Tile:new({char="T",x=39,name="OWtree",y=13,block_sight=false,color={b=35,g=133,r=1},block_move=false})
+map[39][13] = Tile:new({char="c",x=39,name="OWcave",y=13,block_sight=false,color={b=2,g=70,r=140},block_move=false})
 map[39][14] = Tile:new({char="^",x=39,name="OWmountain",y=14,block_sight=true,color={b=2,g=70,r=140},block_move=true})
 map[39][15] = Tile:new({char="^",x=39,name="OWmountain",y=15,block_sight=true,color={b=2,g=70,r=140},block_move=true})
 map[39][16] = Tile:new({char="-",x=39,name="OWroad",y=16,block_sight=false,color={b=100,g=100,r=100},block_move=false})

@@ -1,3 +1,11 @@
+function map_overworld()
+
+	local chunk = love.filesystem.load('map/overworld.lua')
+	chunk()
+	map_new_place_player(23, 23)
+
+end
+
 function map_test(width, height)
 
 	--- Testing maps created in the map editor
@@ -252,6 +260,27 @@ function map_draw()
 	love.graphics.setCanvas()
 	love.graphics.draw(map_canvas)
 	
+end
+
+function map_overworld_fov(x, y, range)
+
+	for x = 1, map_width do
+		for y = 1, map_height do
+			if map[x][y] and map[x][y]:get_seen() then
+				map[x][y]:set_lit()
+			end
+		end
+	end
+	
+	for x = x - range, x + range do
+		for y = y - range, y + range do
+			if map[x][y] then
+				map[x][y]:set_seen()
+				map[x][y]:set_lit()
+			end
+		end
+	end
+
 end
 
 function map_calc_fov(x, y, range)

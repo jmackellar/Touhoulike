@@ -59,9 +59,10 @@ alphabet = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'
 function game:enter()
 		
 	setup_character()
-	map_gen_forest_2(map_width, map_height)
+	map_overworld()
+	level = {name = 'Overworld', depth = 1}
 	path_to_player = dijkstra_map(player:get_x(), player:get_y())
-	map_calc_fov(player:get_x(), player:get_y(), world_see_distance)
+	map_overworld_fov(player:get_x(), player:get_y(), 1)
 
 end
 
@@ -505,7 +506,8 @@ function turn_machine()
 		take_turns()	
 		world_time_machine()	
 		if player:get_turn_cd() <= 1 then
-			map_calc_fov(player:get_x(), player:get_y(), world_see_distance)											
+			if level.name ~= 'Overworld' then map_calc_fov(player:get_x(), player:get_y(), world_see_distance)		
+			elseif level.name == 'Overworld' then map_overworld_fov(player:get_x(), player:get_y(), 1) end
 			player:levelup()
 			next_turn = false
 		end
@@ -1278,6 +1280,7 @@ function Tile:get_holding() return self.holding end
 function Tile:get_block_move() return self.block_move end
 function Tile:get_block_sight() return self.block_sight end
 function Tile:get_lit() return self.lit end
+function Tile:get_seen() return self.seen end
 function Tile:get_name() return self.name end
 function Tile:get_items() return self.items end
 

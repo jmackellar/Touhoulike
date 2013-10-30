@@ -231,7 +231,7 @@ function cook_key(key)
 	for i = 1, # player_inventory do
 		if key == alphabet[i] and player_inventory[i] and player_inventory[i].item:get_cook() then
 					
-			add_item_to_inventory(Item:new({name = 'Cooked ' .. player_inventory[i].item:get_name(), nutrition = 200, edible = true, cook = false, char = '%'}))
+			add_item_to_inventory(cook_food(player_inventory[i].item))
 			
 			player_inventory[i].quantity = player_inventory[i].quantity - 1
 			if player_inventory[i].quantity < 1 then
@@ -629,6 +629,33 @@ function message_add(msg)
 	if # messages > 25 then
 		table.remove(messages, # messages)
 	end
+
+end
+
+function cook_food(food)
+
+	local dice = math.random(1, 100)
+	local good = false
+	local item = false
+	local gain = 0
+	
+	if dice <= player_skills.cooking ^ 2 then
+		good = true
+	end
+	
+	if good then
+		local prefix = {'Cooked', 'Delicious', 'Appatizing'}
+		item = Item:new({name = prefix[math.random(1,3)] .. ' ' .. food:get_name(), nutrition = 250, edible = true, cook = false, char = '%'})
+		gain = 0.1
+	else
+		local prefix = {'Ruined', 'Terrible', 'Disgusting'}
+		item = Item:new({name = prefix[math.random(1,3)] .. ' ' .. food:get_name(), nutrition = 25, edible = true, cook = false, char = '%'})
+		gain = 0.05
+	end
+	
+	player_skills.cooking = player_skills.cooking + gain
+	
+	return item
 
 end
 

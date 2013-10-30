@@ -20,7 +20,9 @@ player_stats = { str = 6,
 				 dex = 9,
 				 int = 5,
 				 con = 7,}
-				 
+	
+player_skills = { fighting = 0, cooking = 0 }
+	
 player_spells = {	{name = 'Omamori of Health', mp_cost = 75, func = function () player:heal(35) end},
 					{name = 'Ofuda of Protection', mp_cost = 50, func = function () add_modifier({name = 'Protection', turn = 60, armor = 5}) end},
 				}
@@ -98,15 +100,19 @@ function game:keypressed(key)
 			
 			if key == 'kp5' then next_turn = true end
 			
-			if key == 'g' then pickup_item() next_turn = true end
-			if key == 'i' then inventory_open = true inventory_action = 'look' end
-			if key == 'd' then inventory_open = true inventory_action = 'drop' inventory_to_drop = {} end
-			if key == 'w' then inventory_open = true inventory_action = 'wield' end
-			if key == 'p' then inventory_open = true inventory_action = 'wear' end
-			if key == 't' then inventory_open = true inventory_action = 'remove' end
-			if key == 'q' then inventory_open = true inventory_action = 'quaff' end
+			if level.name ~= 'Overworld' then
+				if key == 'g' then pickup_item() next_turn = true end
+				if key == 'i' then inventory_open = true inventory_action = 'look' end
+				if key == 'd' then inventory_open = true inventory_action = 'drop' inventory_to_drop = {} end
+				if key == 'w' then inventory_open = true inventory_action = 'wield' end
+				if key == 'p' then inventory_open = true inventory_action = 'wear' end
+				if key == 't' then inventory_open = true inventory_action = 'remove' end
+				if key == 'q' then inventory_open = true inventory_action = 'quaff' end
+				
+				if key == 'c' then spells_open = true end
+				if key == 'u' then map_use_tile() end
+			end
 			
-			if key == 'c' then spells_open = true end
 		elseif inventory_open and inventory_action == 'look' then
 			if key then inventory_open = false end
 		elseif inventory_open and inventory_action == 'drop' then
@@ -119,6 +125,8 @@ function game:keypressed(key)
 			remove_key(key)
 		elseif inventory_open and inventory_action == 'quaff' then
 			quaff_key(key)
+		elseif inventory_open and inventory_action == 'cook' then
+			cook_key(key)
 		elseif pickup_many_items then
 			pickup_many_items_key(key)
 		elseif spells_open then
@@ -176,6 +184,28 @@ function spells_key(key)
 	if key == 'escape' or key == 'return' or key == 'kpenter' then
 		message_add("Never mind")
 		spells_open = false
+	end
+
+end
+
+function cook_key(key)
+
+	for i = 1, # player_inventory do
+		if key == alphabet[i] and player_inventory[i] and player_inventory[i].item:get_cook() then
+					
+			add_item_to_inventory(Item:new({name = 'Cooked ' .. player_inventory[i].item:get_name(), edible = true, cook = false, char = '%'}))
+			
+			player_inventory[i].quantity = player_inventory[i].quantity - 1
+			if player_inventory[i].quantity < 1 then
+				table.remove(player_inventory, i)
+			end
+			
+		end
+	end
+
+	if key == 'escape' or key == 'return' or key == 'kpenter' then
+		inventory_open = false
+		message_add("Never mind.")
 	end
 
 end
@@ -821,6 +851,9 @@ function draw_inventory()
 	elseif inventory_action == 'quaff' then
 		love.graphics.print("Quaff what?", start_x + 24, start_y + 4)
 		love.graphics.print("Choose what to quaff, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+	elseif inventory_action == 'cook' then
+		love.graphics.print("Cook what?", start_x + 24, start_y + 4)
+		love.graphics.print("Choose what to cook, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
 	end
 	
 	local message = ""
@@ -832,7 +865,7 @@ function draw_inventory()
 	
 		if inventory_action == 'look' then
 			message = message .. alphabet[i] .. ": "
-		elseif inventory_action == 'drop' or inventory_action == 'wear' or inventory_action == 'wield' then
+		elseif inventory_action == 'drop' or inventory_action == 'wear' or inventory_action == 'wield' or inventory_action == 'quaff' or inventory_action == 'cook' then
 			if inventory_to_drop[alphabet[i]] then
 				message = message .. '[*] '
 			else
@@ -900,7 +933,7 @@ function Creature:initialize(arg)
 	self.name = arg.name or 'Monster'
 	self.hp_max = arg.hp_max or 125
 	self.hp_cur = arg.hp_cur or self.hp_max
-	self.hp_regen = arg.hp_regen or 25
+	self.hp_regen = arg.hp_regen or 125
 	self.hp_regen_timer = arg.hp_regen_timer or self.hp_regen
 	self.mana_max = arg.mana_max or 100
 	self.mana_cur = arg.mana_cur or self.mana_max
@@ -1041,12 +1074,19 @@ function Creature:move(dx, dy)
 				player_fov()
 			
 				--- tile modifiers and message
-				if map[self.x][self.y]:get_name() == 'Water' then
-					message_add("You step into the cool water.  You get wet.")
-					add_modifier({name = 'Wet', turn = 50, armor = -2})
-				end
+				if level.name ~= 'Overworld' then
+					if map[self.x][self.y]:get_name() == 'Water' then
+						message_add("You step into the cool water.  You get wet.")
+						add_modifier({name = 'Wet', turn = 50, armor = -2})
+					elseif map[self.x][self.y]:get_name() == 'Futon' then
+						message_add("You step onto the comfy futon.")
+					elseif map[self.x][self.y]:get_name() == 'Bed' then
+						message_add("You climb onto the comfy bed.")
+					elseif map[self.x][self.y]:get_name() == 'Cooking Pot' then
+						message_add("There is a pot for cooking here.")
+					end
 				--- overworld square messages
-				if level.name == 'Overworld' then
+				elseif level.name == 'Overworld' then
 					if map[self.x][self.y]:get_char() == '#' or map[self.x][self.y]:get_char() == 'c' then
 						for i = 1, # overworld_levels do
 							if overworld_levels[i].x == self.x and overworld_levels[i].y == self.y then
@@ -1137,6 +1177,15 @@ function Creature:heal(amnt)
 	
 end
 
+function Creature:mheal(amnt)
+
+	self.mana_cur = self.mana_cur + amnt
+	if self.mana_cur > self.mana_max then
+		self.mana_cur = self.mana_max 
+	end
+	
+end
+
 function Creature:lose_mana(amnt)
 
 	self.mana_cur = self.mana_cur - amnt
@@ -1194,6 +1243,8 @@ function Item:initialize(arg)
 	self.potion = arg.potion or false
 	self.scroll = arg.scroll or false
 	self.readable = arg.readable or false
+	self.edible = arg.edible or false
+	self.cook = arg.cook or false
 	self.wearable = arg.wearable or false
 	self.slot = arg.slot or false
 	self.armor = arg.armor or 0
@@ -1240,6 +1291,8 @@ function Item:get_armor() return self.armor end
 function Item:get_damage() return self.damage end
 function Item:get_quaff() return self.quaff end
 function Item:get_affect() return self.affect end
+function Item:get_cook() return self.cook end
+function Item:get_edible() return self.edible end
 function Item:get_message() return self.message end
 	
 Tile = Class('Tile')

@@ -306,6 +306,25 @@ function map_get_surrounding_blocked(x, y)
 	
 end
 
+function map_use_tile()
+
+	if map[player:get_x()][player:get_y()]:get_name() == 'Futon' then
+		message_add("You lay down and rest on the futon...")
+		message_add("... you wake up feeling much better.")
+		player:heal(9999999)
+		player:mheal(9999999)
+	elseif map[player:get_x()][player:get_y()]:get_name() == 'Bed' then
+		message_add("You lay down and rest on the bed...")
+		message_add("... you wake up feeling much better.")
+		player:heal(9999999)
+		player:mheal(9999999)
+	elseif map[player:get_x()][player:get_y()]:get_name() == 'Cooking Pot' then
+		inventory_open = true
+		inventory_action = 'cook'
+	end
+
+end
+
 function map_draw()
 
 	love.graphics.setCanvas(map_canvas)

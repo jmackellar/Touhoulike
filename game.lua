@@ -15,6 +15,7 @@ char_width = 14
 player = {}
 player_level = 1
 player_exp = 0
+player_food = {level = 500, cap = 1000, hungry = 300, starving = 100, weak = 25}
 player_name = 'Reimu Hakurei'
 player_stats = { str = 6,
 				 dex = 9,
@@ -108,6 +109,7 @@ function game:keypressed(key)
 				if key == 'p' then inventory_open = true inventory_action = 'wear' end
 				if key == 't' then inventory_open = true inventory_action = 'remove' end
 				if key == 'q' then inventory_open = true inventory_action = 'quaff' end
+				if key == 'e' then inventory_open = true inventory_action = 'eat' end
 				
 				if key == 'c' then spells_open = true end
 				if key == 'u' then map_use_tile() end
@@ -127,6 +129,9 @@ function game:keypressed(key)
 			quaff_key(key)
 		elseif inventory_open and inventory_action == 'cook' then
 			cook_key(key)
+		elseif inventory_open and inventory_action == 'eat' then	
+			eat_key(key)
+		
 		elseif pickup_many_items then
 			pickup_many_items_key(key)
 		elseif spells_open then
@@ -188,17 +193,53 @@ function spells_key(key)
 
 end
 
+function eat_key(key)
+
+	for i = 1, # player_inventory do
+		if key == alphabet[i] and player_inventory[i] and player_inventory[i].item:get_edible() then
+		
+			player_food.level = player_food.level + player_inventory[i].item:get_nutrition()
+			
+			local text = ""
+			text = text .. "You eat the " .. player_inventory[i].item:get_name() .. "."
+			if player_food.level < 300 then text = text .. "  You still need more food."
+			elseif player_food.level < 500 then text = text .. "  You could eat much more." 
+			elseif player_food.level < 750 then text = text .. "  That really hit the spot."
+			elseif player_food.level < 1000 then text = text .. "  You feel bloated." end
+			message_add(text)
+			
+			inventory_open = false
+			next_turn = true
+		
+			player_inventory[i].quantity = player_inventory[i].quantity - 1
+			if player_inventory[i].quantity < 1 then
+				table.remove(player_inventory, i)
+			end
+		
+		end
+	end
+
+	if key == 'escape' or key == 'return' or key == 'kpenter' then
+		inventory_open = false
+		message_add("Never mind.")
+	end
+
+end
+
 function cook_key(key)
 
 	for i = 1, # player_inventory do
 		if key == alphabet[i] and player_inventory[i] and player_inventory[i].item:get_cook() then
 					
-			add_item_to_inventory(Item:new({name = 'Cooked ' .. player_inventory[i].item:get_name(), edible = true, cook = false, char = '%'}))
+			add_item_to_inventory(Item:new({name = 'Cooked ' .. player_inventory[i].item:get_name(), nutrition = 200, edible = true, cook = false, char = '%'}))
 			
 			player_inventory[i].quantity = player_inventory[i].quantity - 1
 			if player_inventory[i].quantity < 1 then
 				table.remove(player_inventory, i)
 			end
+			
+			inventory_open = false
+			next_turn = true
 			
 		end
 	end
@@ -812,6 +853,14 @@ function player_hud()
 	love.graphics.print("HP:" .. player:get_hp_cur() .. "/" .. player:get_hp_max(), start_x + 10, start_y + 170)
 	love.graphics.print("MP:" .. player:get_mana_cur() .. "/" .. player:get_mana_max(), start_x + 10, start_y + 185)
 	
+	if player_food.level <= player_food.hungry and player_food.level > player_food.starving then
+		love.graphics.print('Hungry', start_x + 10, start_y + 200)
+	elseif player_food.level <= player_food.starving and player_food.level > player_food.weak then
+		love.graphics.print('Starving', start_x + 10, start_y + 200)
+	elseif player_food.level <= player_food.weak then
+		love.graphics.print('Weak', start_x + 10, start_y + 200)
+	end
+	
 	for i = 1, # player_mods do
 		love.graphics.print(player_mods[i].name, start_x + 10, start_y + 215 + ((i - 1) * 15))
 	end
@@ -854,6 +903,9 @@ function draw_inventory()
 	elseif inventory_action == 'cook' then
 		love.graphics.print("Cook what?", start_x + 24, start_y + 4)
 		love.graphics.print("Choose what to cook, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+	elseif inventory_action == 'eat' then
+		love.graphics.print("Eat what?", start_x + 24, start_y + 4)
+		love.graphics.print("Choose what to eat, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
 	end
 	
 	local message = ""
@@ -865,7 +917,7 @@ function draw_inventory()
 	
 		if inventory_action == 'look' then
 			message = message .. alphabet[i] .. ": "
-		elseif inventory_action == 'drop' or inventory_action == 'wear' or inventory_action == 'wield' or inventory_action == 'quaff' or inventory_action == 'cook' then
+		elseif inventory_action == 'drop' or inventory_action == 'eat' or inventory_action == 'wear' or inventory_action == 'wield' or inventory_action == 'quaff' or inventory_action == 'cook' then
 			if inventory_to_drop[alphabet[i]] then
 				message = message .. '[*] '
 			else
@@ -939,6 +991,7 @@ function Creature:initialize(arg)
 	self.mana_cur = arg.mana_cur or self.mana_max
 	self.mana_regen = arg.mana_regen or 25
 	self.mana_regen_timer = arg.mana_regen_timer or self.mana_regen
+	self.food_tick = 25
 	self.base_damage = arg.base_damage or {15, 25}
 	self.armor = arg.armor or 1
 	self.speed = arg.speed or 10
@@ -960,6 +1013,7 @@ function Creature:ai_take_turn()
 	self.turn_cd = self.turn_cd - 1
 	self.hp_regen_timer = self.hp_regen_timer - 1
 	self.mana_regen_timer = self.mana_regen_timer - 1
+	self.food_tick = self.food_tick - 1
 	if self.turn_cd < 1 then
 		self.turn_cd = self.speed
 		if self == player then self.turn_cd = self.speed - player_stats.dex - player_mod_get('speed') end
@@ -980,6 +1034,10 @@ function Creature:ai_take_turn()
 		self.mana_regen_timer = self.mana_regen - player_stats.int
 		self.mana_cur = self.mana_cur + math.ceil(player_stats.int)
 		if self.mana_cur > self.mana_max then self.mana_cur = self.mana_max end
+	end
+	if self.food_tick < 1 and self == player then
+		player_food.level = player_food.level - 1
+		self.food_tick = 25
 	end
 	
 	if self == player then
@@ -1129,6 +1187,8 @@ function Creature:fight(x, y)
 			damage = damage + player_equipment.hand:get_damage()
 			damage = damage + player_mod_get('damage')
 		end
+		--- fighting costs hunger!
+		self.food_tick = self.food_tick - 5
 	end
 	
 	map[x][y]:get_holding():take_dam(damage, 'phys', self.name)
@@ -1245,6 +1305,7 @@ function Item:initialize(arg)
 	self.readable = arg.readable or false
 	self.edible = arg.edible or false
 	self.cook = arg.cook or false
+	self.nutrition = arg.nutrition or false
 	self.wearable = arg.wearable or false
 	self.slot = arg.slot or false
 	self.armor = arg.armor or 0
@@ -1293,6 +1354,7 @@ function Item:get_quaff() return self.quaff end
 function Item:get_affect() return self.affect end
 function Item:get_cook() return self.cook end
 function Item:get_edible() return self.edible end
+function Item:get_nutrition() return self.nutrition end
 function Item:get_message() return self.message end
 	
 Tile = Class('Tile')

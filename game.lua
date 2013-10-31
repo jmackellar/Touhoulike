@@ -559,7 +559,7 @@ end
 
 function add_item_to_inventory(item)
 
-	if item:get_gold() > 0 then
+	if item:get_gold() then
 		player_gold = player_gold + item:get_gold()
 		return
 	end
@@ -1358,6 +1358,8 @@ function Creature:move(dx, dy)
 						message_add("You climb onto the comfy bed.")
 					elseif map[self.x][self.y]:get_name() == 'Cooking Pot' then
 						message_add("There is a pot for cooking here.")
+					elseif map[self.x][self.y]:get_name() == 'Donation Box' then
+						message_add("There is a Donation Box here.")
 					end
 				--- overworld square messages
 				elseif level.name == 'Overworld' then
@@ -1531,7 +1533,7 @@ function Item:initialize(arg)
 	self.affect = arg.affect or function () end
 	self.message = arg.message or "DNE"
 	self.char = arg.char or ' ;'
-	self.gold = arg.gold or 10
+	self.gold = arg.gold or false
 	self.color = arg.color or function () love.graphics.setColor(186, 140, 93, 255) end
 	if arg.self then self = arg.self end
 	

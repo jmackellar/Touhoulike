@@ -783,7 +783,7 @@ map[24][15] = Tile:new({char=" .",x=24,name="Floor",y=15,block_sight=false,color
 map[24][16] = Tile:new({char=" .",x=24,name="Floor",y=16,block_sight=false,color={b=255,g=255,r=255},block_move=false})
 map[24][17] = Tile:new({char=" .",x=24,name="Floor",y=17,block_sight=false,color={b=255,g=255,r=255},block_move=false})
 map[24][18] = Tile:new({char=" .",x=24,name="Floor",y=18,block_sight=false,color={b=255,g=255,r=255},block_move=false})
-map[24][19] = Tile:new({char=" .",x=24,name="Floor",y=19,block_sight=false,color={b=255,g=255,r=255},block_move=false})
+map[24][19] = Tile:new({char="^",x=24,name="Donation Box",y=19,block_sight=false,color={b=20,g=51,r=89},block_move=false})
 map[24][20] = Tile:new({char=" .",x=24,name="Floor",y=20,block_sight=false,color={b=255,g=255,r=255},block_move=false})
 map[24][21] = Tile:new({char=" .",x=24,name="Floor",y=21,block_sight=false,color={b=255,g=255,r=255},block_move=false})
 map[24][22] = Tile:new({char=" .",x=24,name="Floor",y=22,block_sight=false,color={b=255,g=255,r=255},block_move=false})

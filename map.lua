@@ -3,6 +3,7 @@ overworld_levels = {	{x = -1, y = -1, func = function () end, name = 'Overworld'
 						{x = 17, y = 13, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true},
 						{x = 24, y = 16, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true},
 						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Cave', persist = true, mon_gen = 1},
+						{x = 22, y = 20, func = function (dir) map_human_village(dir) end, name = 'Human Village', persist = true},
 					}
 
 function next_level(dir)
@@ -36,10 +37,22 @@ function map_overworld(dir)
 		map_new_place_player(24, 16)
 	elseif prev_level == 'Easy Cave' then
 		map_new_place_player(39, 13)
+	elseif prev_level == 'Human Village' then
+		map_new_place_player(22, 20)
 	else
 		map_new_place_player(23, 23)
 	end
 		
+end
+
+function map_human_village(dir)
+
+	local chunk = love.filesystem.load('map/human_village.lua')
+	chunk()
+	level = {name = 'Human Village', depth = 1}
+	level_connection = {up = function () map_overworld() end, down = nil}
+	map_new_place_player(20, 30)
+
 end
 
 function map_hakurei_shrine(dir)
@@ -392,14 +405,32 @@ function map_use_tile()
 		message_add("... you wake up feeling much better.")
 		player:heal(9999999)
 		player:mheal(9999999)
+		
 	elseif map[player:get_x()][player:get_y()]:get_name() == 'Bed' then
 		message_add("You lay down and rest on the bed...")
 		message_add("... you wake up feeling much better.")
 		player:heal(9999999)
 		player:mheal(9999999)
+		
 	elseif map[player:get_x()][player:get_y()]:get_name() == 'Cooking Pot' then
 		inventory_open = true
 		inventory_action = 'cook'
+		
+	elseif map[player:get_x()][player:get_y()]:get_name() == 'Donation Box' then
+		if player_gold >= 50 then
+			message_add("You put some money into the donation box...")
+			if math.random(1, 10) <= 8 then
+				message_add("... Good luck!")
+				add_modifier({name = 'Good Luck', speed = 2, armor = 2, turn = 1500})
+			else
+				message_add("... Bad luck!")
+				add_modifier({name = 'Bad Luck', speed = -2, armor = -2, turn = 1500})
+			end
+			player_gold = player_gold - 50
+		elseif player_gold < 50 then
+			message_add("You don't have enough money to put in the donation box.")
+		end
+		
 	end
 
 end

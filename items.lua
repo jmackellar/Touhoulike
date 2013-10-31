@@ -22,6 +22,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Cloth Shirt', slot = 'torso', armor = 1, char = ']', prob = 75},
 				{name = 'Gohei Stick', slot = 'hand', damage = 15, char = ')', prob = 80},
 				{name = 'Potion of Healing', quaff = true, potion = true, pname = 'Unknown Potion', char = '!', prob = 83, affect = function () player:heal(100) end, message = "You feel better."},
+				{name = 'Scroll of Return', reads = true, scroll = true, pname = 'Unknown Scroll', char = '?', prob = 85, affect = function () if level.name ~= 'Overworld' then level_connection.up = function () map_overworld(dir) end next_level('up') end end, message = "You are warped back to the entrance."},
 				{name = 'Rice Ball', edible = true, cook = true, nutrition = 50, char = '%', prob = 86},
 				{name = 'Cloth Pants', slot = 'legs', armor = 1, char = ']', prob = 89},
 				{name = 'Leather Vest', slot = 'torso', armor = 2, char = ']', prob = 90},

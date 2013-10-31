@@ -115,6 +115,7 @@ function game:keypressed(key)
 				if key == 't' then inventory_open = true inventory_action = 'remove' end
 				if key == 'q' then inventory_open = true inventory_action = 'quaff' end
 				if key == 'e' then inventory_open = true inventory_action = 'eat' end
+				if key == 'r' then inventory_open = true inventory_action = 'read' end
 				
 				if key == 'c' then spells_open = true end
 				if key == 'u' then map_use_tile() end		
@@ -138,6 +139,8 @@ function game:keypressed(key)
 			eat_key(key)
 		elseif inventory_open and inventory_action == 'sell' then	
 			sell_key(key)
+		elseif inventory_open and inventory_action == 'read' then	
+			read_key(key)
 		
 		elseif pickup_many_items then
 			pickup_many_items_key(key)
@@ -176,6 +179,39 @@ function overworld_down()
 			map_back_canvas_draw()
 			player_fov()
 		end
+	end
+
+end
+
+function read_key(key)
+
+	for i = 1, # player_inventory do
+		if key == alphabet[i] and player_inventory[i] and player_inventory[i].item:get_read() then
+			player_inventory[i].item:get_affect()()
+			message_add(player_inventory[i].item:get_message())
+			
+			local known = false
+			for k = 1, # known_scrolls do
+				if known_scrolls[k] == player_inventory[i].item:get_name() then
+					known = true
+				end
+			end
+			if not known then table.insert(known_scrolls, player_inventory[i].item:get_name()) end
+				
+			player_inventory[i].quantity = player_inventory[i].quantity - 1
+			inventory_open = false
+			next_turn = true
+			if player_inventory[i].quantity < 1 then
+				table.remove(player_inventory, i)
+			end
+		elseif key == alphabet[i] and player_inventory[i] and not player_inventory[i].item:get_read() then
+			message_add("What\'s there to read?.")
+		end
+	end
+
+	if key == 'escape' or key == 'return' or key == 'kpenter' then
+		inventory_open = false
+		message_add("Never mind")
 	end
 
 end
@@ -780,6 +816,12 @@ function save_player()
 		text = text .. "\'" .. v .. "\', "
 	end
 	text = text .. "}\n"
+	--- known scrolls
+	text = text .. "known_scrolls = {  "
+	for k, v in pairs(known_scrolls) do
+		text = text .. "\'" .. v .. "\', "
+	end
+	text = text .. "}\n"
 	--- exp
 	text = text .. "player_exp = " .. player_exp .. "\n"
 	--- gold
@@ -835,7 +877,7 @@ function save_map()
 			if map[x][y]:get_block_sight() then text = text .. "block_sight = true," end
 			if map[x][y]:get_char() then text = text .. "char = \'" .. map[x][y]:get_char() .. "\'," end
 			if map[x][y]:get_seen() then text = text .. "seen = true," end
-			if map[x][y]:get_lit() then text = text .. "lit = true," end
+			if map[x][y]:get_lit() then text = text .. "lit = false," end
 			if map[x][y]:get_name() then text = text .. "name = \'" .. map[x][y]:get_name() .. "\'," end
 			if map[x][y]:get_color() then
 				local color = map[x][y]:get_color()
@@ -1203,6 +1245,9 @@ function draw_inventory()
 	elseif inventory_action == 'sell' then
 		love.graphics.print("Sell what?", start_x + 24, start_y + 4)
 		love.graphics.print("Choose what to sell, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+	elseif inventory_action == 'read' then
+		love.graphics.print("Read what?", start_x + 24, start_y + 4)
+		love.graphics.print("Choose what to read, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
 	end
 	
 	local message = ""
@@ -1214,7 +1259,7 @@ function draw_inventory()
 	
 		if inventory_action == 'look' then
 			message = message .. alphabet[i] .. ": "
-		elseif inventory_action == 'drop' or inventory_action == 'sell' or inventory_action == 'eat' or inventory_action == 'wear' or inventory_action == 'wield' or inventory_action == 'quaff' or inventory_action == 'cook' then
+		elseif inventory_action == 'drop' or inventory_action == 'sell' or inventory_action == 'read' or inventory_action == 'eat' or inventory_action == 'wear' or inventory_action == 'wield' or inventory_action == 'quaff' or inventory_action == 'cook' then
 			if inventory_to_drop[alphabet[i]] then
 				message = message .. '[*] '
 			else
@@ -1638,6 +1683,7 @@ function Item:initialize(arg)
 	self.quaffable = arg.quaffable or false
 	self.potion = arg.potion or false
 	self.scroll = arg.scroll or false
+	self.read = arg.reads or false
 	self.readable = arg.readable or false
 	self.edible = arg.edible or false
 	self.cook = arg.cook or false
@@ -1677,6 +1723,17 @@ function Item:get_pname()
 		
 		if known then return self.name end
 		if not known then return 'Unknown Potion' end		
+		
+	elseif self.scroll then
+		local known = false
+		for i = 1, # known_scrolls do
+			if known_scrolls[i] == self.name then
+				known = true
+			end
+		end
+		
+		if known then return self.name end
+		if not known then return 'Unknown Scroll' end
 	end
 	
 	return self.name
@@ -1695,6 +1752,8 @@ function Item:get_edible() return self.edible end
 function Item:get_nutrition() return self.nutrition end
 function Item:get_message() return self.message end
 function Item:get_gold() return self.gold end
+function Item:get_read() return self.read end
+function Item:get_scroll() return self.scroll end
 	
 Tile = Class('Tile')
 function Tile:initialize(arg)

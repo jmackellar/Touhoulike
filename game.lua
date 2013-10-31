@@ -112,10 +112,7 @@ function game:keypressed(key)
 				if key == 'e' then inventory_open = true inventory_action = 'eat' end
 				
 				if key == 'c' then spells_open = true end
-				if key == 'u' then map_use_tile() end
-				
-				if key == ' ' then save_map() end
-				
+				if key == 'u' then map_use_tile() end		
 			end
 			
 		elseif inventory_open and inventory_action == 'look' then
@@ -164,6 +161,7 @@ function overworld_down()
 	for i = 1, # overworld_levels do
 		if player:get_x() == overworld_levels[i].x and player:get_y() == overworld_levels[i].y then
 			save_map_check()
+			save_player()
 			overworld_levels[i].func()
 			stair_cd = 3
 			map_back_canvas_draw()
@@ -601,6 +599,7 @@ function turn_machine()
 	if next_turn then
 		take_turns()	
 		world_time_machine()	
+		mon_gen_machine()
 		if player:get_turn_cd() <= 1 then		
 			player:levelup()
 			next_turn = false
@@ -663,10 +662,60 @@ function cook_food(food)
 
 end
 
+function save_player()
+
+	local text = ""
+	--- stats
+	text = text .. "player_stats = { str = " .. player_stats.str .. ", dex = " .. player_stats.dex .. ", int = " .. player_stats.int .. ", con = " .. player_stats.con .."}\n"
+	--- skills
+	text = text .. "player_skills = {  "
+	for k, v in pairs(player_skills) do
+		text = text .. k .. " = " .. v .. ", "
+	end
+	text = text .. "  } \n"
+	--- food
+	text = text .. "player_food = {  "
+	for k, v in pairs(player_food) do
+		text = text .. k .. " = " .. v .. ", "
+	end
+	text = text .. "  } \n"
+	--- level
+	text = text .. "player_level = " .. player_level .. "\n"
+	--- name
+	text = text .. "player_name = \'" .. player_name .. "\'\n"
+	--- equipment
+	text = text .. "player_equipment = {  "
+	text = text .. "head = " .. save_item(player_equipment.head)
+	text = text .. "torso = " .. save_item(player_equipment.torso)
+	text = text .. "legs = " .. save_item(player_equipment.legs)
+	text = text .. "feet = " .. save_item(player_equipment.feet)
+	text = text .. "hand = " .. save_item(player_equipment.hand)
+	text = text .. "  }\n"
+	--- inventory
+	text = text .. "player_inventory = {  "
+	for i = 1, # player_inventory do
+		text = text .. "{item = " .. save_item(player_inventory[i].item)
+		text = text .. "quantity = " .. player_inventory[i].quantity .. "}, "
+	end
+	text = text .. "}\n"
+	
+	love.filesystem.write("player.lua", text)
+	
+end
+
+function load_player()
+
+	if love.filesystem.exists("player.lua") then
+		local chunk = love.filesystem.load("player.lua")
+		chunk()
+	end
+	
+end
+
 function load_map()
 
 	if love.filesystem.exists(level.name .. "_" .. level.depth .. ".lua") then
-		chunk = love.filesystem.load(level.name .. "_" .. level.depth .. ".lua")
+		local chunk = love.filesystem.load(level.name .. "_" .. level.depth .. ".lua")
 		chunk()
 		setup_monsters_on_map_load()
 		return true
@@ -733,6 +782,8 @@ function save_map()
 end
 
 function save_item(item)
+
+	if not item then return 'nil, ' end
 
 	local text = ""
 	text = text .. "Item:new("
@@ -1593,6 +1644,8 @@ function setup_character()
 			player_stats = game_characters[i].player_stats
 			player_spells = game_characters[i].starting_spells
 			player_spells_learn = game_characters[i].player_spells_learn
+			--- if a player file exists then load it!
+			load_player()
 		end
 	end
 

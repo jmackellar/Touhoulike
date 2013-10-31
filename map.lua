@@ -2,13 +2,14 @@ overworld_levels = {	{x = -1, y = -1, func = function () end, name = 'Overworld'
 						{x = 41, y = 15, func = function (dir) map_hakurei_shrine(dir) end, name = 'Hakurei Shrine', persist = true},
 						{x = 17, y = 13, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true},
 						{x = 24, y = 16, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true},
-						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Cave', persist = true},
+						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Cave', persist = true, mon_gen = 1},
 					}
 
 function next_level(dir)
 
 	if level_connection[dir] then
 		save_map_check()
+		save_player()
 		level_connection[dir](dir)
 		map_back_canvas_draw()
 		player_fov()
@@ -245,6 +246,40 @@ function map_gen_rogue(width, height)
 	
 	local stairs = {up = UStairs, down = DStairs}
 	return stairs
+
+end
+
+function mon_gen_machine()
+
+	for i = 1, # overworld_levels do
+		if overworld_levels[i].name == level.name and overworld_levels[i].mon_gen then
+			mon_gen(overworld_levels[i].mon_gen)
+		end
+	end
+
+end
+
+function mon_gen(level)
+
+	if math.random(1000 - (level * 4)) <= level + player_level then
+	
+		local placed = false
+		repeat
+		
+			local x = math.random(2, 45)
+			local y = math.random(2, 32)
+			
+			if not map[x][y]:get_block_move() and not map[x][y]:get_lit() then
+				local mon = map_random_monster()
+				mon['x'] = x
+				mon['y'] = y
+				map[x][y]:set_holding(Creature:new(mon))
+				placed = true
+			end
+		
+		until placed 
+	
+	end
 
 end
 

@@ -15,7 +15,7 @@ char_width = 14
 player = {}
 player_level = 1
 player_exp = 0
-player_gold = 0
+player_gold = 1000
 player_food = {level = 500, cap = 1000, hungry = 300, starving = 100, weak = 25}
 player_name = 'Reimu Hakurei'
 player_stats = { str = 6,
@@ -37,6 +37,9 @@ player_inventory = {}
 inventory_open = false
 inventory_action = false
 inventory_to_drop = {}
+
+shop_window = false
+shop_items = { }
 
 player_equipment = {	head = nil,
 						torso = nil,
@@ -81,6 +84,7 @@ function game:draw()
 	if inventory_open then draw_inventory() end
 	if pickup_many_items then draw_many_item_pickup() end
 	if spells_open then draw_spells() end
+	if shop_window then draw_shop() end
 	
 	--- debug coordinate drawing, remove later
 	love.graphics.setCaption(player:get_x() .. ', ' .. player:get_y())
@@ -90,7 +94,7 @@ end
 function game:keypressed(key)
 
 	if player:get_turn_cd() <= 1 then
-		if not inventory_open and not pickup_many_items and not spells_open then
+		if not inventory_open and not pickup_many_items and not spells_open and not shop_window then
 			if key == 'kp8' then player:move(0, -1) next_turn = true end
 			if key == 'kp2' then player:move(0, 1) next_turn = true end
 			if key == 'kp4' then player:move(-1, 0) next_turn = true end
@@ -137,6 +141,8 @@ function game:keypressed(key)
 			pickup_many_items_key(key)
 		elseif spells_open then
 			spells_key(key)
+		elseif shop_window then
+			shop_key(key)
 		end		
 	end
 	
@@ -168,6 +174,27 @@ function overworld_down()
 			map_back_canvas_draw()
 			player_fov()
 		end
+	end
+
+end
+
+function shop_key(key)
+
+	for i = 1, # shop_items do
+		if key == alphabet[i] then
+			if shop_items[i].cost <= player_gold then
+				message_add("You bought the " .. shop_items[i].name .. " for " .. shop_items[i].cost .. " gold.")
+				add_item_to_inventory(shop_items[i].item)
+				player_gold = player_gold - shop_items[i].cost
+			else
+				message_add("You don't have enough gold to pay for that!")
+			end
+		end
+	end
+
+	if key == 'escape' or key == 'return' or key == 'kpenter' then
+		message_add("Never mind")
+		shop_window = false
 	end
 
 end
@@ -960,6 +987,32 @@ function player_mod_get(get)
 
 end
 
+function draw_shop()
+
+	local start_x = 0
+	local start_y = 0
+	local width = 300
+	local height = (# player_spells + 1) * 15 + 8
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', start_x, start_y, width, height)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
+	
+	love.graphics.print("-FOR SALE-", start_x + 24, start_y + 4)
+	love.graphics.print("Choose what to buy, ESC to cancel", start_x + 24, start_y + ((# player_spells)) * 15 + 4)
+	
+	for i = 1, # shop_items do
+	
+		local message = ""
+		message = message .. alphabet[i] .. ": "
+		message = message .. shop_items[i].name .. ", "
+		message = message .. "Cost: " .. shop_items[i].cost
+		love.graphics.print(message, start_x + 4, start_y + (i) * 15 + 4)
+	end
+
+end
+
 function draw_spells()
 
 	local start_x = 0
@@ -1195,6 +1248,12 @@ function player_fov()
 	
 end
 
+function shop_load_items()
+
+	shop_items = {	{ name = 'Potion of Health', cost = 25, item = Item:new(game_items[19]) }, }
+	 
+end
+
 Creature = Class('Creature')
 function Creature:initialize(arg)
 
@@ -1211,6 +1270,7 @@ function Creature:initialize(arg)
 	self.base_damage = arg.base_damage or {15, 25}
 	self.armor = arg.armor or 1
 	self.speed = arg.speed or 10
+	self.shop = arg.shop or false
 	self.turn_cd = arg.turn_cd or 0
 	self.x = arg.x or 1
 	self.y = arg.y or 1
@@ -1390,6 +1450,9 @@ function Creature:move(dx, dy)
 			
 		elseif map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() ~= self.team then
 			Creature.fight(self, new_x, new_y)
+		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_shop() then
+			shop_window = true
+			shop_load_items()
 		end
 	end
 	
@@ -1511,6 +1574,7 @@ function Creature:get_hp_max() return self.hp_max end
 function Creature:get_mana_cur() return self.mana_cur end
 function Creature:get_mana_max() return self.mana_max end
 function Creature:get_base_damage() return self.base_damage end
+function Creature:get_shop() return self.shop end
 	
 Item = Class('Item')
 function Item:initialize(arg)

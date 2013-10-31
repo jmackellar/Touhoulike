@@ -23,6 +23,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Cloth Pants', slot = 'legs', armor = 1, char = ']', prob = 89},
 				{name = 'Leather Vest', slot = 'torso', armor = 2, char = ']', prob = 90},
 				{name = 'Dagger', slot = 'hand', damage = 18, char = ')', prob = 91},
+				{name = 'Gold', char = '$', gold = math.random(15, 25), prob = 250},
 				{name = 'Piece of Junk', char = ';', prob = 300},
 				{name = 'Loaf of Bread', edible = true, cook = true, nutrition = 135, char = '%', prob = 300},				
 		}

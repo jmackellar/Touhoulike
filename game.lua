@@ -15,6 +15,7 @@ char_width = 14
 player = {}
 player_level = 1
 player_exp = 0
+player_gold = 0
 player_food = {level = 500, cap = 1000, hungry = 300, starving = 100, weak = 25}
 player_name = 'Reimu Hakurei'
 player_stats = { str = 6,
@@ -558,6 +559,11 @@ end
 
 function add_item_to_inventory(item)
 
+	if item:get_gold() > 0 then
+		player_gold = player_gold + item:get_gold()
+		return
+	end
+
 	if # player_inventory == 0 then
 		table.insert(player_inventory, {item = item, quantity = 1})
 	else
@@ -722,6 +728,10 @@ function save_player()
 		text = text .. "\'" .. v .. "\', "
 	end
 	text = text .. "}\n"
+	--- exp
+	text = text .. "player_exp = " .. player_exp .. "\n"
+	--- gold
+	text = text .. "player_gold = " .. player_gold .. "\n"
 	
 	love.filesystem.write("player.lua", text)
 	
@@ -935,7 +945,7 @@ function many_items_sorted(items)
 		end
 		
 	end
-	
+
 end
 
 function player_mod_get(get)
@@ -1070,6 +1080,7 @@ function player_hud()
 		love.graphics.print(player_mods[i].name, start_x + 10, start_y + 215 + ((i - 1) * 15))
 	end
 	
+	love.graphics.print("Gold: " .. player_gold, start_x + 10, start_y + 400)
 	love.graphics.print(level.name, start_x + 10, start_y + 430)
 	love.graphics.print("Depth: " .. level.depth, start_x + 10, start_y + 445)
 	
@@ -1520,6 +1531,7 @@ function Item:initialize(arg)
 	self.affect = arg.affect or function () end
 	self.message = arg.message or "DNE"
 	self.char = arg.char or ' ;'
+	self.gold = arg.gold or 10
 	self.color = arg.color or function () love.graphics.setColor(186, 140, 93, 255) end
 	if arg.self then self = arg.self end
 	
@@ -1562,6 +1574,7 @@ function Item:get_cook() return self.cook end
 function Item:get_edible() return self.edible end
 function Item:get_nutrition() return self.nutrition end
 function Item:get_message() return self.message end
+function Item:get_gold() return self.gold end
 	
 Tile = Class('Tile')
 function Tile:initialize(arg)

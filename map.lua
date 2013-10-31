@@ -1,6 +1,14 @@
+overworld_levels = {	{x = -1, y = -1, func = function () end, name = 'Overworld', persist = true},
+						{x = 41, y = 15, func = function (dir) map_hakurei_shrine(dir) end, name = 'Hakurei Shrine', persist = true},
+						{x = 17, y = 13, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true},
+						{x = 24, y = 16, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true},
+						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Cave', persist = true},
+					}
+
 function next_level(dir)
 
 	if level_connection[dir] then
+		save_map_check()
 		level_connection[dir](dir)
 		map_back_canvas_draw()
 		player_fov()
@@ -10,25 +18,27 @@ end
 
 function map_overworld(dir)
 
-	local chunk = love.filesystem.load('map/overworld.lua')
-	chunk()	
+	local prev_level = level.name 
+	level = {name = 'Overworld', depth = 1}
+	level_connection = {up = nil, down = nil}
+
+	if not load_map() then	
+		local chunk = love.filesystem.load('map/overworld.lua')
+		chunk()	
+	end
 	
-	if level.name == 'Hakurei Shrine' then
+	if prev_level == 'Hakurei Shrine' then
 		map_new_place_player(41, 15)
-	elseif level.name == 'Marisa Kirisame\'s house' then
+	elseif prev_level == 'Marisa Kirisame\'s house' then
 		map_new_place_player(17, 13)
-	elseif level.name == 'Alice Margatroid\'s house' then
+	elseif prev_level == 'Alice Margatroid\'s house' then
 		map_new_place_player(24, 16)
-	elseif level.name == 'Easy Cave' then
+	elseif prev_level == 'Easy Cave' then
 		map_new_place_player(39, 13)
 	else
 		map_new_place_player(23, 23)
 	end
-	
-	level = {name = 'Overworld', depth = 1}
-	level_connection = {up = nil, down = nil}
-	map_set_all_seen()
-	
+		
 end
 
 function map_hakurei_shrine(dir)
@@ -66,7 +76,7 @@ end
 
 function map_easy_cave(dir)
 
-	--- moving up and down throught the cave.  I need to abstract and simplify this later for other levels
+	--- moving up and down through the cave.  I need to abstract and simplify this later for other levels
 	if level.name ~= 'Easy Cave' then
 		level = {name = 'Easy Cave', depth = 1}	
 		dir = 'down'
@@ -85,23 +95,57 @@ function map_easy_cave(dir)
 		end
 	end
 	
-	--- still in the caves
-	if level.depth > 0 then
+	--- map wasnt found, create one instead
+	if not load_map() then	
 	
-		stairs = map_gen_rogue(map_width, map_height)	
-		if dir == 'down' then
-			map_new_place_player(stairs.up.x, stairs.up.y)
-		elseif dir == 'up' then
-			map_new_place_player(stairs.down.x, stairs.down.y)
-		end
+		--- still in the caves
+		if level.depth > 0 then
 		
-		--- now add in monsters and items to the map
-		monster_maker(math.random(7, 9))
-		item_maker(math.random(4, 7))
+			stairs = map_gen_rogue(map_width, map_height)	
+			if dir == 'down' then
+				map_new_place_player(stairs.up.x, stairs.up.y)
+			elseif dir == 'up' then
+				map_new_place_player(stairs.down.x, stairs.down.y)
+			end
+			
+			--- now add in monsters and items to the map
+			monster_maker(math.random(7, 9))
+			item_maker(math.random(4, 7))
+		
+		--- back on the overworld
+		elseif level.depth < 1 then
+			map_overworld(dir)
+		end
 	
-	--- back on the overworld
-	elseif level.depth < 1 then
-		map_overworld(dir)
+	--- loaded previous cave map, set player at map entrance now
+	else
+		place_player_on_stairs(dir)
+	end
+	
+end
+
+function place_player_on_stairs(dir)
+
+	for x = 1, 46 do
+		for y = 1, 33 do
+			if map[x][y]:get_char() == '>' and dir == 'up' then
+				map_new_place_player(x, y)
+				break
+			elseif map[x][y]:get_char() == '<' and dir == 'down' then
+				map_new_place_player(x, y)
+				break
+			end
+		end
+	end
+
+end
+
+function save_map_check()
+
+	for i = 1, # overworld_levels do
+		if overworld_levels[i].name == level.name and overworld_levels[i].persist then
+			save_map()
+		end
 	end
 	
 end

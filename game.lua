@@ -113,6 +113,9 @@ function game:keypressed(key)
 				
 				if key == 'c' then spells_open = true end
 				if key == 'u' then map_use_tile() end
+				
+				if key == ' ' then save_map() end
+				
 			end
 			
 		elseif inventory_open and inventory_action == 'look' then
@@ -160,6 +163,7 @@ function overworld_down()
 
 	for i = 1, # overworld_levels do
 		if player:get_x() == overworld_levels[i].x and player:get_y() == overworld_levels[i].y then
+			save_map_check()
 			overworld_levels[i].func()
 			stair_cd = 3
 			map_back_canvas_draw()
@@ -656,6 +660,105 @@ function cook_food(food)
 	player_skills.cooking = player_skills.cooking + gain
 	
 	return item
+
+end
+
+function load_map()
+
+	if love.filesystem.exists(level.name .. "_" .. level.depth .. ".lua") then
+		chunk = love.filesystem.load(level.name .. "_" .. level.depth .. ".lua")
+		chunk()
+		setup_monsters_on_map_load()
+		return true
+	end
+	return false
+	
+end
+
+function setup_monsters_on_map_load()
+
+	for x = 1, map_width do
+		for y = 1, map_height do
+			if map[x][y]:get_holding() and map[x][y]:get_holding() ~= player then
+				map[x][y]:get_holding():set_x(x)
+				map[x][y]:get_holding():set_y(y)
+			end
+		end
+	end
+	
+end
+
+function save_map()
+
+	local text = ""
+	text = text .. "map = {} for x = 1, 46 do map[x] = {} for y = 1, 33 do map[x][y] = {} end end\n\n"
+
+	for x = 1, map_width do
+		for y = 1, map_height do
+			text = text .. "map[" .. x .. "][" .. y .. "] = Tile:new({"
+			if map[x][y]:get_block_move() then text = text .. "block_move = true," end
+			if map[x][y]:get_block_sight() then text = text .. "block_sight = true," end
+			if map[x][y]:get_char() then text = text .. "char = \'" .. map[x][y]:get_char() .. "\'," end
+			if map[x][y]:get_seen() then text = text .. "seen = true," end
+			if map[x][y]:get_lit() then text = text .. "lit = true," end
+			if map[x][y]:get_name() then text = text .. "name = \'" .. map[x][y]:get_name() .. "\'," end
+			if map[x][y]:get_color() then
+				local color = map[x][y]:get_color()
+				text = text .. "color = {r=" .. color.r .. ",g=" .. color.g .. ",b=" .. color.b .. "},"
+			end
+			--- save items
+			if map[x][y]:get_items() then
+				local items = ""
+				local item = false
+				for i = 1, # map[x][y]:get_items() do
+					item = save_item(map[x][y]:get_items()[i])
+					if item:len() > 1 then items = items .. item end
+				end
+				text = text .. "items = {" .. items .. "},"
+			end
+			--- save creatures
+			if map[x][y]:get_holding() and map[x][y]:get_holding() ~= player then
+				local creat = save_creature(map[x][y]:get_holding())
+				if creat:len() > 1 then					
+					text = text .. "holding = " .. creat
+				end
+			end
+			text = text .. "x = " .. x .. ",y = " .. y .. ","
+			text = text .. "})\n"
+		end
+	end
+	
+	love.filesystem.write(level.name .. "_" .. level.depth .. ".lua", text)
+	
+end
+
+function save_item(item)
+
+	local text = ""
+	text = text .. "Item:new("
+	for i = 1, # game_items do
+		if item:get_name() == game_items[i].name then
+			text = text .. "game_items[" .. i .. "]), "
+			return text
+		end
+	end
+	
+	return ""
+
+end
+
+function save_creature(creat)
+
+	local text = ""
+	text = text .. "Creature:new("
+	for i = 1, # game_monsters do
+		if creat:get_name() == game_monsters[i].name then
+			text = text .. "game_monsters[" .. i .. "]), "
+			return text
+		end
+	end
+	
+	return ""
 
 end
 
@@ -1343,6 +1446,7 @@ function Item:initialize(arg)
 	self.message = arg.message or "DNE"
 	self.char = arg.char or ' ;'
 	self.color = arg.color or function () love.graphics.setColor(186, 140, 93, 255) end
+	if arg.self then self = arg.self end
 	
 end
 
@@ -1374,6 +1478,7 @@ function Item:get_pname()
 end
 
 function Item:get_name() return self.name end
+function Item:get_pname() return self.pname end
 function Item:get_slot() return self.slot end
 function Item:get_armor() return self.armor end
 function Item:get_damage() return self.damage end
@@ -1447,6 +1552,7 @@ function Tile:set_items(foo) self.items = foo end
 function Tile:set_seen() self.seen = true end
 function Tile:set_lit() self.lit = true end
 function Tile:set_unlit() self.lit = false end
+function Tile:set_self(slf) self = slf end
 
 function Tile:get_holding() return self.holding end
 function Tile:get_block_move() return self.block_move end
@@ -1456,6 +1562,8 @@ function Tile:get_seen() return self.seen end
 function Tile:get_name() return self.name end
 function Tile:get_items() return self.items end
 function Tile:get_char() return self.char end
+function Tile:get_color() return self.color end
+function Tile:get_self() return self end
 
 function ascii_draw_point(num)
 

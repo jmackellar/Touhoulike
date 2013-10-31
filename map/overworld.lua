@@ -1,9 +1,3 @@
-overworld_levels = {	{x = 41, y = 15, func = function (dir) map_hakurei_shrine(dir) end, name = 'Hakurei Shrine'},
-						{x = 17, y = 13, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house'},
-						{x = 24, y = 16, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house'},
-						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Cave'},
-					}
-
 map = {} 
 for x = 1, 46 do 
 map[x] = {} 

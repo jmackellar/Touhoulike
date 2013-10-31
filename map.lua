@@ -228,10 +228,10 @@ function map_gen_rogue(width, height)
 		local x2 = math.floor(rooms[i+1].x + rooms[i+1].w / 2)
 		local y2 = math.floor(rooms[i+1].y + rooms[i+1].h / 2)
 		for x = math.min(x1, x2), math.max(x1, x2) do
-			map[x][y1] = Tile:new({name = "Floor", x = x, y = y1})
+			if map[x][y1]:get_block_move() then map[x][y1] = Tile:new({name = "Floor", x = x, y = y1}) end
 		end
 		for y = math.min(y1, y2), math.max(y1, y2) do
-			map[x2][y] = Tile:new({name = "Floor", x = x2, y = y})
+			if map[x2][y]:get_block_move() then map[x2][y] = Tile:new({name = "Floor", x = x2, y = y}) end
 		end
 		
 		--- stairs

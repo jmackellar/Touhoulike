@@ -647,13 +647,31 @@ function cook_food(food)
 	end
 	
 	if good then
-		local prefix = {'Cooked', 'Delicious', 'Appatizing'}
-		item = Item:new({name = prefix[math.random(1,3)] .. ' ' .. food:get_name(), nutrition = 250, edible = true, cook = false, char = '%'})
-		gain = 0.1
+	
+		for i = 1, # game_items do
+			if game_items[i].name == 'Cooked ' .. food:get_name() then
+				item = Item:new(game_items[i])
+				gain = 0.15
+				message_add("You successfully cooked your " .. food:get_name() .. ".")
+			end
+		end
+		if not item then
+			message_add("Your " .. food:get_name() .. " was destroyed.")
+		end
+		
 	else
-		local prefix = {'Ruined', 'Terrible', 'Disgusting'}
-		item = Item:new({name = prefix[math.random(1,3)] .. ' ' .. food:get_name(), nutrition = 25, edible = true, cook = false, char = '%'})
-		gain = 0.05
+	
+		for i = 1, # game_items do
+			if game_items[i].name == 'Ruined ' .. food:get_name() then
+				item = Item:new(game_items[i])
+				gain = 0.025
+				message_add("You ruined your " .. food:get_name() .. ".")
+			end
+		end
+		if not item then
+			message_add("Your " .. food:get_name() .. " was destroyed.")
+		end
+		
 	end
 	
 	player_skills.cooking = player_skills.cooking + gain
@@ -696,6 +714,12 @@ function save_player()
 	for i = 1, # player_inventory do
 		text = text .. "{item = " .. save_item(player_inventory[i].item)
 		text = text .. "quantity = " .. player_inventory[i].quantity .. "}, "
+	end
+	text = text .. "}\n"
+	--- known potions
+	text = text .. "known_potions = {  "
+	for k, v in pairs(known_potions) do
+		text = text .. "\'" .. v .. "\', "
 	end
 	text = text .. "}\n"
 	
@@ -1520,8 +1544,7 @@ function Item:get_pname()
 		end
 		
 		if known then return self.name end
-		if not known then return 'Unknown Potion' end
-		
+		if not known then return 'Unknown Potion' end		
 	end
 	
 	return self.name
@@ -1529,7 +1552,7 @@ function Item:get_pname()
 end
 
 function Item:get_name() return self.name end
-function Item:get_pname() return self.pname end
+function Item:get_pname_real() return self.pname end
 function Item:get_slot() return self.slot end
 function Item:get_armor() return self.armor end
 function Item:get_damage() return self.damage end

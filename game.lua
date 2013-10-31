@@ -136,6 +136,8 @@ function game:keypressed(key)
 			cook_key(key)
 		elseif inventory_open and inventory_action == 'eat' then	
 			eat_key(key)
+		elseif inventory_open and inventory_action == 'sell' then	
+			sell_key(key)
 		
 		elseif pickup_many_items then
 			pickup_many_items_key(key)
@@ -174,6 +176,29 @@ function overworld_down()
 			map_back_canvas_draw()
 			player_fov()
 		end
+	end
+
+end
+
+function sell_key(key)
+
+	for i = 1, # player_inventory do
+		if key == alphabet[i] then
+		
+			player_gold = player_gold + 5
+			message_add("You sold your " .. player_inventory[i].item:get_name() .. " for 5 gold.")
+		
+			player_inventory[i].quantity = player_inventory[i].quantity - 1
+			if player_inventory[i].quantity < 1 then
+				table.remove(player_inventory, i)
+			end
+		
+		end
+	end
+
+	if key == 'escape' or key == 'return' or key == 'kpenter' then
+		message_add("Never mind")
+		inventory_open = false
 	end
 
 end
@@ -992,7 +1017,7 @@ function draw_shop()
 	local start_x = 0
 	local start_y = 0
 	local width = 300
-	local height = (# player_spells + 1) * 15 + 8
+	local height = (# shop_items + 2) * 15 + 8
 	
 	love.graphics.setColor(0, 0, 0, 255)
 	love.graphics.rectangle('fill', start_x, start_y, width, height)
@@ -1000,7 +1025,7 @@ function draw_shop()
 	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
 	
 	love.graphics.print("-FOR SALE-", start_x + 24, start_y + 4)
-	love.graphics.print("Choose what to buy, ESC to cancel", start_x + 24, start_y + ((# player_spells)) * 15 + 4)
+	love.graphics.print("Choose what to buy, ESC to cancel", start_x + 24, start_y + ((# shop_items +1)) * 15 + 4)
 	
 	for i = 1, # shop_items do
 	
@@ -1175,6 +1200,9 @@ function draw_inventory()
 	elseif inventory_action == 'eat' then
 		love.graphics.print("Eat what?", start_x + 24, start_y + 4)
 		love.graphics.print("Choose what to eat, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+	elseif inventory_action == 'sell' then
+		love.graphics.print("Sell what?", start_x + 24, start_y + 4)
+		love.graphics.print("Choose what to sell, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
 	end
 	
 	local message = ""
@@ -1186,7 +1214,7 @@ function draw_inventory()
 	
 		if inventory_action == 'look' then
 			message = message .. alphabet[i] .. ": "
-		elseif inventory_action == 'drop' or inventory_action == 'eat' or inventory_action == 'wear' or inventory_action == 'wield' or inventory_action == 'quaff' or inventory_action == 'cook' then
+		elseif inventory_action == 'drop' or inventory_action == 'sell' or inventory_action == 'eat' or inventory_action == 'wear' or inventory_action == 'wield' or inventory_action == 'quaff' or inventory_action == 'cook' then
 			if inventory_to_drop[alphabet[i]] then
 				message = message .. '[*] '
 			else
@@ -1199,6 +1227,10 @@ function draw_inventory()
 		else
 			message = message .. tostring(player_inventory[i].quantity) .. " " .. player_inventory[i].item:get_pname()
 		end	
+		
+		if inventory_action == 'sell' then
+			message = message .. ", Sell For: 5"
+		end
 		
 		love.graphics.print(message, start_x + 4, start_y + (i) * 15 + 4)
 	end
@@ -1248,10 +1280,26 @@ function player_fov()
 	
 end
 
-function shop_load_items()
+function shop_load_items(shop)
 
-	shop_items = {	{ name = 'Potion of Health', cost = 25, item = Item:new(game_items[19]) }, }
-	 
+	if shop == 'Weapon' then
+		shop_items = {	{ name = 'Broom', cost = 25, item = Item:new(game_items[18]) },
+						{ name = 'Gohei Stick', cost = 45, item = Item:new(game_items[21]) },
+						{ name = 'Dagger', cost = 125, item = Item:new(game_items[26]) },
+						{ name = 'Katana', cost = 250, item = Item:new(game_items[11]) },
+						}
+	elseif shop == 'Armor' then
+		shop_items = {	{ name = 'Leather Vest', cost = 50, item = Item:new(game_items[25]) },
+						{ name = 'Cloth Skirt', cost = 75, item = Item:new(game_items[19]) },
+						{ name = 'Leahter Shoes', cost = 75, item = Item:new(game_items[10]) },
+						{ name = 'Silk Bonnet', cost = 85, item = Item:new(game_items[13]) },
+						}
+	elseif shop == 'Potion' then
+		shop_items = {	{ name = 'Potion of Gain', cost = 350, item = Item:new(game_items[14]) },
+						{ name = 'Potion of Healing', cost = 50, item = Item:new(game_items[22]) },
+						}
+	end
+	
 end
 
 Creature = Class('Creature')
@@ -1271,6 +1319,7 @@ function Creature:initialize(arg)
 	self.armor = arg.armor or 1
 	self.speed = arg.speed or 10
 	self.shop = arg.shop or false
+	self.sell = arg.sell or false
 	self.turn_cd = arg.turn_cd or 0
 	self.x = arg.x or 1
 	self.y = arg.y or 1
@@ -1451,8 +1500,12 @@ function Creature:move(dx, dy)
 		elseif map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() ~= self.team then
 			Creature.fight(self, new_x, new_y)
 		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_shop() then
+			shop_load_items(map[new_x][new_y]:get_holding():get_shop())
 			shop_window = true
 			shop_load_items()
+		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_sell() then
+			inventory_open = true
+			inventory_action = 'sell'
 		end
 	end
 	
@@ -1575,6 +1628,7 @@ function Creature:get_mana_cur() return self.mana_cur end
 function Creature:get_mana_max() return self.mana_max end
 function Creature:get_base_damage() return self.base_damage end
 function Creature:get_shop() return self.shop end
+function Creature:get_sell() return self.sell end
 	
 Item = Class('Item')
 function Item:initialize(arg)

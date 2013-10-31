@@ -1527,3 +1527,6 @@ map[46][33] = Tile:new({char="#",x=46,name="Wall",block_sight=true,color={b=255,
 
 
 map[7][7]:set_holding(Creature:new({name = 'Shopkeeper', team = 0, shop = 'Weapon', char = '@', x = 7, y = 7, ai = 'shop'}))
+map[17][9]:set_holding(Creature:new({name = 'Shopkeeper', team = 0, shop = 'Armor', char = '@', x = 7, y = 7, ai = 'shop'}))
+map[7][18]:set_holding(Creature:new({name = 'Shopkeeper', team = 0, shop = 'Potion', char = '@', x = 7, y = 7, ai = 'shop'}))
+map[26][15]:set_holding(Creature:new({name = 'Shopkeeper', team = 0, sell = true, char = '@', x = 7, y = 7, ai = 'shop'}))

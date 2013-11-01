@@ -201,6 +201,14 @@ function apply_key(key)
 		elseif key == alphabet[i] and player_inventory[i] and not player_inventory[i].item:get_apply() then
 			message_add("How could you possibly apply that?")
 			
+		elseif key == alphabet[i] and player_inventory[i] and player_inventory[i].item:get_potion() then
+			player_inventory[i].quantity = player_inventory[i].quantity  - 1
+			message("You empty the " .. player_inventory[i].item:get_name() .. ".")
+			add_item_to_inventory(Item:new({name = 'Empty Bottle', char = '!', prob = 33}))
+			if player_inventory[i].quantity < 1 then table.remove(player_inventory, i) end
+			inventory_open = false
+			next_turn = true
+			
 		end
 	end
 
@@ -1362,7 +1370,7 @@ function shop_load_items(shop)
 		shop_items = {	{ name = 'Broom', cost = 25, item = Item:new(game_items[18]) },
 						{ name = 'Gohei Stick', cost = 45, item = Item:new(game_items[21]) },
 						{ name = 'Dagger', cost = 125, item = Item:new(game_items[26]) },
-						{ name = 'Katana', cost = 250, item = Item:new(game_items[11]) },
+						{ name = 'Katana', cost = 250, item = Item:new(game_items[13]) },
 						}
 	elseif shop == 'Armor' then
 		shop_items = {	{ name = 'Leather Vest', cost = 50, item = Item:new(game_items[25]) },

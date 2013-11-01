@@ -438,6 +438,7 @@ end
 function map_draw()
 
 	love.graphics.setCanvas(map_canvas)
+	love.graphics.setFont(game_font)
 	map_canvas:clear()
 	love.graphics.setBlendMode('alpha')
 	
@@ -481,6 +482,7 @@ end
 function map_back_canvas_draw()
 
 	love.graphics.setCanvas(map_back_canvas)
+	love.graphics.setFont(game_font)
 	map_back_canvas:clear()
 	love.graphics.setBlendMode('alpha')
 	love.graphics.setColor(255, 255, 255, 255)

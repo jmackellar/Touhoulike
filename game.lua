@@ -64,6 +64,7 @@ world_time = 4000
 world_see_distance = 8
 
 alphabet = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'}
+game_font = love.graphics.newFont("media/coolvetica.ttf", 14)
 
 function game:enter()
 		
@@ -76,6 +77,8 @@ function game:enter()
 end
 
 function game:draw()
+
+	love.graphics.setFont(game_font)
 
 	map_draw()
 	player_hud()

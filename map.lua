@@ -133,6 +133,22 @@ function map_easy_cave(dir)
 		place_player_on_stairs(dir)
 	end
 	
+	--- if last cave level then place a magic mirror
+	if level.depth == 5 then
+		local placed = false
+		repeat
+		
+			local x = math.random(1, map_width)
+			local y = math.random(1, map_height)
+			print(x, y)
+			if not map[x][y]:get_block_move() then
+				map[x][y]:set_items({Item:new(game_items[7])})
+				placed = true
+			end
+		
+		until placed
+	end
+	
 end
 
 function place_player_on_stairs(dir)

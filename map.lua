@@ -62,7 +62,6 @@ function map_hakurei_shrine(dir)
 	level = {name = 'Hakurei Shrine', depth = 1}
 	level_connection = {up = function () map_overworld() end, down = nil}
 	map_new_place_player(24, 30)
-	map_set_all_seen()
 	
 end
 
@@ -73,7 +72,6 @@ function map_kirisame_house(dir)
 	level = {name = 'Marisa Kirisame\'s house', depth = 1}
 	level_connection = {up = function () map_overworld() end, down = nil}
 	map_new_place_player(32, 31)
-	map_set_all_seen()
 	
 end
 
@@ -84,7 +82,6 @@ function map_margatroid_house(dir)
 	level = {name = 'Alice Margatroid\'s house', depth = 1}
 	level_connection = {up = function () map_overworld() end, down = nil}
 	map_new_place_player(22, 31)
-	map_set_all_seen()
 	
 end
 

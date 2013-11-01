@@ -119,6 +119,7 @@ function game:keypressed(key)
 				if key == 'q' then inventory_open = true inventory_action = 'quaff' end
 				if key == 'e' then inventory_open = true inventory_action = 'eat' end
 				if key == 'r' then inventory_open = true inventory_action = 'read' end
+				if key == 'a' then inventory_open = true inventory_action = 'apply' end
 				
 				if key == 'c' then spells_open = true end
 				if key == 'u' then map_use_tile() end		
@@ -144,6 +145,8 @@ function game:keypressed(key)
 			sell_key(key)
 		elseif inventory_open and inventory_action == 'read' then	
 			read_key(key)
+		elseif inventory_open and inventory_action == 'apply' then	
+			apply_key(key)
 		
 		elseif pickup_many_items then
 			pickup_many_items_key(key)
@@ -182,6 +185,28 @@ function overworld_down()
 			map_back_canvas_draw()
 			player_fov()
 		end
+	end
+
+end
+
+function apply_key(key)
+
+	for i = 1, # player_inventory do
+		if key == alphabet[i] and player_inventory[i] and player_inventory[i].item:get_apply() then			
+			player_inventory[i].item:get_afunc()()
+			message_add(player_inventory[i].item:get_message())
+			inventory_open = false
+			next_turn = true
+			
+		elseif key == alphabet[i] and player_inventory[i] and not player_inventory[i].item:get_apply() then
+			message_add("How could you possibly apply that?")
+			
+		end
+	end
+
+	if key == 'escape' or key == 'return' or key == 'kpenter' then
+		inventory_open = false
+		message_add("Never mind")
 	end
 
 end
@@ -1251,6 +1276,9 @@ function draw_inventory()
 	elseif inventory_action == 'read' then
 		love.graphics.print("Read what?", start_x + 24, start_y + 4)
 		love.graphics.print("Choose what to read, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+	elseif inventory_action == 'apply' then
+		love.graphics.print("Apply what?", start_x + 24, start_y + 4)
+		love.graphics.print("Choose what to apply, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
 	end
 	
 	local message = ""
@@ -1262,7 +1290,7 @@ function draw_inventory()
 	
 		if inventory_action == 'look' then
 			message = message .. alphabet[i] .. ": "
-		elseif inventory_action == 'drop' or inventory_action == 'sell' or inventory_action == 'read' or inventory_action == 'eat' or inventory_action == 'wear' or inventory_action == 'wield' or inventory_action == 'quaff' or inventory_action == 'cook' then
+		elseif inventory_action == 'drop' or inventory_action == 'apply' or inventory_action == 'sell' or inventory_action == 'read' or inventory_action == 'eat' or inventory_action == 'wear' or inventory_action == 'wield' or inventory_action == 'quaff' or inventory_action == 'cook' then
 			if inventory_to_drop[alphabet[i]] then
 				message = message .. '[*] '
 			else
@@ -1698,6 +1726,8 @@ function Item:initialize(arg)
 	self.weight = arg.weight or 3
 	self.quaff = arg.quaff or false
 	self.affect = arg.affect or function () end
+	self.apply = arg.apply or false
+	self.afunc = arg.afunc or function () end
 	self.message = arg.message or "DNE"
 	self.char = arg.char or ' ;'
 	self.gold = arg.gold or false
@@ -1757,6 +1787,8 @@ function Item:get_message() return self.message end
 function Item:get_gold() return self.gold end
 function Item:get_read() return self.read end
 function Item:get_scroll() return self.scroll end
+function Item:get_apply() return self.apply end
+function Item:get_afunc() return self.afunc end
 	
 Tile = Class('Tile')
 function Tile:initialize(arg)

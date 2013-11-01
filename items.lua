@@ -5,6 +5,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Cooked Loaf of Bread', edible = true, cook = false, nutrition = 200, char = '%', prob = 0},
 				{name = 'Cooked Rice Ball', edible = true, cook = false, nutrition = 150, char = '%', prob = 0},
 				{name = 'Cooked Fish', edible = true, cook = false, nutrition = 175, char = '%', prob = 0},
+				{name = 'Magic Mirror', apply = true, char = '(', message = "You gaze into the mirror.", afunc = function () level_connection['down'] = function (dir) map_hakurei_shrine(dir) end next_level('down') end, prob = 0},
 				--- items randomly generated
 				{name = 'Mini Hakkero', slot = 'hand', damage = 100, char = ')', prob = 1},
 				{name = 'Miko Outfit', slot = 'torso', armor = 2, char = ']', prob = 20},

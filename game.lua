@@ -69,7 +69,7 @@ game_font = love.graphics.newFont("media/coolvetica.ttf", 14)
 function game:enter()
 		
 	setup_character()
-	map_hakurei_shrine()
+	map_hakurei_shrine('up')
 	map_back_canvas_draw()
 	path_to_player = dijkstra_map(player:get_x(), player:get_y())
 	player_fov()
@@ -180,7 +180,7 @@ function overworld_down()
 		if player:get_x() == overworld_levels[i].x and player:get_y() == overworld_levels[i].y then
 			save_map_check()
 			save_player()
-			overworld_levels[i].func()
+			overworld_levels[i].func('down')
 			stair_cd = 3
 			map_back_canvas_draw()
 			player_fov()

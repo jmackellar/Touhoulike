@@ -1,5 +1,5 @@
-overworld_levels = {	{x = -1, y = -1, func = function () end, name = 'Overworld', persist = true},
-						{x = 41, y = 15, func = function (dir) map_hakurei_shrine(dir) end, name = 'Hakurei Shrine', persist = true},
+overworld_levels = {	{x = -1, y = -1, func = function (dir) end, name = 'Overworld', persist = true},
+						{x = 41, y = 15, func = function (dir) map_hakurei_shrine('down') end, name = 'Hakurei Shrine', persist = true},
 						{x = 17, y = 13, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true},
 						{x = 24, y = 16, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true},
 						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Dungeon', persist = true, mon_gen = 1},
@@ -40,6 +40,8 @@ function map_overworld(dir)
 		map_new_place_player(39, 13)
 	elseif prev_level == 'Human Village' then
 		map_new_place_player(22, 20)
+	elseif prev_level == 'Easy Cavern' then
+		map_new_place_player(43, 15)
 	else
 		map_new_place_player(23, 23)
 	end
@@ -58,11 +60,19 @@ end
 
 function map_hakurei_shrine(dir)
 
-	local chunk = love.filesystem.load('map/hakurei_shrine.lua')
-	chunk()
 	level = {name = 'Hakurei Shrine', depth = 1}
 	level_connection = {up = function () map_overworld() end, down = nil}
-	map_new_place_player(24, 30)
+	
+	if not load_map() then
+		local chunk = love.filesystem.load('map/hakurei_shrine.lua')
+		chunk()
+	end
+			
+	if dir == 'down' then
+		map_new_place_player(24, 30)
+	else
+		map_new_place_player(24, 14)
+	end
 	
 end
 
@@ -242,7 +252,7 @@ function map_gen_cave(width, height)
 	--- clear the map
 	for x = 1, width do
 		for y = 1, height do
-			map[x][y] = Tile:new({name = 'Wall', x = x, y = y})
+			map[x][y] = Tile:new({name = 'CaveWall', x = x, y = y, color = {b=2,g=70,r=140}, block_move = true, block_sight = true})
 		end
 	end
 	
@@ -576,7 +586,7 @@ function map_use_tile()
 end
 
 function map_draw()
-
+	
 	love.graphics.setCanvas(map_canvas)
 	love.graphics.setFont(game_font)
 	map_canvas:clear()
@@ -612,6 +622,7 @@ function map_draw()
 		
 		end
 	end
+	
 	
 	love.graphics.setCanvas()
 	love.graphics.draw(map_back_canvas)

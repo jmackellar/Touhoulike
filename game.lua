@@ -1556,7 +1556,7 @@ function Creature:move(dx, dy)
 					end
 				--- overworld square messages
 				elseif level.name == 'Overworld' then
-					if map[self.x][self.y]:get_char() == '#' or map[self.x][self.y]:get_char() == 'c' then
+					if map[self.x][self.y]:get_char() == 'O' or map[self.x][self.y]:get_char() == '*' then
 						for i = 1, # overworld_levels do
 							if overworld_levels[i].x == self.x and overworld_levels[i].y == self.y then
 								message_add("You are at " .. overworld_levels[i].name)

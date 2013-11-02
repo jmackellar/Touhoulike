@@ -2,8 +2,9 @@ overworld_levels = {	{x = -1, y = -1, func = function () end, name = 'Overworld'
 						{x = 41, y = 15, func = function (dir) map_hakurei_shrine(dir) end, name = 'Hakurei Shrine', persist = true},
 						{x = 17, y = 13, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true},
 						{x = 24, y = 16, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true},
-						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Cave', persist = true, mon_gen = 1},
+						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Dungeon', persist = true, mon_gen = 1},
 						{x = 22, y = 20, func = function (dir) map_human_village(dir) end, name = 'Human Village', persist = false},
+						{x = 43, y = 15, func = function (dir) map_easy_cavern(dir) end, name = 'Easy Cavern', persist = true, mon_gen = 1},
 					}
 
 function next_level(dir)
@@ -35,7 +36,7 @@ function map_overworld(dir)
 		map_new_place_player(17, 13)
 	elseif prev_level == 'Alice Margatroid\'s house' then
 		map_new_place_player(24, 16)
-	elseif prev_level == 'Easy Cave' then
+	elseif prev_level == 'Easy Dungeon' then
 		map_new_place_player(39, 13)
 	elseif prev_level == 'Human Village' then
 		map_new_place_player(22, 20)
@@ -85,14 +86,62 @@ function map_margatroid_house(dir)
 	
 end
 
+function map_easy_cavern(dir)
+
+	--- another stupid and non abstract moving method
+	if level.name ~= 'Easy Cavern' then
+		level = {name = 'Easy Cavern', depth = 1}
+		dir = 'down'
+		level_connection = {up = function () map_overworld() end, down = function () map_easy_cavern('down') end}
+	elseif level.name == 'Easy Cavern' then
+			if dir == 'down' then 
+			level.depth = level.depth + 1
+			level_connection = {up = function () map_easy_cavern('up') end, down = function () map_easy_cavern('down') end}
+		elseif dir == 'up' then 
+			level.depth = level.depth - 1	
+			if level.depth == 1 then
+				level_connection = {up = function () map_overworld() end, down = function () map_easy_cavern('down') end}
+			else
+				level_connection = {up = function () map_easy_cavern('up') end, down = function () map_easy_cavern('down') end}
+			end
+		end
+	end
+	
+	--- map not found, create one instead
+	if not load_map() then
+		
+		if level.depth > 0 then
+			stairs = map_gen_cave(map_width, map_height)
+			if dir == 'down' then
+				map_new_place_player(stairs.up.x, stairs.up.y)
+			elseif dir == 'up' then
+				map_new_place_player(stairs.down.x, stairs.down.y)
+			end
+			
+			--- now add in monsters and items to the map
+			monster_maker(math.random(7, 9))
+			item_maker(math.random(4, 7))
+			
+		--- back on the overworld
+		elseif level.depth < 1 then
+			map_overworld(dir)
+		end
+		
+	--- loaded previous cave map, set player at map entrance now
+	else
+		place_player_on_stairs(dir)
+	end
+
+end
+
 function map_easy_cave(dir)
 
 	--- moving up and down through the cave.  I need to abstract and simplify this later for other levels
-	if level.name ~= 'Easy Cave' then
-		level = {name = 'Easy Cave', depth = 1}	
+	if level.name ~= 'Easy Dungeon' then
+		level = {name = 'Easy Dungeon', depth = 1}	
 		dir = 'down'
 		level_connection = {up = function () map_overworld() end, down = function () map_easy_cave('down') end}
-	elseif level.name == 'Easy Cave' then
+	elseif level.name == 'Easy Dungeon' then
 		if dir == 'down' then 
 			level.depth = level.depth + 1
 			level_connection = {up = function () map_easy_cave('up') end, down = function () map_easy_cave('down') end}
@@ -185,6 +234,84 @@ function map_set_all_seen()
 			map[x][y]:set_seen()		
 		end
 	end
+
+end
+
+function map_gen_cave(width, height)
+
+	--- clear the map
+	for x = 1, width do
+		for y = 1, height do
+			map[x][y] = Tile:new({name = 'Wall', x = x, y = y})
+		end
+	end
+	
+	--- DLA cave generator
+	map[math.floor(width/2)][math.floor(height/2)] = Tile:new({name = 'Floor', x = math.floor(width/2), y = math.floor(height/2)})
+	local tiles_placed = 0
+	repeat
+	
+		local placed = false
+		local x = math.random(1, width)
+		local y = math.random(1, height)
+		repeat
+		
+			local dx = math.random(-1, 1)
+			local dy = math.random(-1, 1)
+			
+			x = x + dx
+			y = y + dy
+			
+			if x < 1 then x = 1 end
+			if x > width then x = width end
+			if y < 1 then y = 1 end
+			if y > height then y = height end
+			
+			if not map[x][y]:get_block_move() then
+				map[x-dx][y-dy] = Tile:new({name = 'Floor', x = x-dx, y = y-dy})
+				placed = true
+				tiles_placed = tiles_placed + 1
+			end
+		
+		until placed
+	
+	until tiles_placed >= math.floor((width * height) * 0.75)
+	
+	--- surround map with walls
+	for x = 1, width do
+		map[x][1] = Tile:new({name = 'Wall', x = x, y = 1})
+		map[x][height] = Tile:new({name = 'Wall', x = x, y = height})
+	end
+	for y = 1, height do
+		map[1][y] = Tile:new({name = 'Wall', x = 1, y = y})
+		map[width][y] = Tile:new({name = 'Wall', x = width, y = y})
+	end
+	
+	--- place stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, width)
+		local y1 = math.random(1, height)
+		local x2 = math.random(1, width)
+		local y2 = math.random(1, height)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1})
+				map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2})
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs
+	
+	return stairs
 
 end
 

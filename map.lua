@@ -121,7 +121,11 @@ function map_easy_cavern(dir)
 	if not load_map() then
 		
 		if level.depth > 0 then
-			stairs = map_gen_cave(map_width, map_height)
+			if level.depth < 8 then
+				stairs = map_gen_cave(map_width, map_height, true, true)
+			else
+				stairs = map_gen_cave(map_width, map_height, false, true)
+			end
 			if dir == 'down' then
 				map_new_place_player(stairs.up.x, stairs.up.y)
 			elseif dir == 'up' then
@@ -140,6 +144,19 @@ function map_easy_cavern(dir)
 	--- loaded previous cave map, set player at map entrance now
 	else
 		place_player_on_stairs(dir)
+	end
+	
+	--- if last level then place yin yang orb
+	if level.depth == 8 then
+		local placed = false
+		repeat
+			local x = math.random(1, map_width)
+			local y = math.random(1, map_height)
+			if not map[x][y]:get_block_move() then
+				placed = true
+				map[x][y]:set_items({Item:new(game_items[8])})
+			end
+		until placed
 	end
 
 end
@@ -247,7 +264,7 @@ function map_set_all_seen()
 
 end
 
-function map_gen_cave(width, height)
+function map_gen_cave(width, height, dstairsd, ustairsd)
 
 	--- clear the map
 	for x = 1, width do
@@ -310,8 +327,9 @@ function map_gen_cave(width, height)
 		
 		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
 			if x1 ~= x2 and y1 ~= y2 then
-				map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1})
-				map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2})
+				print(dstairs, ustairs)
+				if dstairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if ustairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
 				ustairs = true
 				dstairs = true
 			end

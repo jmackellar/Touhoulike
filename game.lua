@@ -1605,6 +1605,10 @@ function Creature:fight(x, y)
 			damage = damage + player_equipment.hand:get_damage()
 			damage = damage + player_mod_get('damage')
 		end
+		--- critical hits
+		local crit = 0
+		if player_equipment.hand then crit = player_equipment.hand:get_crit() end
+		if math.random(1, 100) <= crit then damage = damage + math.ceil(damage * .15) end
 		--- fighting costs hunger!
 		self.food_tick = self.food_tick - 5
 	end
@@ -1731,6 +1735,7 @@ function Item:initialize(arg)
 	self.slot = arg.slot or false
 	self.armor = arg.armor or 0
 	self.damage = arg.damage or 5
+	self.crit = arg.crit or 0
 	self.weight = arg.weight or 3
 	self.quaff = arg.quaff or false
 	self.affect = arg.affect or function () end
@@ -1786,6 +1791,7 @@ function Item:get_pname_real() return self.pname end
 function Item:get_slot() return self.slot end
 function Item:get_armor() return self.armor end
 function Item:get_damage() return self.damage end
+function Item:get_crit() return self.crit end
 function Item:get_quaff() return self.quaff end
 function Item:get_affect() return self.affect end
 function Item:get_cook() return self.cook end

@@ -858,6 +858,12 @@ function save_player()
 		text = text .. "\'" .. v .. "\', "
 	end
 	text = text .. "}\n"
+	--- unique dead
+	text = text .. "unique_dead = {  "
+	for k, v in pairs(unique_dead) do
+		text = text .. "\'" .. v .. "\', "
+	end
+	text = text .. "}\n"
 	--- exp
 	text = text .. "player_exp = " .. player_exp .. "\n"
 	--- gold
@@ -1413,6 +1419,7 @@ function Creature:initialize(arg)
 	self.seen_player = arg.seen_player or false
 	self.seen_player_cd = 10
 	self.exp = arg.exp or 10
+	self.unique = arg.unique or false
 	self.color = arg.color or function () love.graphics.setColor(255, 255, 255, 255) end
 	
 end
@@ -1643,6 +1650,10 @@ function Creature:take_dam(dam, dtype, name)
 	end
 	
 	if self.hp_cur < 1 then
+		if self.unique then
+			table.insert(unique_dead, self.name)
+		end
+	
 		if self ~= player then message_add("You killed the " .. self.name .. ".") end
 		map[self.x][self.y]:set_holding(nil)
 		player_exp = player_exp + self.exp
@@ -1717,6 +1728,7 @@ function Creature:get_mana_max() return self.mana_max end
 function Creature:get_base_damage() return self.base_damage end
 function Creature:get_shop() return self.shop end
 function Creature:get_sell() return self.sell end
+function Creature:get_unique() return self.unique end
 	
 Item = Class('Item')
 function Item:initialize(arg)

@@ -64,12 +64,22 @@ end
 function map_sdm(dir)
 
 	if level.name == 'Overworld' then
+	
 		local chunk = love.filesystem.load('map/sdm_gate.lua')
 		chunk()
 		level = {name = 'Scarlet Devil Mansion', depth = 1}
 		level_connection = {up = function () map_overworld() end, down = nil}
+		
+		--- hong meiling
+		local hong = game_monsters[1]
+		hong['x'] = 23
+		hong['y'] = 16
+		if check_unique(hong) then map[23][16]:set_holding(Creature:new(hong)) end
+		
 		map_new_place_player(23, 28)
+		
 	elseif level.name == 'Scarlet Devil Mansion' then
+	
 		if level.depth == 1 then 
 			--- gate
 		elseif level.depth > 1 and level.depth < 6 then
@@ -85,6 +95,7 @@ function map_sdm(dir)
 		elseif level.depth == 10 then
 			--- flan flan
 		end
+		
 	end
 	
 end
@@ -461,6 +472,18 @@ function map_gen_rogue(width, height)
 
 end
 
+function check_unique(mon) 
+
+	local good = true
+	for i = 1, # unique_dead do
+		if unique_dead[i] == mon.name then
+			good = false
+		end
+	end
+	return good
+
+end
+
 function mon_gen_machine()
 
 	for i = 1, # overworld_levels do
@@ -544,7 +567,7 @@ function map_random_monster()
 	local dice = math.random(1, dice_max)
 	for i = 1, # game_monsters do
 		chance = chance + game_monsters[i].level
-		if dice <= chance then
+		if dice <= chance and game_monsters[i].rand_gen then
 			return game_monsters[i]
 		end
 	end

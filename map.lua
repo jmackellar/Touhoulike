@@ -112,8 +112,28 @@ function map_sdm(dir)
 				place_player_on_stairs(dir)
 				
 			elseif level.depth == 6 then
-				--- library + patchy
+				--- library + patchy and koakuma
 				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) map_sdm(dir) end}
+				local chunk = love.filesystem.load('map/sdm_library.lua')
+				chunk()
+				place_player_on_stairs(dir)
+				
+				--- patchy
+				local patch = game_monsters[2]
+				patch['x'] = 16
+				patch['y'] = 26
+				if check_unique(patch) then
+					map[16][26]:set_holding(Creature:new(patch))
+					table.insert(unique_dead, patch.name)
+				end
+				--- koa
+				local koa = game_monsters[3]
+				koa['x'] = 14
+				koa['y'] = 25
+				if check_unique(koa) then
+					map[14][25]:set_holding(Creature:new(koa))
+					table.insert(unique_dead, koa.name)
+				end
 				
 			elseif level.depth == 7 then
 				--- scarlet devil rooms and corridors
@@ -679,7 +699,7 @@ end
 
 function mon_gen(level)
 
-	if math.random(1000 - (level * 4)) <= level + player_level then
+	if math.random(2000 - (level * 4)) <= level + player_level then
 	
 		local placed = false
 		repeat
@@ -755,7 +775,7 @@ function map_random_monster()
 		end
 	end
 	
-	return game_monsters[1]
+	return game_monsters[4]
 	
 end
 

@@ -38,6 +38,9 @@ inventory_open = false
 inventory_action = false
 inventory_to_drop = {}
 
+danmaku_dir = false
+danmaku = false
+
 shop_window = false
 shop_items = { }
 
@@ -89,6 +92,13 @@ function game:draw()
 	if spells_open then draw_spells() end
 	if shop_window then draw_shop() end
 	
+	--- danmaku draw
+	if danmaku then
+		love.graphics.setColor(0, 100, 255, 255)
+		love.graphics.print('*', ascii_draw_point(danmaku.x), ascii_draw_point(danmaku.y))
+		love.graphics.setColor(255, 255, 255, 255)
+	end
+	
 	--- debug coordinate drawing, remove later
 	love.graphics.setCaption(player:get_x() .. ', ' .. player:get_y())
 
@@ -96,8 +106,8 @@ end
 
 function game:keypressed(key)
 
-	if player:get_turn_cd() <= 1 then
-		if not inventory_open and not pickup_many_items and not spells_open and not shop_window then
+	if player:get_turn_cd() <= 1 and not danmaku then
+		if not inventory_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir then
 			if key == 'kp8' then player:move(0, -1) next_turn = true end
 			if key == 'kp2' then player:move(0, 1) next_turn = true end
 			if key == 'kp4' then player:move(-1, 0) next_turn = true end
@@ -122,7 +132,9 @@ function game:keypressed(key)
 				if key == 'a' then inventory_open = true inventory_action = 'apply' end
 				
 				if key == 'c' then spells_open = true end
-				if key == 'u' then map_use_tile() end		
+				if key == 'u' then map_use_tile() end	
+
+				if key == 'f' then danmaku_dir = true end
 			end
 			
 		elseif inventory_open and inventory_action == 'look' then
@@ -154,6 +166,18 @@ function game:keypressed(key)
 			spells_key(key)
 		elseif shop_window then
 			shop_key(key)
+			
+		elseif danmaku_dir then
+			if key == 'kp8' then danmaku_fire(0, -1) danmaku_dir = false next_turn = true end
+			if key == 'kp2' then danmaku_fire(0, 1) danmaku_dir = false next_turn = true end
+			if key == 'kp4' then danmaku_fire(-1, 0) danmaku_dir = false next_turn = true end
+			if key == 'kp6' then danmaku_fire(1, 0) danmaku_dir = false next_turn = true end
+			if key == 'kp7' then danmaku_fire(-1, -1) danmaku_dir = false next_turn = true end
+			if key == 'kp9' then danmaku_fire(1, -1) danmaku_dir = false next_turn = true end
+			if key == 'kp1' then danmaku_fire(-1, 1) danmaku_dir = false next_turn = true end
+			if key == 'kp3' then danmaku_fire(1, 1) danmaku_dir = false next_turn = true end
+			if key == 'kp3' then danmaku_fire(1, 1) danmaku_dir = false next_turn = true end
+			
 		end		
 	end
 	
@@ -171,6 +195,21 @@ function game:update(dt)
 		--- down for the overworld
 		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and level.name == 'Overworld' then overworld_down() end
 	end
+	
+	--- danmaku update
+	if danmaku then
+		danmaku.cd = danmaku.cd - 1
+		if danmaku.cd < 1 then
+			danmaku.cd = 3
+			danmaku.x = danmaku.x + danmaku.dx
+			danmaku.y = danmaku.y + danmaku.dy
+			
+			--- check for danmaku end
+			if danmaku.x == danmaku.ex and danmaku.y == danmaku.ey then
+				danmaku = false
+			end
+		end
+	end
 
 end
 
@@ -186,6 +225,29 @@ function overworld_down()
 			player_fov()
 		end
 	end
+
+end
+
+function danmaku_fire(dx, dy)
+
+	local air = true
+	local x = player:get_x()
+	local y = player:get_y()
+	repeat
+	
+		x = x + dx
+		y = y + dy
+		
+		if map[x][y]:get_block_move() then air = false end
+		if map[x][y]:get_holding() then 
+			air = false 
+			local dam = math.random(player_stats.int * 3, player_stats.int * 4)
+			map[x][y]:get_holding():take_dam(dam, 'phys', 'whut')
+		end
+	
+	until not air
+	
+	danmaku = {x = player:get_x(), y = player:get_y(), dx = dx, dy = dy, ex = x, ey = y, cd = 3}
 
 end
 

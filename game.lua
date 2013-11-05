@@ -134,7 +134,7 @@ function game:keypressed(key)
 				if key == 'c' then spells_open = true end
 				if key == 'u' then map_use_tile() end	
 
-				if key == 'f' then danmaku_dir = true end
+				if key == 'f' then danmaku_dir = true message_add("Fire danmaku in which direction?") end
 			end
 			
 		elseif inventory_open and inventory_action == 'look' then
@@ -230,6 +230,8 @@ end
 
 function danmaku_fire(dx, dy)
 
+	message_add("You fired danmaku!")
+
 	local air = true
 	local x = player:get_x()
 	local y = player:get_y()
@@ -241,7 +243,7 @@ function danmaku_fire(dx, dy)
 		if map[x][y]:get_block_move() then air = false end
 		if map[x][y]:get_holding() then 
 			air = false 
-			local dam = math.random(player_stats.int * 3, player_stats.int * 4)
+			local dam = math.random(player_stats.int * 4, player_stats.int * 5)
 			map[x][y]:get_holding():take_dam(dam, 'phys', 'whut')
 		end
 	
@@ -1712,10 +1714,6 @@ function Creature:take_dam(dam, dtype, name)
 	end
 	
 	if self.hp_cur < 1 then
-		if self.unique then
-			table.insert(unique_dead, self.name)
-		end
-	
 		if self ~= player then message_add("You killed the " .. self.name .. ".") end
 		map[self.x][self.y]:set_holding(nil)
 		player_exp = player_exp + self.exp

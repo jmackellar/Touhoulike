@@ -63,37 +63,79 @@ end
 
 function map_sdm(dir)
 
+	if dir == 'down' then
+		level.depth = level.depth + 1
+	elseif dir == 'up' then
+		level.depth = level.depth - 1
+	end
+
 	if level.name == 'Overworld' then
-	
-		local chunk = love.filesystem.load('map/sdm_gate.lua')
-		chunk()
+		
+		--- set up level info
 		level = {name = 'Scarlet Devil Mansion', depth = 1}
-		level_connection = {up = function () map_overworld() end, down = nil}
+		level_connection = {up = function (dir) map_overworld() end, down = function (dir) map_sdm(dir) end}
+		
+		--- load level
+		if not load_map() then
+			local chunk = love.filesystem.load('map/sdm_gate.lua')
+			chunk()
+		else
+			place_player_on_stairs(dir)
+		end
 		
 		--- hong meiling
 		local hong = game_monsters[1]
 		hong['x'] = 23
 		hong['y'] = 16
-		if check_unique(hong) then map[23][16]:set_holding(Creature:new(hong)) end
+		if check_unique(hong) then 
+			map[23][16]:set_holding(Creature:new(hong)) 
+			table.insert(unique_dead, hong.name)
+		end
 		
 		map_new_place_player(23, 28)
 		
 	elseif level.name == 'Scarlet Devil Mansion' then
 	
-		if level.depth == 1 then 
-			--- gate
-		elseif level.depth > 1 and level.depth < 6 then
-			--- scarlet devil rooms and corridors
-		elseif level.depth == 6 then
-			--- library + patchy
-		elseif level.depth == 7 then
-			--- scarlet devil rooms and corridors
-		elseif level.depth == 8 then
-			--- sakuya
-		elseif level.depth == 9 then
-			--- remi
-		elseif level.depth == 10 then
-			--- flan flan
+		if not load_map() then
+		
+			if level.depth == 1 then 
+				--- gate
+				level_connection = {up = function (dir) map_overworld() end, down = function (dir) map_sdm(dir) end}
+				local chunk = love.filesystem.load('map/sdm_gate.lua')
+				chunk()
+				place_player_on_stairs(dir)
+				
+			elseif level.depth > 1 and level.depth < 6 then
+				--- scarlet corridors
+				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) map_sdm(dir) end}
+				local stairs = map_gen_abstract(map_width, map_height, true, true)					
+				place_player_on_stairs(dir)
+				
+			elseif level.depth == 6 then
+				--- library + patchy
+				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) map_sdm(dir) end}
+				
+			elseif level.depth == 7 then
+				--- scarlet devil rooms and corridors
+				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) map_sdm(dir) end}
+				
+			elseif level.depth == 8 then
+				--- sakuya
+				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) map_sdm(dir) end}
+				
+			elseif level.depth == 9 then
+				--- remi
+				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) map_sdm(dir) end}
+				
+			elseif level.depth == 10 then
+				--- flan flan
+				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) end}
+				
+			end
+			
+		else
+			place_player_on_stairs(dir)
+		
 		end
 		
 	end
@@ -306,6 +348,147 @@ function map_set_all_seen()
 
 end
 
+function map_gen_abstract(width, height, dstairsd, ustairsd)
+
+	local gridx = 6
+	local gridy = 6
+
+	--- flood map with floor
+	for x = 1, width do
+		for y = 1, height do
+			map[x][y] = Tile:new({name = 'Floor', x = x, y = y, color = {b=255,g=255,r=255},})
+		end
+	end
+	
+	--- place grid walls randomly
+	for x = 1, width do
+		for y = 1, height do
+			if x % gridx == 0 then map[x][y] = Tile:new({name = 'Wall', x = x, y = y}) end
+			if y % gridy == 0 then map[x][y] = Tile:new({name = 'Wall', x = x, y = y}) end
+		end
+	end
+	
+	--- Fill in the corner
+	for x = 42, width do
+		for y = 30, height do
+			map[x][y] = Tile:new({name = 'Wall', x = x, y = y})
+		end
+	end
+
+	--- fill in rooms
+	for x = 1, math.floor(width / gridx) do
+		for y = 1, math.floor(height / gridy) do
+			local x1 = (x - 1) * gridx + 1
+			local y1 = (y - 1) * gridy + 1
+			local x2 = x1 + gridx
+			local y2 = y1 + gridy
+			
+			local dice = math.random(1, 100)
+			
+			if dice <= 85 then
+				--- rooms
+			
+				--- room walls
+				if math.random(100) <= 25 then
+					for dx = x1, x2 do
+						map[dx][y1] = Tile:new({name = 'Wall', x = dx, y = y1})
+						map[dx][y2] = Tile:new({name = 'Wall', x = dx, y = y2})
+					end
+					for dy = y1, y2 do
+						map[x1][dy] = Tile:new({name = 'Wall', x = x1, y = dy})
+						map[x2][dy] = Tile:new({name = 'Wall', x = x2, y = dy})
+					end
+				end
+				
+				--- corridors
+				for i = 1, 2 do
+				
+					local dx = math.random(x1 + 1, x2 - 1)
+					local dy = math.random(y1 + 1, y2 - 1)
+					
+					if i == 1 then
+						map[dx][y2-1] = Tile:new({name = 'Floor', x = dx, y = y2-1})
+						map[dx][y2+1] = Tile:new({name = 'Floor', x = dx, y = y2+1})
+						map[dx][y2] = Tile:new({name = 'Floor', x = dx, y = y2})
+					elseif i == 2 then
+						map[x2-1][dy] = Tile:new({name = 'Floor', x = x2-1, y = dy})
+						map[x2+1][dy] = Tile:new({name = 'Floor', x = x2+1, y = dy})
+						map[x2][dy] = Tile:new({name = 'Floor', x = x2, y = dy})
+					end
+					
+				end
+				
+			else
+				--- flood
+				
+				--- fill with walls
+				for dx = x1, x2 do
+					for dy = y1, y2 do
+						map[dx][dy] = Tile:new({name = 'Wall', x = dx, y = dy})
+					end
+				end
+				
+				--- corridors
+				for i = 1, 2 do
+				
+					local dx = math.random(x1 + 1, x2 - 1)
+					local dy = math.random(y1 + 1, y2 - 1)
+					
+					if i == 1 then
+						for my = y1, y2+1 do
+							map[dx][my] = Tile:new({name = 'Floor', x = dx, y = my})
+						end
+					elseif i == 2 then
+						for mx = x1, x2+1 do
+							map[mx][dy] = Tile:new({name = 'Floor', x = mx, y = dy})
+						end
+					end
+					
+				end
+				
+			end
+			
+		end
+	end
+	
+	--- surround map with walls
+	for x = 1, width do
+		map[x][1] = Tile:new({name = 'Wall', x = x, y = 1})
+		map[x][height] = Tile:new({name = 'Wall', x = x, y = height})
+	end
+	for y = 1, height do
+		map[1][y] = Tile:new({name = 'Wall', x = 1, y = y})
+		map[width][y] = Tile:new({name = 'Wall', x = width, y = y})
+	end
+	
+	--- place stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, width-7)
+		local y1 = math.random(1, height-7)
+		local x2 = math.random(1, width-7)
+		local y2 = math.random(1, height-7)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs
+	
+	return stairs
+	
+end
+
 function map_gen_cave(width, height, dstairsd, ustairsd)
 
 	--- clear the map
@@ -370,8 +553,8 @@ function map_gen_cave(width, height, dstairsd, ustairsd)
 		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
 			if x1 ~= x2 and y1 ~= y2 then
 				print(dstairs, ustairs)
-				if dstairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
-				if ustairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
 				ustairs = true
 				dstairs = true
 			end

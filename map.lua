@@ -5,6 +5,7 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) end, name = 'Overwor
 						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Dungeon', persist = true, mon_gen = 1},
 						{x = 22, y = 20, func = function (dir) map_human_village(dir) end, name = 'Human Village', persist = false},
 						{x = 43, y = 15, func = function (dir) map_easy_cavern(dir) end, name = 'Easy Cavern', persist = true, mon_gen = 1},
+						{x = 21, y = 8, func = function (dir) map_sdm(dir) end, name = 'Scarlet Devil Mansion', persist = true, mon_gen = 5},
 					}
 
 function next_level(dir)
@@ -42,6 +43,8 @@ function map_overworld(dir)
 		map_new_place_player(22, 20)
 	elseif prev_level == 'Easy Cavern' then
 		map_new_place_player(43, 15)
+	elseif prev_level == 'Scarlet Devil Mansion' then
+		map_new_place_player(21, 8)
 	else
 		map_new_place_player(23, 23)
 	end
@@ -56,6 +59,34 @@ function map_human_village(dir)
 	level_connection = {up = function () map_overworld() end, down = nil}
 	map_new_place_player(20, 30)
 
+end
+
+function map_sdm(dir)
+
+	if level.name == 'Overworld' then
+		local chunk = love.filesystem.load('map/sdm_gate.lua')
+		chunk()
+		level = {name = 'Scarlet Devil Mansion', depth = 1}
+		level_connection = {up = function () map_overworld() end, down = nil}
+		map_new_place_player(23, 28)
+	elseif level.name == 'Scarlet Devil Mansion' then
+		if level.depth == 1 then 
+			--- gate
+		elseif level.depth > 1 and level.depth < 6 then
+			--- scarlet devil rooms and corridors
+		elseif level.depth == 6 then
+			--- library + patchy
+		elseif level.depth == 7 then
+			--- scarlet devil rooms and corridors
+		elseif level.depth == 8 then
+			--- sakuya
+		elseif level.depth == 9 then
+			--- remi
+		elseif level.depth == 10 then
+			--- flan flan
+		end
+	end
+	
 end
 
 function map_hakurei_shrine(dir)

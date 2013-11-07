@@ -528,7 +528,16 @@ function map_gen_cave(width, height, dstairsd, ustairsd)
 	--- clear the map
 	for x = 1, width do
 		for y = 1, height do
-			map[x][y] = Tile:new({name = 'CaveWall', x = x, y = y, color = {b=2,g=70,r=140}, block_move = true, block_sight = true})
+			local dchar = '#'
+			local dice = math.random(1, 100)
+			if dice >= 1 and dice < 40 then
+				dchar = ' |'
+			elseif dice >= 40 and dice < 80 then
+				dchar = '-'
+			else
+				dchar = '#'
+			end
+			map[x][y] = Tile:new({name = 'CaveWall', x = x, y = y, char = dchar, color = {b=2,g=70,r=140}, block_move = true, block_sight = true})
 		end
 	end
 	

@@ -138,10 +138,24 @@ function map_sdm(dir)
 			elseif level.depth == 7 then
 				--- scarlet devil rooms and corridors
 				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) map_sdm(dir) end}
+				local stairs = map_gen_abstract(map_width, map_height, true, true)					
+				place_player_on_stairs(dir)
 				
 			elseif level.depth == 8 then
-				--- sakuya
+				--- sakuya's level
 				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) map_sdm(dir) end}
+				local chunk = love.filesystem.load('map/sdm_sakuya.lua')
+				chunk()
+				place_player_on_stairs(dir)
+				
+				--- sakuya
+				local sakuya = game_monsters[4]
+				sakuya['x'] = 43
+				sakuya['y'] = 27
+				if check_unique(sakuya) then
+					map[43][27]:set_holding(Creature:new(sakuya))
+					table.insert(unique_dead, sakuya.name)
+				end
 				
 			elseif level.depth == 9 then
 				--- remi

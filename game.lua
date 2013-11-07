@@ -99,9 +99,6 @@ function game:draw()
 		love.graphics.setColor(255, 255, 255, 255)
 	end
 	
-	--- debug coordinate drawing, remove later
-	love.graphics.setCaption(player:get_x() .. ', ' .. player:get_y())
-
 end
 
 function game:keypressed(key)

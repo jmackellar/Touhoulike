@@ -1,13 +1,7 @@
 local state = 'main'
 local option = 1
-local main_options = {	'Reimu Hakurei',
-						'Yukari Yakumo',
-						'Marisa Kirisame',
-						'Alice Margatroid',
-						'Remilia Scarlet',
-						'Sakuya Izayoi',
-						'Youmu Konpaku',
-						'Yuyuko Saigyouji',
+local main_options = {	'Reimu Hakurei A',
+						'Reimu Hakurei B',
 						}
 						
 choice = ''

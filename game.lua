@@ -892,6 +892,12 @@ function save_player()
 	text = text .. "player_level = " .. player_level .. "\n"
 	--- name
 	text = text .. "player_name = \'" .. player_name .. "\'\n"
+	--- spells
+	text = text .. "player_spells = { " 
+	for i = 1, # player_spells do
+		text = text .. save_spell(player_spells[i].name)
+	end
+	text = text .. "  }\n"
 	--- equipment
 	text = text .. "player_equipment = {  "
 	text = text .. "head = " .. save_item(player_equipment.head)
@@ -1010,6 +1016,23 @@ function save_map()
 	
 	love.filesystem.write(level.name .. "_" .. level.depth .. ".lua", text)
 	
+end
+
+function save_spell(spell)
+
+	if not spell then return 'nil, ' end
+	
+	local text = ""
+	text = text .. "game_spells["
+	for i = 1, # game_spells do
+		if spell == game_spells[i].name then
+			text = text .. i .. "], "
+			return text
+		end
+	end
+	
+	return ""
+
 end
 
 function save_item(item)

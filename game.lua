@@ -98,7 +98,7 @@ function game:draw()
 	
 	--- danmaku draw
 	if danmaku then
-		love.graphics.setColor(0, 100, 255, 255)
+		danmaku.color()
 		love.graphics.print('*', ascii_draw_point(danmaku.x), ascii_draw_point(danmaku.y))
 		love.graphics.setColor(255, 255, 255, 255)
 	end
@@ -281,12 +281,15 @@ function danmaku_fire(dx, dy)
 			if map[x][y]:get_holding() then 
 				air = false 
 				local dam = math.random(player_stats.int * 4, player_stats.int * 5)
-				map[x][y]:get_holding():take_dam(dam, 'phys', 'whut')
+				map[x][y]:get_holding():take_dam(dam, 'danmaku', 'whut')
 			end
 			
 			if d == 8 then
 				air = false
 			end
+			
+			ex = x
+			ey = y
 		
 		until not air
 	end
@@ -294,6 +297,53 @@ function danmaku_fire(dx, dy)
 	danmaku = {x = player:get_x(), y = player:get_y(), dx = dx, dy = dy, ex = x, ey = y, cd = 3, char = '*', color = function () love.graphics.setColor(0, 100, 255, 255) end}
 	for i = 1, bullets - 1 do
 		table.insert(danmaku_add, {x = player:get_x(), y = player:get_y(), dx = dx, dy = dy, ex = x, ey = y, cd = 3, char = '*', color = function () love.graphics.setColor(0, 100, 255, 255) end})
+	end
+
+end
+
+function enemy_danmaku_fire(sx, sy, dx, dy, bullets, dam, name)
+
+	message_add("The " .. name .. " fired danmaku!")
+	
+	local air = true
+	local x = sx
+	local y = sy
+	local d = 0
+	local ex = 0
+	local ey = 0
+	
+	for i = 1, bullets do
+		air = true
+		x = sx
+		y = sy
+		d = 0
+	
+		repeat
+		
+			x = x + dx
+			y = y + dy
+			d = d + 1
+			
+			if map[x][y]:get_block_move() then air = false end
+			if x == player:get_x() and y == player:get_y() then
+				air = false
+				player:take_dam(dam, 'danmaku', name)
+			end
+			
+			if d == 8 then
+				air = false
+			end
+			
+			ex = x
+			ey = y
+		
+		until not air
+	
+	end
+	
+	danmaku = {x = sx, y = sy, dx = dx, dy = dy, ex = ex, ey = ey, cd = 3, char = '*', color = function () love.graphics.setColor(0, 255, 100, 255) end}
+	for i = 1, bullets - 1 do
+		table.insert(danmaku_add, {x = sx, y = sy, dx = dx, dy = dy, ex = ex, ey = ey, cd = 3, char = '*', color = function () love.graphics.setColor(0, 255, 100, 255) end})
 	end
 
 end
@@ -1634,6 +1684,69 @@ function Creature:ai_wander()
 
 end
 
+function Creature:enemy_can_hit_danmaku()
+
+	local can_hit = false
+	local dx = 0
+	local dy = 0
+	
+	--- vertical firing
+	if self.x == player:get_x() and self.y ~= player:get_y() then
+		if self.y > player:get_y() then
+			dy = -1
+		else
+			dy = 1
+		end
+		can_hit = true
+	end
+	
+	--- horizontal firing
+	if self.y == player:get_y() and self.x ~= player:get_x() then
+		if self.x > player:get_x() then	
+			dx = -1
+		else
+			dx = 1
+		end
+		can_hit = true
+	end
+	
+	--- diagonal firing
+	for d = 1, 8 do
+		
+		if self.x - d == player:get_x() then
+			if self.y - d == player:get_y() then
+				dx = -1
+				dy = -1
+				can_hit = true
+				break
+			elseif self.y + d == player:get_y() then
+				dx = -1
+				dy = 1
+				can_hit = true
+				break
+			end
+		end
+		
+		if self.x + d == player:get_x() then
+			if self.y - d == player:get_y() then
+				dx = 1
+				dy = -1
+				can_hit = true
+				break
+			elseif self.y + d == player:get_y() then
+				dx = 1
+				dy = 1
+				can_hit = true
+				break
+			end
+		end
+		
+	end
+	
+	return can_hit, dx, dy
+	
+end
+
 function Creature:ai_normal()
 
 	local moved = false
@@ -1649,14 +1762,32 @@ function Creature:ai_normal()
 			path_to_player = dijkstra_map(player:get_x(), player:get_y())
 		end
 		
-		if path_to_player[self.x-1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, 0) moved = true end
-		if path_to_player[self.x+1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, 0) moved = true end
-		if path_to_player[self.x][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 0, -1) moved = true end
-		if path_to_player[self.x][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 0, 1) moved = true end
-		if path_to_player[self.x-1][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, -1) moved = true end
-		if path_to_player[self.x-1][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, 1) moved = true end
-		if path_to_player[self.x+1][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, -1) moved = true end
-		if path_to_player[self.x+1][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, 1) moved = true end
+		--- fire danmaku at player if we can
+		if math.random(1, 100) >= 75 then
+			local can_hit = false
+			local dx = 0
+			local dy = 0
+			
+			can_hit, dx, dy = Creature.enemy_can_hit_danmaku(self)
+			
+			if can_hit then
+				enemy_danmaku_fire(self.x, self.y, dx, dy, 2, 25, self.name)
+				moved = true
+			end		
+		end
+		
+		--- move and bump player
+		if not moved then
+			if path_to_player[self.x-1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, 0) moved = true end
+			if path_to_player[self.x+1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, 0) moved = true end
+			if path_to_player[self.x][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 0, -1) moved = true end
+			if path_to_player[self.x][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 0, 1) moved = true end
+			if path_to_player[self.x-1][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, -1) moved = true end
+			if path_to_player[self.x-1][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, 1) moved = true end
+			if path_to_player[self.x+1][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, -1) moved = true end
+			if path_to_player[self.x+1][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, 1) moved = true end
+		end
+		
 	else
 		Creature.move(self, math.random(-1,1), math.random(-1,1))
 	end
@@ -1801,9 +1932,28 @@ function Creature:take_dam(dam, dtype, name)
 		end
 		
 		--- dodge
-		if player_stance == 1 then
+		if player_stance == 1 and dtype == 'phys' then
 			if math.random(1, 100) <= 20 then
 				dam = 0
+			end		
+		end
+		
+		--- graze
+		if dtype == 'danmaku' then
+			if player_stance == 1 then
+				dam = 0
+			elseif player_stance == 2 then
+				if math.random(1, 100) <= 50 then
+					dam = 0
+				end
+			elseif player_stance == 3 then
+				if math.random(1, 100) <= 25 then
+					dam = 0
+				end
+			elseif player_stance == 4 then
+				if math.random(1, 100) <= 5 then
+					dam = 0
+				end
 			end
 		end
 		
@@ -1822,11 +1972,17 @@ function Creature:take_dam(dam, dtype, name)
 		else
 			message_add("You hit the " .. self.name .. " for " .. dam .. " damage.")
 		end
-	elseif dam == 0 then
+	elseif dam == 0 and dtype == 'phys' then
 		if self == player then
 			message_add("You dodged the attack from the " .. name .. ".")
 		else
 			message_add("The " .. self.name .. " dodged your attack.")
+		end
+	elseif dam == 0 and dtype == 'danmaku' then
+		if self == player then
+			message_add("You grazed the danmaku fired from the " .. name .. ".")
+		else
+			message_add("The " .. self.name .. " grazed your danmaku.")
 		end
 	end
 	

@@ -6,7 +6,7 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) end, name = 'Overwor
 						{x = 22, y = 20, func = function (dir) map_human_village(dir) end, name = 'Human Village', persist = false},
 						{x = 43, y = 15, func = function (dir) map_easy_cavern(dir) end, name = 'Easy Cavern', persist = true, mon_gen = 1},
 						{x = 21, y = 8, func = function (dir) map_sdm(dir) end, name = 'Scarlet Devil Mansion', persist = true, mon_gen = 5},
-						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Dungeon', persist = false, mon_gen = 4},
+						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Forest', persist = false, mon_gen = 4},
 					}
 
 function next_level(dir)
@@ -46,7 +46,7 @@ function map_overworld(dir)
 		map_new_place_player(43, 15)
 	elseif prev_level == 'Scarlet Devil Mansion' then
 		map_new_place_player(21, 8)
-	elseif prev_level == 'Youkai Dungeon' then
+	elseif prev_level == 'Youkai Forest' then
 		map_new_place_player(39, 24)
 	else
 		map_new_place_player(23, 23)
@@ -56,7 +56,7 @@ end
 
 function map_youkai_dungeon(dir)
 
-	if level.name == 'Youkai Dungeon' then
+	if level.name == 'Youkai Forest' then
 		if dir == 'down' then
 			level.depth = level.depth + 1
 		elseif dir == 'up' then
@@ -78,8 +78,10 @@ function map_youkai_dungeon(dir)
 	
 	local dstairs = true
 	if level.depth == 10 then dstairs = false end
-	
-	map_gen_rogue(map_width, map_height, true, dstairs)	
+		
+	map_gen_forest(map_width, map_height, true, dstairs)
+	monster_maker(math.random(20,30))
+	item_maker(math.random(10,20))
 	place_player_on_stairs(dir)
 	
 end
@@ -643,7 +645,6 @@ function map_gen_cave(width, height, dstairsd, ustairsd)
 		
 		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
 			if x1 ~= x2 and y1 ~= y2 then
-				print(dstairs, ustairs)
 				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
 				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
 				ustairs = true
@@ -657,6 +658,148 @@ function map_gen_cave(width, height, dstairsd, ustairsd)
 	
 	return stairs
 
+end
+
+function map_gen_forest(width, height, p_ustairs, p_dstairs)
+	
+	local n = 0
+	local s = 0
+	local e = 0
+	local w = 0
+	
+	local placed = 0
+	
+	local i = math.floor(width/2)
+	local j = math.floor(height/2)
+	
+	--- flood map with floor
+	for x = 1, width do
+		for y = 1, height do
+			local tchar = ' .'
+			if math.random(1,100) <= 50 then tchar = ',' end
+			map[x][y] = Tile:new({name = 'LeafFloor', char = tchar, block_move = false, block_sight = false, color = {r=184, g=157, b=83}, x = x, y = y})
+		end
+	end
+
+	--- grow trees in clusters
+	repeat
+	
+	i = math.random(1, map_width)
+	j = math.random(1, map_height)
+	
+	for k = 1, 20 do
+		n = math.random(1, 6)
+		s = math.random(1, 6)
+		e = math.random(1, 6)
+		w = math.random(1, 6)
+		
+		local color = {r=209, g=61, b=61}
+		local dice = math.random(1, 3)
+		if dice == 1 then
+			color = {r=201, g=119, b=46}
+		elseif dice == 2 then
+			color = {r=186, g=153, b=52}
+		else
+			color = {r=209, g=61, b=61}
+		end
+		
+		if n == 1 then
+			i = i - 1
+			if i < 1 then i = 1 end
+			map[i][j] = Tile:new({name = 'AutumnTree', char = 'T', block_move = false, block_sight = true, color = color, x = i, y = j})
+		end
+		if s == 1 then
+			i = i + 1
+			if i > map_width then i = map_width end
+			map[i][j] = Tile:new({name = 'AutumnTree', char = 'T', block_move = false, block_sight = true, color = color, x = i, y = j})
+		end
+		if e == 1 then
+			j = j + 1
+			if j > map_height then j = map_height end
+			map[i][j] = Tile:new({name = 'AutumnTree', char = 'T', block_move = false, block_sight = true, color = color, x = i, y = j})
+		end
+		if w == 1 then
+			j = j - 1
+			if j < 1 then j = 1 end
+			map[i][j] = Tile:new({name = 'AutumnTree', char = 'T', block_move = false, block_sight = true, color = color, x = i, y = j})
+		end
+	end
+	
+	placed = placed + 1
+	
+	until placed > 55
+	
+	--- place some fallen logs around
+	local placed = 0
+	
+	repeat
+	
+		local x = math.random(3, map_width - 3)
+		local y = math.random(3, map_height - 3)
+		local length = math.random(2, 3)
+		local dice = math.random(1, 2)
+		local tchar = '='
+		
+		if dice == 1 then
+			tchar = '='
+		elseif dice == 2 then
+			tchar = '[]'
+		end
+		
+		if not map[x][y]:get_block_move() then
+			map[x][y] = Tile:new({name = 'FallenLog', char = tchar, x = x, y = y, block_move = true, block_sight = false, color = {r=129, g=96, b=10}})
+			if dice == 1 then
+				map[x+1][y] = Tile:new({name = 'FallenLog', char = tchar, x = x+1, y = y, block_move = true, block_sight = false, color = {r=129, g=96, b=10}})
+				if length == 3 then
+					map[x+2][y] = Tile:new({name = 'FallenLog', char = tchar, x = x+2, y = y, block_move = true, block_sight = false, color = {r=129, g=96, b=10}})
+				end
+			elseif dice == 2 then
+				map[x][y+1] = Tile:new({name = 'FallenLog', char = tchar, x = x, y = y+1, block_move = true, block_sight = false, color = {r=129, g=96, b=10}})
+				if length == 3 then
+					map[x][y+2] = Tile:new({name = 'FallenLog', char = tchar, x = x, y = y+2, block_move = true, block_sight = false, color = {r=129, g=96, b=10}})
+				end
+			end
+			placed = placed + 1
+		end
+	
+	until placed > 15
+	
+	--- surround map with trees now
+	for x = 1, width do
+		map[x][1] = Tile:new({name = 'AutumnTree', char = 'T', block_move = true, block_sight = true, color = {r=209, g=61, b=61}, x = x, y = 1})
+		map[x][height] = Tile:new({name = 'AutumnTree', char = 'T', block_move = true, block_sight = true, color = {r=209, g=61, b=61}, x = x, y = height})
+	end
+	for y = 1, height do
+		map[1][y] = Tile:new({name = 'AutumnTree', char = 'T', block_move = true, block_sight = true, color = {r=209, g=61, b=61}, x = 1, y = y})
+		map[width][y] = Tile:new({name = 'AutumnTree', char = 'T', block_move = true, block_sight = true, color = {r=209, g=61, b=61}, x = width, y = y})
+	end
+	
+	--- place stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, width)
+		local y1 = math.random(1, height)
+		local x2 = math.random(1, width)
+		local y2 = math.random(1, height)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				if p_ustairs then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if p_dstairs then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs
+	
+	return stairs
+	
 end
 
 function map_gen_rogue(width, height, p_ustairs, p_dstairs)
@@ -833,11 +976,13 @@ function item_maker(num)
 
 end
 
-function map_random_monster(level)
+function map_random_monster(lvl)
+
+	local monlevel = math.min(level.depth, lvl)
 
 	local mons = {}
 	for i = 1, # game_monsters do
-		if game_monsters[i].level == level and game_monsters[i].rand_gen then
+		if game_monsters[i].level == monlevel and game_monsters[i].rand_gen then
 			table.insert(mons, game_monsters[i])
 		end
 	end

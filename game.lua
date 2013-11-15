@@ -1680,7 +1680,7 @@ function Creature:levelup()
 		
 		for i = 1, # player_spells_learn do
 			if player_spells_learn[i].level == player_level then
-				table.insert(player_spells, player_spells_learn[i])
+				table.insert(player_spells, player_spells_learn[i].spell)
 				table.remove(player_spells_learn, i)
 				break
 			end

@@ -1589,6 +1589,7 @@ function Creature:initialize(arg)
 	self.mana_regen_timer = arg.mana_regen_timer or self.mana_regen
 	self.food_tick = 25
 	self.base_damage = arg.base_damage or {15, 25}
+	self.bullet = arg.bullet or 1
 	self.armor = arg.armor or 1
 	self.speed = arg.speed or 10
 	self.shop = arg.shop or false
@@ -1615,7 +1616,13 @@ function Creature:ai_take_turn()
 	self.food_tick = self.food_tick - 1
 	if self.turn_cd < 1 then
 		self.turn_cd = self.speed
-		if self == player then self.turn_cd = self.speed - player_stats.dex - player_mod_get('speed') end
+		if self == player then 
+			self.turn_cd = self.speed - player_stats.dex - player_mod_get('speed') 
+			if player_stance == 1 then self.turn_cd = self.turn_cd + 3 end
+			if player_stance == 2 then self.turn_cd = self.turn_cd + 2 end
+			if player_stance == 4 then self.turn_cd = self.turn_cd - 2 end
+			if player_stance == 5 then self.turn_cd = self.turn_cd - 3 end
+		end
 		if self.name ~= "Player" then
 			if self.ai == 'wander' then
 				Creature.ai_wander(self)
@@ -1766,12 +1773,12 @@ function Creature:ai_normal()
 		if math.random(1, 100) >= 75 then
 			local can_hit = false
 			local dx = 0
-			local dy = 0
-			
+			local dy = 0			
+			local dam = math.ceil(math.random(self.base_damage[1], self.base_damage[2]) / 3)
 			can_hit, dx, dy = Creature.enemy_can_hit_danmaku(self)
 			
 			if can_hit then
-				enemy_danmaku_fire(self.x, self.y, dx, dy, 2, 25, self.name)
+				enemy_danmaku_fire(self.x, self.y, dx, dy, self.bullet, dam, self.name)
 				moved = true
 			end		
 		end

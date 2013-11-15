@@ -18,6 +18,9 @@ player_exp = 0
 player_gold = 1000
 player_food = {level = 500, cap = 1000, hungry = 300, starving = 100, weak = 25}
 player_name = 'Reimu Hakurei'
+player_stances = { 'Graze', 'Defensive', 'Normal', 'Offensive', 'Trance' }
+player_stance = 3
+
 player_stats = { str = 6,
 				 dex = 9,
 				 int = 5,
@@ -40,6 +43,7 @@ inventory_to_drop = {}
 
 danmaku_dir = false
 danmaku = false
+danmaku_add = {}
 
 shop_window = false
 shop_items = { }
@@ -118,6 +122,12 @@ function game:keypressed(key)
 			if key == 'kp3' then player:move(1, 1) next_turn = true end
 			
 			if key == 'kp5' then next_turn = true end
+			
+			if key == '-' or key == 'kp-' then player_stance = player_stance - 1 end
+			if key == '+' or key == 'kp+' then player_stance = player_stance + 1 end
+			
+			if player_stance > 5 then player_stance = 5 end
+			if player_stance < 1 then player_stance = 1 end
 			
 			if level.name ~= 'Overworld' then
 				if key == 'g' then pickup_item() next_turn = true end
@@ -207,6 +217,13 @@ function game:update(dt)
 			--- check for danmaku end
 			if danmaku.x == danmaku.ex and danmaku.y == danmaku.ey then
 				danmaku = false
+				
+				--- danmaku additions
+				if # danmaku_add > 0 then
+					danmaku = danmaku_add[1]
+					table.remove(danmaku_add, 1)
+				end
+				
 			end
 		end
 	end
@@ -235,21 +252,49 @@ function danmaku_fire(dx, dy)
 	local air = true
 	local x = player:get_x()
 	local y = player:get_y()
-	repeat
+	local d = 0
+	local bullets = 1
 	
-		x = x + dx
-		y = y + dy
+	if player_stance == 1 or player_stance == 2 then
+		bullets = 1
+	elseif player_stance == 3 then
+		bullets = 2
+	elseif player_stance == 4 then
+		bullets = 3
+	elseif player_stance == 5 then
+		bullets = 4
+	end
+	
+	for i = 1, bullets do
+		air = true
+		x = player:get_x()
+		y = player:get_y()
+		d = 0
 		
-		if map[x][y]:get_block_move() then air = false end
-		if map[x][y]:get_holding() then 
-			air = false 
-			local dam = math.random(player_stats.int * 4, player_stats.int * 5)
-			map[x][y]:get_holding():take_dam(dam, 'phys', 'whut')
-		end
-	
-	until not air
-	
-	danmaku = {x = player:get_x(), y = player:get_y(), dx = dx, dy = dy, ex = x, ey = y, cd = 3}
+		repeat
+		
+			x = x + dx
+			y = y + dy
+			d = d + 1
+			
+			if map[x][y]:get_block_move() then air = false end
+			if map[x][y]:get_holding() then 
+				air = false 
+				local dam = math.random(player_stats.int * 4, player_stats.int * 5)
+				map[x][y]:get_holding():take_dam(dam, 'phys', 'whut')
+			end
+			
+			if d == 8 then
+				air = false
+			end
+		
+		until not air
+	end
+		
+	danmaku = {x = player:get_x(), y = player:get_y(), dx = dx, dy = dy, ex = x, ey = y, cd = 3, char = '*', color = function () love.graphics.setColor(0, 100, 255, 255) end}
+	for i = 1, bullets - 1 do
+		table.insert(danmaku_add, {x = player:get_x(), y = player:get_y(), dx = dx, dy = dy, ex = x, ey = y, cd = 3, char = '*', color = function () love.graphics.setColor(0, 100, 255, 255) end})
+	end
 
 end
 
@@ -1329,6 +1374,7 @@ function player_hud()
 		love.graphics.print(player_mods[i].name, start_x + 10, start_y + 215 + ((i - 1) * 15))
 	end
 	
+	love.graphics.print(player_stances[player_stance], start_x + 10, start_y + 370)
 	love.graphics.print("Gold: " .. player_gold, start_x + 10, start_y + 400)
 	love.graphics.print(level.name, start_x + 10, start_y + 430)
 	love.graphics.print("Depth: " .. level.depth, start_x + 10, start_y + 445)
@@ -1701,14 +1747,28 @@ function Creature:fight(x, y)
 	local mon_name = map[x][y]:get_holding():get_name()
 	
 	if self == player then
+		--- damage from weapons
 		if player_equipment.hand then
 			damage = damage + player_equipment.hand:get_damage()
 			damage = damage + player_mod_get('damage')
 		end
+		
+		--- changes from player stance
+		if player_stance == 1 then
+			damage = math.ceil(damage * .50)
+		elseif player_stance == 2 then
+			damage = math.ceil(damage * .75)
+		elseif player_stance == 4 then
+			damage = math.ceil(damage * 1.25)
+		elseif player_stance == 5 then
+			damage = math.ceil(damage * 1.50)
+		end
+		
 		--- critical hits
 		local crit = 0
 		if player_equipment.hand then crit = player_equipment.hand:get_crit() end
 		if math.random(1, 100) <= crit then damage = damage + math.ceil(damage * .15) end
+		
 		--- fighting costs hunger!
 		self.food_tick = self.food_tick - 5
 	end
@@ -1722,11 +1782,31 @@ function Creature:take_dam(dam, dtype, name)
 	local armor = self.armor
 	
 	if self == player then
+		--- armor
 		if player_equipment.head then armor = armor + player_equipment.head:get_armor() end
 		if player_equipment.torso then armor = armor + player_equipment.torso:get_armor() end
 		if player_equipment.legs then armor = armor + player_equipment.legs:get_armor() end
 		if player_equipment.feet then armor = armor + player_equipment.feet:get_armor() end
 		armor = armor + player_mod_get('armor')
+		
+		--- damage changes due to stances
+		if player_stance == 1 then
+			dam = math.ceil(dam * .50)
+		elseif player_stance == 2 then
+			dam = math.ceil(dam * .75)
+		elseif player_stance == 4 then
+			dam = math.ceil(dam * 1.25)
+		elseif player_stance == 5 then
+			dam = math.ceil(dam * 1.50)
+		end
+		
+		--- dodge
+		if player_stance == 1 then
+			if math.random(1, 100) <= 20 then
+				dam = 0
+			end
+		end
+		
 	end
 	
 	local dam_red = ((0.06 * armor) / (1 + 0.06 * armor)) * 100
@@ -1736,10 +1816,18 @@ function Creature:take_dam(dam, dtype, name)
 	end
 	self.hp_cur = self.hp_cur - dam
 	
-	if self == player then
-		message_add("You were hit by the " .. name .. " for " .. dam .. " damage.")
-	else
-		message_add("You hit the " .. self.name .. " for " .. dam .. " damage.")
+	if dam > 0 then
+		if self == player then
+			message_add("You were hit by the " .. name .. " for " .. dam .. " damage.")
+		else
+			message_add("You hit the " .. self.name .. " for " .. dam .. " damage.")
+		end
+	elseif dam == 0 then
+		if self == player then
+			message_add("You dodged the attack from the " .. name .. ".")
+		else
+			message_add("The " .. self.name .. " dodged your attack.")
+		end
 	end
 	
 	if self.hp_cur < 1 then

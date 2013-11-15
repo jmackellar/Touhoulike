@@ -1624,11 +1624,18 @@ function Creature:ai_take_turn()
 			if player_stance == 5 then self.turn_cd = self.turn_cd - 3 end
 		end
 		if self.name ~= "Player" then
+		
+			--- enemy ai
 			if self.ai == 'wander' then
 				Creature.ai_wander(self)
 			elseif self.ai == 'normal' then
 				Creature.ai_normal(self)
+			elseif self.ai == 'ranged' then
+				Creature.ai_ranged(self)
+			elseif self.ai == 'melee' then
+				Creature.ai_melee(self)
 			end
+			
 		end
 	end
 	if self.hp_regen_timer < 1 and self == player then
@@ -1683,6 +1690,99 @@ function Creature:levelup()
 
 end
 
+function Creature:ai_melee()
+
+	local moved = false
+	if map[player:get_x()][player:get_y()]:get_lit() and map[self.x][self.y]:get_lit() then
+		self.seen_player = true
+		self.seen_player_cd = 4
+	end
+	if self.seen_player then
+		self.seen_player_cd = self.seen_player_cd - 1
+		if self.seen_player_cd < 1 then self.seen_player = false end
+		
+		if path_to_player[player:get_x()][player:get_y()] ~= 0 then
+			path_to_player = dijkstra_map(player:get_x(), player:get_y())
+		end
+		
+		--- move and bump player
+		if not moved then
+			if path_to_player[self.x-1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, 0) moved = true end
+			if path_to_player[self.x+1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, 0) moved = true end
+			if path_to_player[self.x][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 0, -1) moved = true end
+			if path_to_player[self.x][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 0, 1) moved = true end
+			if path_to_player[self.x-1][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, -1) moved = true end
+			if path_to_player[self.x-1][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, 1) moved = true end
+			if path_to_player[self.x+1][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, -1) moved = true end
+			if path_to_player[self.x+1][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, 1) moved = true end
+		end
+		
+	else
+		Creature.move(self, math.random(-1,1), math.random(-1,1))
+	end
+
+end
+
+function Creature:ai_ranged()
+
+	local moved = false
+	if map[player:get_x()][player:get_y()]:get_lit() and map[self.x][self.y]:get_lit() then
+		self.seen_player = true
+		self.seen_player_cd = 4
+	end
+	if self.seen_player then
+	
+		if distance(self.x, self.y, player:get_x(), player:get_y()) > 3 then
+			--- fire danmaku at the player if we can
+			local can_hit = false
+			local dx = 0
+			local dy = 0			
+			local dam = math.ceil(math.random(self.base_damage[1], self.base_damage[2]) / 3)
+			can_hit, dx, dy = Creature.enemy_can_hit_danmaku(self)
+			
+			if can_hit then
+				enemy_danmaku_fire(self.x, self.y, dx, dy, self.bullet, dam, self.name)
+				moved = true
+			end	
+			--- cant fire danmaku, move instead
+			if not moved then
+				Creature.move(self, math.random(-1,1), math.random(-1,1))
+			end
+		--- too close to player, run away and fire danmaku at the same time
+		else
+			--- movement portion
+			local dx = 0
+			local dy = 0
+			if self.x > player:get_x() then
+				dx = 1
+			elseif self.x < player:get_x() then
+				dx = -1
+			end
+			if self.y > player:get_y() then
+				dy = 1
+			elseif self.y < player:get_y() then
+				dy = -1
+			end
+			Creature.move(self, dx, dy)
+			--- danmaku portion
+			local can_hit = false
+			local dx = 0
+			local dy = 0			
+			local dam = math.ceil(math.random(self.base_damage[1], self.base_damage[2]) / 3)
+			can_hit, dx, dy = Creature.enemy_can_hit_danmaku(self)
+			
+			if can_hit then
+				enemy_danmaku_fire(self.x, self.y, dx, dy, self.bullet, dam, self.name)
+				moved = true
+			end	
+		end
+		
+	else
+		Creature.move(self, math.random(-1,1), math.random(-1,1))
+	end
+
+end
+
 function Creature:ai_wander()
 
 	local dx = math.random(-1, 1)
@@ -1697,6 +1797,11 @@ function Creature:enemy_can_hit_danmaku()
 	local dx = 0
 	local dy = 0
 	
+	--- is the path to the player free?
+	if not map[self.x][self.y]:get_lit() then
+		return false, 0, 0
+	end
+	
 	--- vertical firing
 	if self.x == player:get_x() and self.y ~= player:get_y() then
 		if self.y > player:get_y() then
@@ -1705,6 +1810,7 @@ function Creature:enemy_can_hit_danmaku()
 			dy = 1
 		end
 		can_hit = true
+		return can_hit, dx, dy
 	end
 	
 	--- horizontal firing
@@ -1715,6 +1821,7 @@ function Creature:enemy_can_hit_danmaku()
 			dx = 1
 		end
 		can_hit = true
+		return can_hit, dx, dy
 	end
 	
 	--- diagonal firing
@@ -1725,12 +1832,12 @@ function Creature:enemy_can_hit_danmaku()
 				dx = -1
 				dy = -1
 				can_hit = true
-				break
+				return can_hit, dx, dy
 			elseif self.y + d == player:get_y() then
 				dx = -1
 				dy = 1
 				can_hit = true
-				break
+				return can_hit, dx, dy
 			end
 		end
 		
@@ -1739,18 +1846,18 @@ function Creature:enemy_can_hit_danmaku()
 				dx = 1
 				dy = -1
 				can_hit = true
-				break
+				return can_hit, dx, dy
 			elseif self.y + d == player:get_y() then
 				dx = 1
 				dy = 1
 				can_hit = true
-				break
+				return can_hit, dx, dy
 			end
 		end
 		
 	end
-	
-	return can_hit, dx, dy
+		
+	return false, 0, 0
 	
 end
 
@@ -2236,6 +2343,13 @@ function ascii_draw_point(num)
 
 	num = (num - 1) * char_width
 	return num
+
+end
+
+function distance(x1, y1, x2, y2)
+
+	local distance = math.sqrt( ((x2 - x1)^2) + ((y2 - y1)^2) )
+	return distance
 
 end
 

@@ -779,7 +779,7 @@ function mon_gen(level)
 			local y = math.random(2, 32)
 			
 			if not map[x][y]:get_block_move() and not map[x][y]:get_lit() then
-				local mon = map_random_monster()
+				local mon = map_random_monster(player_level)
 				mon['x'] = x
 				mon['y'] = y
 				map[x][y]:set_holding(Creature:new(mon))
@@ -802,7 +802,7 @@ function monster_maker(num)
 		local y = math.random(2, map_height-1)
 		
 		if not map[x][y]:get_block_move() then
-			local monster = map_random_monster()
+			local monster = map_random_monster(player_level)
 			monster['x'] = x
 			monster['y'] = y
 			map[x][y]:set_holding(Creature:new(monster))
@@ -833,20 +833,21 @@ function item_maker(num)
 
 end
 
-function map_random_monster()
+function map_random_monster(level)
 
-	local chance = 0
-	local dice_max = player_level + 1
-	
-	local dice = math.random(1, dice_max)
+	local mons = {}
 	for i = 1, # game_monsters do
-		chance = chance + game_monsters[i].level
-		if dice <= chance and game_monsters[i].rand_gen then
-			return game_monsters[i]
+		if game_monsters[i].level == level and game_monsters[i].rand_gen then
+			table.insert(mons, game_monsters[i])
 		end
 	end
 	
-	return game_monsters[4]
+	if # mons == 0 then
+		table.insert(mons, game_monsters[6])
+	end
+	
+	local dice = math.random(1, # mons)
+	return mons[dice]
 	
 end
 

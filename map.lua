@@ -6,6 +6,7 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) end, name = 'Overwor
 						{x = 22, y = 20, func = function (dir) map_human_village(dir) end, name = 'Human Village', persist = false},
 						{x = 43, y = 15, func = function (dir) map_easy_cavern(dir) end, name = 'Easy Cavern', persist = true, mon_gen = 1},
 						{x = 21, y = 8, func = function (dir) map_sdm(dir) end, name = 'Scarlet Devil Mansion', persist = true, mon_gen = 5},
+						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Dungeon', persist = false, mon_gen = 4},
 					}
 
 function next_level(dir)
@@ -45,10 +46,42 @@ function map_overworld(dir)
 		map_new_place_player(43, 15)
 	elseif prev_level == 'Scarlet Devil Mansion' then
 		map_new_place_player(21, 8)
+	elseif prev_level == 'Youkai Dungeon' then
+		map_new_place_player(39, 24)
 	else
 		map_new_place_player(23, 23)
 	end
 		
+end
+
+function map_youkai_dungeon(dir)
+
+	if level.name == 'Youkai Dungeon' then
+		if dir == 'down' then
+			level.depth = level.depth + 1
+		elseif dir == 'up' then
+			level.depth = level.depth - 1
+		end
+	else
+		level.depth = 1
+	end
+	
+	level.name = 'Youkai Dungeon'
+	
+	if level.depth > 1 and level.depth <= 9 then
+		level_connection = {up = function (dir) map_youkai_dungeon(dir) end, down = function (dir) map_youkai_dungeon(dir) end}
+	elseif level.depth == 10 then
+		level_connection = {up = function (dir) map_youkai_dungeon(dir) end, down = function (dir) end}
+	elseif level.depth == 1 then
+		level_connection = {up = function(dir) map_overworld() end, down = function (dir) map_youkai_dungeon(dir) end}
+	end
+	
+	local dstairs = true
+	if level.depth == 10 then dstairs = false end
+	
+	map_gen_rogue(map_width, map_height, true, dstairs)	
+	place_player_on_stairs(dir)
+	
 end
 
 function map_human_village(dir)
@@ -160,6 +193,18 @@ function map_sdm(dir)
 			elseif level.depth == 9 then
 				--- remi
 				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) map_sdm(dir) end}
+				local chunk = love.filesystem.load('map/sdm_throneroom.lua')
+				chunk()
+				place_player_on_stairs(dir)
+				
+				--- remi
+				local remi = game_monsters[5]
+				remi['x'] = 43
+				remi['y'] = 27
+				if check_unique(remi) then
+					map[43][27]:set_holding(Creature:new(remi))
+					table.insert(unique_dead, remi.name)
+				end
 				
 			elseif level.depth == 10 then
 				--- flan flan
@@ -306,7 +351,10 @@ function map_easy_cave(dir)
 		--- still in the caves
 		if level.depth > 0 then
 		
-			stairs = map_gen_rogue(map_width, map_height)	
+			local dstairs = true
+			if level.depth == 5 then dstairs = false end
+			stairs = map_gen_rogue(map_width, map_height, true, dstairs)	
+			
 			if dir == 'down' then
 				map_new_place_player(stairs.up.x, stairs.up.y)
 			elseif dir == 'up' then
@@ -611,7 +659,7 @@ function map_gen_cave(width, height, dstairsd, ustairsd)
 
 end
 
-function map_gen_rogue(width, height)
+function map_gen_rogue(width, height, p_ustairs, p_dstairs)
 	
 	local rooms = {}
 	local rooms_placed = 0
@@ -684,10 +732,10 @@ function map_gen_rogue(width, height)
 		end
 		
 		--- stairs
-		if i == 1 then
+		if p_ustairs and i == 1 then
 			map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1})
 			UStairs = {x = x1, y = y1}
-		elseif i == # rooms - 1 and level.depth < 5 then
+		elseif p_dstairs and i == # rooms - 1 then
 			map[x1][y1] = Tile:new({name = 'DStairs', x = x1, y = y1})
 			DStairs = {x = x1, y = y1}
 		end

@@ -99,6 +99,9 @@ function game:draw()
 		love.graphics.setColor(255, 255, 255, 255)
 	end
 	
+	--- debug coordinate view
+	love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")")
+	
 end
 
 function game:keypressed(key)
@@ -1650,9 +1653,15 @@ function Creature:move(dx, dy)
 					if map[self.x][self.y]:get_char() == 'O' or map[self.x][self.y]:get_char() == '*' then
 						for i = 1, # overworld_levels do
 							if overworld_levels[i].x == self.x and overworld_levels[i].y == self.y then
-								message_add("You are at " .. overworld_levels[i].name)
+								message_add(overworld_levels[i].name)
 							end
 						end
+					elseif map[self.x][self.y]:get_char() == '.' then
+						message_add("A road")
+					elseif map[self.x][self.y]:get_char() == '&' then
+						message_add("A forest")
+					elseif map[self.x][self.y]:get_char() == '"' then
+						message_add("A field")
 					end
 				end
 				--- tile item seen messages

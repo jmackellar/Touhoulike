@@ -1556,23 +1556,37 @@ end
 function shop_load_items(shop)
 
 	if shop == 'Weapon' then
-		shop_items = {	{ name = 'Broom', cost = 25, item = Item:new(game_items[18]) },
-						{ name = 'Gohei Stick', cost = 45, item = Item:new(game_items[21]) },
-						{ name = 'Dagger', cost = 125, item = Item:new(game_items[26]) },
-						{ name = 'Katana', cost = 250, item = Item:new(game_items[13]) },
+		shop_items = {	{ name = 'Broom', cost = 25, item = shop_find_game_item('Broom') },
+						{ name = 'Gohei Stick', cost = 45, item = shop_find_game_item('Gohei Stick') },
+						{ name = 'Dagger', cost = 125, item = shop_find_game_item('Dagger') },
+						{ name = 'Katana', cost = 250, item = shop_find_game_item('Katana') },
 						}
 	elseif shop == 'Armor' then
-		shop_items = {	{ name = 'Leather Vest', cost = 50, item = Item:new(game_items[25]) },
-						{ name = 'Cloth Skirt', cost = 75, item = Item:new(game_items[19]) },
-						{ name = 'Leahter Shoes', cost = 75, item = Item:new(game_items[10]) },
-						{ name = 'Silk Bonnet', cost = 85, item = Item:new(game_items[13]) },
+		shop_items = {	{ name = 'Leather Vest', cost = 50, item = shop_find_game_item('Leather Vest') },
+						{ name = 'Cloth Skirt', cost = 75, item = shop_find_game_item('Cloth Skirt') },
+						{ name = 'Leahter Shoes', cost = 75, item = shop_find_game_item('Leather Shoes') },
+						{ name = 'Silk Bonnet', cost = 85, item = shop_find_game_item('Silk Bonnet') },
 						}
 	elseif shop == 'Potion' then
-		shop_items = {	{ name = 'Potion of Gain', cost = 350, item = Item:new(game_items[14]) },
-						{ name = 'Potion of Healing', cost = 50, item = Item:new(game_items[22]) },
+		shop_items = {	{ name = 'Potion of Gain', cost = 350, item = shop_find_game_item('Potion of Gain') },
+						{ name = 'Potion of Healing', cost = 50, item = shop_find_game_item('Potion of Healing') },
 						}
+	elseif shop == 'Aki' then
+		shop_items = {	{ name = 'Sweet Potato', cost = 55, item = shop_find_game_item('Sweet Potato') }, }
 	end
 	
+end
+
+function shop_find_game_item(name)
+
+	for i = 1, # game_items do
+		if name == game_items[i].name then
+			return Item:new(game_items[i])
+		end
+	end
+	
+	return Item:new(game_items[#game_items])
+
 end
 
 Creature = Class('Creature')
@@ -1974,13 +1988,20 @@ function Creature:move(dx, dy)
 			
 		elseif map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() ~= self.team then
 			Creature.fight(self, new_x, new_y)
+			
 		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_shop() then
 			shop_load_items(map[new_x][new_y]:get_holding():get_shop())
 			shop_window = true
 			shop_load_items()
+			
+			--- messages for special shopkeepers
+			if map[new_x][new_y]:get_holding():get_shop() == 'Aki' then
+				message_add("Minoriko Aki offers you some sweet potatos.")
+			end
+			
 		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_sell() then
 			inventory_open = true
-			inventory_action = 'sell'
+			inventory_action = 'sell'			
 		end
 	end
 	

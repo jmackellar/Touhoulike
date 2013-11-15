@@ -8,6 +8,9 @@ game_items = {	--- items never randomly generated
 				{name = 'Magic Mirror', apply = true, char = '(', message = "You gaze into the mirror.", afunc = function () level_connection['down'] = function (dir) map_hakurei_shrine('up') end next_level('down') end, prob = 0},
 				{name = 'Yin-Yang Orb', slot = 'hand', crit = 15, damage = 25, char = ')', prob = 0},
 				{name = 'Sweet Potato', edible = true, cook = false, nutrition = 125, char = '%', prob = 0},
+				{name = 'Police Baton', slot = 'hand', damage = 30, char = ')', prob = 0},
+				{name = 'Bullet-Proof Vest', slot = 'torso', armor = 5, char = ']', prob = 0},
+				{name = 'Game Boy', apply = true, afunc = function () end, message = "You activate the doomsday device...", char = '(', prob = 0},
 				--- items randomly generated
 				{name = 'Miko Outfit', slot = 'torso', armor = 2, char = ']', prob = 20},
 				{name = 'Silk Dress', slot = 'legs', armor = 3, char = ']', prob = 30},

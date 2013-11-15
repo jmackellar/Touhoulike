@@ -7,6 +7,7 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) end, name = 'Overwor
 						{x = 43, y = 15, func = function (dir) map_easy_cavern(dir) end, name = 'Easy Cavern', persist = true, mon_gen = 1},
 						{x = 21, y = 8, func = function (dir) map_sdm(dir) end, name = 'Scarlet Devil Mansion', persist = true, mon_gen = 5},
 						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Forest', persist = false, mon_gen = 4},
+						{x = 21, y = 18, func = function (dir) map_kourindou(dir) end, name = 'Kourindou', persist = false},
 					}
 
 function next_level(dir)
@@ -48,6 +49,8 @@ function map_overworld(dir)
 		map_new_place_player(21, 8)
 	elseif prev_level == 'Youkai Forest' then
 		map_new_place_player(39, 24)
+	elseif prev_level == 'Kourindou' then
+		map_new_place_player(21, 18)
 	else
 		map_new_place_player(23, 23)
 	end
@@ -86,13 +89,23 @@ function map_youkai_dungeon(dir)
 	
 end
 
+function map_kourindou(dir)
+
+	local chunk = love.filesystem.load('map/kourindou.lua')
+	chunk()
+	level = {name = 'Kourindou', depth = 1}
+	level_connection = {up = function () map_overworld() end, down = nil}
+	place_player_on_stairs(dir)
+
+end
+
 function map_human_village(dir)
 
 	local chunk = love.filesystem.load('map/human_village.lua')
 	chunk()
 	level = {name = 'Human Village', depth = 1}
 	level_connection = {up = function () map_overworld() end, down = nil}
-	map_new_place_player(20, 30)
+	place_player_on_stairs(dir)
 
 end
 

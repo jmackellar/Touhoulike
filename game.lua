@@ -1573,6 +1573,11 @@ function shop_load_items(shop)
 						}
 	elseif shop == 'Aki' then
 		shop_items = {	{ name = 'Sweet Potato', cost = 55, item = shop_find_game_item('Sweet Potato') }, }
+	elseif shop == 'Rino' then
+		shop_items = {	{ name = 'Police Baton', cost = 350, item = shop_find_game_item('Police Baton') },
+						{ name = 'Bullet-Proof Vest', cost = 500, item = shop_find_game_item('Bullet-Proof Vest') },
+						{ name = 'Game Boy', cost = 10, item = shop_find_game_item('Game Boy') },
+						}
 	end
 	
 end
@@ -1997,6 +2002,8 @@ function Creature:move(dx, dy)
 			--- messages for special shopkeepers
 			if map[new_x][new_y]:get_holding():get_shop() == 'Aki' then
 				message_add("Minoriko Aki offers you some sweet potatos.")
+			elseif map[new_x][new_y]:get_holding():get_shop() == 'Rino' then
+				message_add("Rinnosuke welcomes you into Kourindou")
 			end
 			
 		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_sell() then

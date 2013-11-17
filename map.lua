@@ -87,6 +87,26 @@ function map_youkai_dungeon(dir)
 	item_maker(math.random(10,20))
 	place_player_on_stairs(dir)
 	
+	if level.depth == 1 then
+		--- Minoriko Aki
+		local aki = game_monsters[6]	
+		if check_unique(aki) then 
+			aki['x'] = math.floor(map_width/2)
+			aki['y'] = math.floor(map_height/2)
+			map[math.floor(map_width/2)][math.floor(map_height/2)]:set_holding(Creature:new(aki)) 
+		end
+	elseif level.depth == 10 then
+		--- Shizuha Aki
+		local aki = game_monsters[7]	
+		if check_unique(aki) then 
+			aki['x'] = math.floor(map_width/2)
+			aki['y'] = math.floor(map_height/2)
+			map[math.floor(map_width/2)][math.floor(map_height/2)]:set_holding(Creature:new(aki)) 
+		end
+		--- Purification Rod
+		map[math.floor(map_width/2)][math.floor(map_height/2)]:set_items({Item:new(game_items[13])})
+	end
+	
 end
 
 function map_kourindou(dir)

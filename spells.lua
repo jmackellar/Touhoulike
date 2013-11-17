@@ -6,28 +6,48 @@ game_spells = {	{name = 'Omamori of Health', mp_cost = 75, func = function () pl
 				{name = 'Border of Distance', mp_cost = 55, func = function () add_modifier({name = 'Distancer', turn = 70, speed = 5, armor = -5, damage = -25}) end},
 				{name = 'Circular Danmaku', mp_cost = 40, func = function () circle_danmaku(player:get_x(), player:get_y(), 8) end},
 				{name = 'High Frequency Danmaku', mp_cost = 55, func = function () add_modifier({name = 'Hi Freq', turn = 60, danmaku_explosive = 2}) end},
-				{name = 'Fantasy Seal', mp_cost = 200, func = function () fantasy_seal(player:get_x(), player:get_y(), 5) end},
+				{name = 'Fantasy Seal Spread', mp_cost = 200, func = function () fantasy_seal(player:get_x(), player:get_y(), 5, 'int') end},
+				{name = 'Merciless Purification Rod', mp_cost = 250, func = function () fantasy_seal(player:get_x(), player:get_y(), 1, 'str') end},
 				}
 	
-function fantasy_seal(sx, sy, range)
+function fantasy_seal(sx, sy, range, stat)
 
 	local sx = sx
 	local sy = sy
 	local range = range
 	local mons = {}
-	local dam = math.random(player_stats.int * 10, player_stats.int * 12)
+	local dam = math.random(player_stats[stat] * 14, player_stats[stat] * 16)
+	local d1 = '#'
+	local d2 = '*'
+	local color = function () love.graphics.setColor(0, 100, 255, 255) end
+	
+	if stat == 'str' then
+		d1 = '()'
+		d2 = 'o'
+		color = function () love.graphics.setColor(255, 0, 100, 255) end
+	end
 	
 	for i = 1, range do
 	
 		for xx = sx-i, sx+i do
-			table.insert(ascii_effects, {char = '#', time = (range + 1 - i), delay = i * 2, x = xx, y = sy-i, color = function () love.graphics.setColor(0, 100, 255, 255) end})
-			table.insert(ascii_effects, {char = '#', time = (range + 1 - i), delay = i * 2, x = xx, y = sy+i, color = function () love.graphics.setColor(0, 100, 255, 255) end})
+			--- hit effects
+			table.insert(ascii_effects, {char = d1, time = (range + i), delay = i * 2, x = xx, y = sy-i, color = color})
+			table.insert(ascii_effects, {char = d1, time = (range + i), delay = i * 2, x = xx, y = sy+i, color = color})
+			--- dissipate effects
+			table.insert(ascii_effects, {char = d2, time = (range + i), delay = i * 4, x = xx, y = sy-i, color = color})
+			table.insert(ascii_effects, {char = d2, time = (range + i), delay = i * 4, x = xx, y = sy+i, color = color})
+			--- check for monsters hit
 			if map[xx][sy-i]:get_holding() then table.insert(mons, {x=xx, y=sy-i}) end
 			if map[xx][sy+i]:get_holding() then table.insert(mons, {x=xx, y=sy+i}) end
 		end
 		for yy = sy-i+1, sy+i-1 do
-			table.insert(ascii_effects, {char = '#', time = (range + 1 - i), delay = i * 2, x = sx-i, y = yy, color = function () love.graphics.setColor(0, 100, 255, 255) end})
-			table.insert(ascii_effects, {char = '#', time = (range + 1 - i), delay = i * 2, x = sx+i, y = yy, color = function () love.graphics.setColor(0, 100, 255, 255) end})
+			--- hit effects
+			table.insert(ascii_effects, {char = d1, time = (range + i), delay = i * 2, x = sx-i, y = yy, color = color})
+			table.insert(ascii_effects, {char = d1, time = (range + i), delay = i * 2, x = sx+i, y = yy, color = color})
+			--- disssipate effects
+			table.insert(ascii_effects, {char = d2, time = (range + i), delay = i * 4, x = sx-i, y = yy, color = color})
+			table.insert(ascii_effects, {char = d2, time = (range + i), delay = i * 4, x = sx+i, y = yy, color = color})	
+			--- check for monstesr hit
 			if map[sx-i][yy]:get_holding() then table.insert(mons, {x=sx-i, y=yy}) end
 			if map[sx+i][yy]:get_holding() then table.insert(mons, {x=sx+i, y=yy}) end
 		end	

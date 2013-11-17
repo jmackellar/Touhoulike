@@ -1741,6 +1741,19 @@ function Creature:ai_take_turn()
 
 end
 
+function Creature:armor_change(amnt)
+
+	self.armor = self.armor + amnt
+	
+end
+
+function Creature:base_dam_change(amnt)
+
+	self.base_damage[1] = self.base_damage[1] + amnt
+	self.base_damage[2] = self.base_damage[2] + amnt
+
+end
+
 function Creature:levelup()
 
 	if player_exp >= player_level^5 + 200 then

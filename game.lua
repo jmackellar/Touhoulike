@@ -2,6 +2,7 @@
 require("map")
 require("items")
 require("monsters")
+require("spells")
 require("characters")
 
 map = {}
@@ -44,6 +45,8 @@ inventory_to_drop = {}
 danmaku_dir = false
 danmaku = false
 danmaku_add = {}
+
+ascii_effects = {}
 
 shop_window = false
 shop_items = { }
@@ -96,6 +99,17 @@ function game:draw()
 	if spells_open then draw_spells() end
 	if shop_window then draw_shop() end
 	
+	--- ascii effects draw
+	if # ascii_effects > 0 then
+		for i = 1, # ascii_effects do
+			if ascii_effects[i].delay < 1 then
+				ascii_effects[i].color()
+				love.graphics.print(ascii_effects[i].char, ascii_draw_point(ascii_effects[i].x), ascii_draw_point(ascii_effects[i].y))
+				love.graphics.setColor(255, 255, 255, 255)
+			end
+		end
+	end
+	
 	--- danmaku draw
 	if danmaku then
 		danmaku.color()
@@ -110,7 +124,7 @@ end
 
 function game:keypressed(key)
 
-	if player:get_turn_cd() <= 1 and not danmaku then
+	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
 		if not inventory_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir then
 			if key == 'kp8' then player:move(0, -1) next_turn = true end
 			if key == 'kp2' then player:move(0, 1) next_turn = true end
@@ -195,15 +209,34 @@ end
 
 function game:update(dt)
 
-	turn_machine()	
+	if not danmaku and # ascii_effects == 0 then turn_machine() end
 	stair_cd = stair_cd - 1
 	
-	if player:get_turn_cd() <= 1 and stair_cd <= 1 then
+	if player:get_turn_cd() <= 1 and stair_cd <= 1 and not danmaku and # ascii_effects == 0 then
 		--- up and down stairs in levels
 		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and map[player:get_x()][player:get_y()]:get_name() == 'DStairs' then stair_machine('down') end
 		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown(',') and map[player:get_x()][player:get_y()]:get_name() == 'UStairs'  then stair_machine('up') end
 		--- down for the overworld
 		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and level.name == 'Overworld' then overworld_down() end
+	end
+	
+	--- ascii effects update
+	if # ascii_effects > 0 then
+		for i = 1, # ascii_effects do
+			if i > # ascii_effects then break end
+			
+			if ascii_effects[i].delay < 1 then
+				ascii_effects[i].time = ascii_effects[i].time - 1
+			else
+				ascii_effects[i].delay = ascii_effects[i].delay - 1
+			end
+			
+			if ascii_effects[i].time < 1 then
+				table.remove(ascii_effects, i)
+				i = i - 1
+			end
+			
+		end
 	end
 	
 	--- danmaku update
@@ -245,6 +278,22 @@ function overworld_down()
 
 end
 
+function aoe_danmaku_dam(x, y, range, delay)
+
+	for xx = x-range, x+range do
+		for yy = y-range, y+range do
+			
+			table.insert(ascii_effects, {char = '#', time = 5, delay = delay, x = xx, y = yy, color = function () love.graphics.setColor(0, 100, 255, 255) end})
+			if map[xx][yy]:get_holding() then
+				local dam = math.random(player_stats.int * 2, player_stats.int * 3)
+				map[xx][yy]:get_holding():take_dam(dam, 'danmaku', 'whut')
+			end
+			
+		end
+	end
+
+end
+
 function danmaku_fire(dx, dy)
 
 	message_add("You fired danmaku!")
@@ -281,11 +330,18 @@ function danmaku_fire(dx, dy)
 			if map[x][y]:get_holding() then 
 				air = false 
 				local dam = math.random(player_stats.int * 4, player_stats.int * 5)
-				map[x][y]:get_holding():take_dam(dam, 'danmaku', 'whut')
+				map[x][y]:get_holding():take_dam(dam, 'danmaku', 'whut')			
 			end
 			
 			if d == 8 then
 				air = false
+			end
+			
+			if not air then
+				--- danmaku aoe modifier
+				if player_mod_get('danmaku_explosive') > 0 then
+					aoe_danmaku_dam(x, y, player_mod_get('danmaku_explosive'), d * 3 * i)
+				end
 			end
 			
 			ex = x

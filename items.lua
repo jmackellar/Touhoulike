@@ -14,7 +14,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Purification Rod', slot = 'hand', damage = 15, char = ')', prob = 0, bullet = 1},
 				--- items randomly generated
 				{name = 'Miko Outfit', slot = 'torso', armor = 2, char = ']', prob = 20},
-				{name = 'Scroll of Enlightenment', reads = true, scroll = true, pname = 'Unknown Golden Scroll', char = '?', prob = 28, affect = function() enlightenment() end},
+				{name = 'Scroll of Enlightenment', reads = true, scroll = true, pname = 'Unknown Golden Scroll', char = '?', prob = 28, affect = function() enlightenment() end, message = "You feel more knowledgeable about the unknown."},
 				{name = 'Scroll of Magic Mapping', reads = true, scroll = true, pname = 'Unknown Scroll', char = '?', prob = 29, affect = function() for x = 1, map_width do for y = 1, map_height do map[x][y]:set_seen() end end end, message = "An image of the surrounding area forms in your mind."},
 				{name = 'Silk Dress', slot = 'legs', armor = 3, char = ']', prob = 30},
 				{name = 'Potion of Intellect', char = '!', prob = 31, quaff = true, potion = true, pname = 'Unknown Potion', affect = function () local dice = math.random(1, 2) player_stats.int = player_stats.int + dice end, message = "You feel much smarter."},
@@ -61,6 +61,8 @@ function enlightenment()
 	local known = false
 	
 	for i = 1, # game_items do
+	
+		known = true
 	
 		if game_items[i].potion then
 			known = false

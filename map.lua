@@ -946,7 +946,7 @@ end
 function mon_gen(level)
 
 	if math.random(2000 - (level * 4)) <= level + player_level then
-	
+
 		local placed = false
 		repeat
 		
@@ -1011,20 +1011,36 @@ end
 function map_random_monster(lvl)
 
 	local monlevel = math.min(level.depth, lvl)
-
 	local mons = {}
+	local chance = 0
+	local dice_max = 0
+	local dice = 0
+
 	for i = 1, # game_monsters do
-		if game_monsters[i].level == monlevel and game_monsters[i].rand_gen then
+		if game_monsters[i].level <= monlevel and game_monsters[i].rand_gen then
 			table.insert(mons, game_monsters[i])
 		end
 	end
 	
 	if # mons == 0 then
-		table.insert(mons, game_monsters[6])
+		table.insert(mons, game_monsters[10])
+	end
+		
+	for i = 1, # mons do
+		chance = chance + mons[i].level
+	end
+	dice_max = chance
+	chance = 0
+	
+	dice = math.random(1, dice_max)
+	for i = 1, # mons do
+		chance = chance + mons[i].level
+		if dice <= chance and mons[dice] then
+			return mons[dice]
+		end
 	end
 	
-	local dice = math.random(1, # mons)
-	return mons[dice]
+	return mons[1]
 	
 end
 

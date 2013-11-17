@@ -69,7 +69,7 @@ function map_youkai_dungeon(dir)
 		level.depth = 1
 	end
 	
-	level.name = 'Youkai Dungeon'
+	level.name = 'Youkai Forest'
 	
 	if level.depth > 1 and level.depth <= 9 then
 		level_connection = {up = function (dir) map_youkai_dungeon(dir) end, down = function (dir) map_youkai_dungeon(dir) end}
@@ -689,7 +689,6 @@ function map_gen_forest(width, height, p_ustairs, p_dstairs)
 	for x = 1, width do
 		for y = 1, height do
 			local tchar = ' .'
-			if math.random(1,100) <= 50 then tchar = ',' end
 			map[x][y] = Tile:new({name = 'LeafFloor', char = tchar, block_move = false, block_sight = false, color = {r=184, g=157, b=83}, x = x, y = y})
 		end
 	end

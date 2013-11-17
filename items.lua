@@ -13,7 +13,8 @@ game_items = {	--- items never randomly generated
 				{name = 'Game Boy', apply = true, afunc = function () end, message = "You activate the doomsday device...", char = '(', prob = 0},
 				--- items randomly generated
 				{name = 'Miko Outfit', slot = 'torso', armor = 2, char = ']', prob = 20},
-				{name = 'Scroll of Magic Mapping', reads = true, scroll = true, pname = 'Unknown Scroll', char = '?', prob = 290, affect = function() for x = 1, map_width do for y = 1, map_height do map[x][y]:set_seen() end end end, message = "An image of the surrounding area forms in your mind."},
+				{name = 'Scroll of Enlightenment', reads = true, scroll = true, pname = 'Unknown Golden Scroll', char = '?', prob = 28, affect = function() enlightenment() end},
+				{name = 'Scroll of Magic Mapping', reads = true, scroll = true, pname = 'Unknown Scroll', char = '?', prob = 29, affect = function() for x = 1, map_width do for y = 1, map_height do map[x][y]:set_seen() end end end, message = "An image of the surrounding area forms in your mind."},
 				{name = 'Silk Dress', slot = 'legs', armor = 3, char = ']', prob = 30},
 				{name = 'Potion of Intellect', char = '!', prob = 31, quaff = true, potion = true, pname = 'Unknown Potion', affect = function () local dice = math.random(1, 2) player_stats.int = player_stats.int + dice end, message = "You feel much smarter."},
 				{name = 'Leather Shoes', slot = 'feet', armor = 1, char = '[', prob = 32},
@@ -52,3 +53,41 @@ game_items = {	--- items never randomly generated
 		
 known_potions = {}
 known_scrolls = {}
+
+function enlightenment()
+
+	local items = {}
+	local known = false
+	
+	for i = 1, # game_items do
+	
+		if game_items[i].potion then
+			known = false
+			for k = 1, # known_potions do
+				if game_items[i].name == known_potions[i] then 
+					known = true
+				end
+			end
+		end
+		
+		if game_items[i].scroll then
+			known = false
+			for k = 1, # known_scrolls do
+				if game_items[i].name == known_scrolls[i] then
+					known = true
+				end
+			end
+		end
+		
+		if not known then table.insert(items, game_items[i]) end
+		
+	end
+	
+	local dice = math.random(1, # items)
+	if items[dice].scroll then
+		table.insert(known_scrolls, items[dice].name)
+	elseif items[dice].potion then
+		table.insert(known_potions, items[dice].name)
+	end
+
+end

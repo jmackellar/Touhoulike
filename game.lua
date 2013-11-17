@@ -98,7 +98,7 @@ function game:draw()
 	if pickup_many_items then draw_many_item_pickup() end
 	if spells_open then draw_spells() end
 	if shop_window then draw_shop() end
-	
+
 	--- ascii effects draw
 	if # ascii_effects > 0 then
 		for i = 1, # ascii_effects do
@@ -158,7 +158,7 @@ function game:keypressed(key)
 				if key == 'c' then spells_open = true end
 				if key == 'u' then map_use_tile() end	
 
-				if key == 'f' then danmaku_dir = true message_add("Fire danmaku in which direction?") end
+				if key == 'f' then danmaku_dir = true message_add("Fire danmaku in which direction? ESC to cancel.") end
 			end
 			
 		elseif inventory_open and inventory_action == 'look' then
@@ -192,6 +192,8 @@ function game:keypressed(key)
 			shop_key(key)
 			
 		elseif danmaku_dir then
+			if key == 'escape' or key == 'return' or key == 'kpenter' then danmaku_dir = false message_add("Never mind.") end
+			
 			if key == 'kp8' then danmaku_fire(0, -1) danmaku_dir = false next_turn = true end
 			if key == 'kp2' then danmaku_fire(0, 1) danmaku_dir = false next_turn = true end
 			if key == 'kp4' then danmaku_fire(-1, 0) danmaku_dir = false next_turn = true end
@@ -2324,7 +2326,7 @@ function Item:get_pname()
 		end
 		
 		if known then return self.name end
-		if not known then return 'Unknown Potion' end		
+		if not known then return self.pname end		
 		
 	elseif self.scroll then
 		local known = false
@@ -2335,10 +2337,10 @@ function Item:get_pname()
 		end
 		
 		if known then return self.name end
-		if not known then return 'Unknown Scroll' end
+		if not known then return self.pname end
 	end
 	
-	return self.name
+	return self.pname
 	
 end
 

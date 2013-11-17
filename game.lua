@@ -298,13 +298,12 @@ end
 
 function danmaku_fire(dx, dy)
 
-	message_add("You fired danmaku!")
-
 	local air = true
 	local x = player:get_x()
 	local y = player:get_y()
 	local d = 0
 	local bullets = 1
+	local mana_cost = 0
 	
 	if player_stance == 1 or player_stance == 2 then
 		bullets = 1
@@ -316,7 +315,31 @@ function danmaku_fire(dx, dy)
 		bullets = 4
 	end
 	
-	for i = 1, bullets + player_mod_get('bullet') do
+	--- bullet num modifiers
+	bullets = bullets + player_mod_get('bullet')
+	--- weapons that add bullets
+	if player_equipment.hand then
+		bullets = bullets + player_equipment.hand:get_bullet()
+	end
+	
+	--- mana cost
+	mana_cost = bullets * 3
+	if mana_cost > player:get_mana_cur() then
+		repeat
+			bullets = bullets - 1
+			mana_cost = bullets * 3
+		until mana_cost <= player:get_mana_cur()
+	end
+	--- we don't have enough mana to fire any bullets
+	if bullets < 1 then 
+		message_add("You don't have enough mana to fire any danmaku!")
+		return 
+	end
+	
+	message_add("You fired danmaku!")
+	player:lose_mana(mana_cost)
+	
+	for i = 1, bullets do
 		air = true
 		x = player:get_x()
 		y = player:get_y()
@@ -2294,6 +2317,7 @@ function Item:initialize(arg)
 	self.armor = arg.armor or 0
 	self.damage = arg.damage or 5
 	self.crit = arg.crit or 0
+	self.bullet = arg.bullet or 0
 	self.weight = arg.weight or 3
 	self.quaff = arg.quaff or false
 	self.affect = arg.affect or function () end
@@ -2361,6 +2385,7 @@ function Item:get_read() return self.read end
 function Item:get_scroll() return self.scroll end
 function Item:get_apply() return self.apply end
 function Item:get_afunc() return self.afunc end
+function Item:get_bullet() return self.bullet end
 	
 Tile = Class('Tile')
 function Tile:initialize(arg)

@@ -1,27 +1,137 @@
-local state = 'main'
+local state = 'enter'
 local option = 1
-local main_options = {	'Reimu Hakurei A',
+local main_options = {	'New Game',
+						'Load Game',
+						'Quit Game',
+						}
+local char_options = {	'Reimu Hakurei A',
 						'Reimu Hakurei B',
 						}
+						
+local title = love.graphics.newImage("media/title.png")
+local bg = love.graphics.newImage("media/bg.png")
+
+local reimu_a = love.graphics.newImage("media/reimua.png")
+local reimu_b = love.graphics.newImage("media/reimub.png")
 						
 choice = ''
 
 function menu:enter()
-	state = 'main'
+	state = 'enter'
 end
 
 function menu:draw()
-	if state == 'main' then main_draw() end
+	if state == 'main' then main_draw() 
+	elseif state == 'char' then char_draw() 
+	elseif state == 'enter' then enter_draw() end
 end
 
 function menu:keypressed(key)
-	if state == 'main' then main_key(key) end
+	if state == 'main' then main_key(key)
+	elseif state == 'char' then char_key(key)
+	elseif state == 'enter' then enter_key(key) end
+end
+
+function menu:update(dt)
+	choice = ''
+end
+
+function enter_draw()
+	love.graphics.draw(bg, 0, 0)
+	
+	local text = 'Press any key to continue'
+	love.graphics.setFont(love.graphics.newFont())
+	local font = love.graphics.getFont()
+	local width = font:getWidth(text)
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', 400 - width/2 - 10, 0, width + 20, 18)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.print(text, 400 - width/2, 2)
+	
+end
+
+function enter_key(key)
+	if key then state = 'main' end
+end
+
+function char_draw()
+
+	--- menu art
+	love.graphics.draw(bg, 0, 0)
+	love.graphics.draw(title, 344, 10)
+
+	--- options
+	local start_x = 98
+	local start_y = 200
+
+	--- character descriptions
+	if option == 1 then
+		love.graphics.draw(reimu_a, start_x + 150, start_y + 5)
+	elseif option == 2 then
+		love.graphics.draw(reimu_b, start_x + 150, start_y + 5)
+	end
+	
+	--- options
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', start_x - 10, start_y + 15 - 10, 127, 50)
+	love.graphics.setColor(255, 255, 255, 255)
+	
+	love.graphics.setFont(love.graphics.newFont())
+	local font = love.graphics.getFont()
+	for i = 1, # char_options do
+		if option == i then
+			--- character names
+			local width = font:getWidth(char_options[i])
+			love.graphics.rectangle('fill', start_x - 2, start_y + (15 * i), width + 4, 12)
+			love.graphics.setColor(0, 0, 0, 255)
+			love.graphics.print(char_options[i], start_x, start_y + (15 * i))
+			love.graphics.setColor(255, 255, 255, 255)
+			--- character description
+			
+		else
+			love.graphics.print(char_options[i], start_x, start_y + (15 * i))
+		end
+	end		
+
+end
+
+function char_key(key)
+
+	if key == 'kp2' or key == 'down' then
+		option = option + 1 
+	end
+	if key == 'kp8' or key == 'up' then
+		option = option - 1
+	end
+	
+	if option < 1 then option = 1 end
+	if option > # char_options then option = # char_options end
+	
+	if key == 'return' or key == 'kpenter' then		
+		local files = love.filesystem.enumerate("")
+		for k, file in ipairs(files) do	
+			love.filesystem.remove(file)
+		end
+		choice = char_options[option]
+		Gamestate.switch(game)
+	end
+	
 end
 
 function main_draw()
 
-	local start_x = 100
-	local start_y = 75
+	--- menu art
+	love.graphics.draw(bg, 0, 0)
+	love.graphics.draw(title, 344, 10)
+
+	--- options
+	local start_x = 98
+	local start_y = 200
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', start_x - 10, start_y + 15 - 10, 90, 65)
+	love.graphics.setColor(255, 255, 255, 255)
 	
 	love.graphics.setFont(love.graphics.newFont())
 	local font = love.graphics.getFont()
@@ -33,7 +143,11 @@ function main_draw()
 			love.graphics.print(main_options[i], start_x, start_y + (15 * i))
 			love.graphics.setColor(255, 255, 255, 255)
 		else
+			if main_options[i] == 'Load Game' and not love.filesystem.exists("player.lua") then
+				love.graphics.setColor(100, 100, 100, 255)
+			end
 			love.graphics.print(main_options[i], start_x, start_y + (15 * i))
+			love.graphics.setColor(255, 255, 255, 255)
 		end
 	end		
 
@@ -48,12 +162,31 @@ function main_key(key)
 		option = option - 1
 	end
 	
+	if option == 2 and not love.filesystem.exists("player.lua") then
+		if key == 'kp2' or key == 'down' then
+			option = 3
+		end
+		if key == 'kp8' or key == 'up' then
+			option = 1
+		end
+	end
+	
 	if option < 1 then option = 1 end
 	if option > # main_options then option = # main_options end
 	
 	if key == 'return' or key == 'kpenter' then
 		choice = main_options[option]
-		Gamestate.switch(game)
+		
+		if choice == 'New Game' then 
+			state = 'char' 
+		elseif choice == 'Load Game' and love.filesystem.exists("player.lua") then
+			load_player()
+			choice = player_name
+			Gamestate.switch(game)
+		elseif choice == 'Quit Game' then
+			love.event.push('quit')
+		end
+		
 	end
 
 end

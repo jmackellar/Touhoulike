@@ -118,7 +118,7 @@ function game:draw()
 	end
 	
 	--- debug coordinate view
-	love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")")
+	love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS())
 	
 end
 
@@ -126,14 +126,6 @@ function game:keypressed(key)
 
 	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
 		if not inventory_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir then
-			if key == 'kp8' then player:move(0, -1) next_turn = true end
-			if key == 'kp2' then player:move(0, 1) next_turn = true end
-			if key == 'kp4' then player:move(-1, 0) next_turn = true end
-			if key == 'kp6' then player:move(1, 0) next_turn = true end
-			if key == 'kp7' then player:move(-1, -1) next_turn = true end
-			if key == 'kp9' then player:move(1, -1) next_turn = true end
-			if key == 'kp1' then player:move(-1, 1) next_turn = true end
-			if key == 'kp3' then player:move(1, 1) next_turn = true end
 			
 			if key == 'kp5' then next_turn = true end
 			
@@ -215,6 +207,15 @@ function game:update(dt)
 	stair_cd = stair_cd - 1
 	
 	if player:get_turn_cd() <= 1 and stair_cd <= 1 and not danmaku and # ascii_effects == 0 then
+		--- movement keys
+		if love.keyboard.isDown('kp8') then player:move(0, -1) next_turn = true end
+		if love.keyboard.isDown('kp2') then player:move(0, 1) next_turn = true end
+		if love.keyboard.isDown('kp4') then player:move(-1, 0) next_turn = true end
+		if love.keyboard.isDown('kp6') then player:move(1, 0) next_turn = true end
+		if love.keyboard.isDown('kp7') then player:move(-1, -1) next_turn = true end
+		if love.keyboard.isDown('kp9') then player:move(1, -1) next_turn = true end
+		if love.keyboard.isDown('kp1') then player:move(-1, 1) next_turn = true end
+		if love.keyboard.isDown('kp3') then player:move(1, 1) next_turn = true end
 		--- up and down stairs in levels
 		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and map[player:get_x()][player:get_y()]:get_name() == 'DStairs' then stair_machine('down') end
 		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown(',') and map[player:get_x()][player:get_y()]:get_name() == 'UStairs'  then stair_machine('up') end

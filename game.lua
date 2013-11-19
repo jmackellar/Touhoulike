@@ -27,7 +27,8 @@ player_stats = { str = 6,
 				 int = 5,
 				 con = 7,}
 	
-player_skills = { fighting = 0, cooking = 0 }
+player_skills = { fighting = 0, evasion = 0, danmaku = 0, cooking = 0 }
+skills_open = false
 	
 player_spells = {	{name = 'Omamori of Health', mp_cost = 75, func = function () player:heal(35) end},
 					{name = 'Ofuda of Protection', mp_cost = 50, func = function () add_modifier({name = 'Protection', turn = 60, armor = 5}) end},
@@ -98,6 +99,7 @@ function game:draw()
 	if pickup_many_items then draw_many_item_pickup() end
 	if spells_open then draw_spells() end
 	if shop_window then draw_shop() end
+	if skills_open then draw_skills() end
 
 	--- ascii effects draw
 	if # ascii_effects > 0 then
@@ -125,7 +127,7 @@ end
 function game:keypressed(key)
 
 	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
-		if not inventory_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir then
+		if not inventory_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
 			
 			if key == 'kp5' then next_turn = true end
 			
@@ -149,6 +151,8 @@ function game:keypressed(key)
 				
 				if key == 'c' then spells_open = true end
 				if key == 'u' then map_use_tile() end	
+				
+				if key == 's' then skills_open = true end
 
 				if key == 'f' then danmaku_dir = true message_add("Fire danmaku in which direction? ESC to cancel.") end
 			end
@@ -182,6 +186,8 @@ function game:keypressed(key)
 			spells_key(key)
 		elseif shop_window then
 			shop_key(key)
+		elseif skills_open then
+			if key then skills_open = false end
 			
 		elseif danmaku_dir then
 			if key == 'escape' or key == 'return' or key == 'kpenter' then danmaku_dir = false message_add("Never mind.") end
@@ -355,8 +361,9 @@ function danmaku_fire(dx, dy)
 			if map[x][y]:get_block_move() then air = false end
 			if map[x][y]:get_holding() then 
 				air = false 
-				local dam = math.random(player_stats.int * 4, player_stats.int * 5)
+				local dam = math.floor(math.random(player_stats.int * 4, player_stats.int * 5) * ((((player_skills.danmaku + 1) * 2) * 0.01) + 1))
 				map[x][y]:get_holding():take_dam(dam, 'danmaku', 'whut')			
+				player_skills.danmaku = player_skills.danmaku + 0.05
 			end
 			
 			if d == 8 then
@@ -1360,6 +1367,39 @@ function player_mod_get(get)
 
 end
 
+function draw_skills()
+
+	local start_x = 0
+	local start_y = 0
+	local width = 650
+	local height = 470
+	local index = 1
+	local font = love.graphics.getFont()
+	local tw = 0
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', start_x, start_y, width, height)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
+	
+	love.graphics.print("Skills: Press any key to return", start_x + 4, start_y + 4)
+	
+	
+	for k, v in pairs(player_skills) do
+	
+		index = index + 1
+		--- key
+		love.graphics.setColor(204, 155, 63, 255)
+		love.graphics.print(k .. " : ", start_x + 10, start_y + index * 16)
+		--- value
+		love.graphics.setColor(255, 255, 255, 255)
+		tw = font:getWidth(k .. " : ")
+		love.graphics.print(v, start_x + 10 + tw, start_y + index * 16)
+	
+	end
+
+end
+
 function draw_shop()
 
 	local start_x = 0
@@ -1474,26 +1514,88 @@ function player_hud()
 	local start_y = 0
 	local width = 150
 	local height = 470
+	local font = love.graphics.getFont()
+	local tw = 0
+	local per = 0
 	
 	love.graphics.setColor(0, 0, 0, 255)
 	love.graphics.rectangle('fill', start_x, start_y, width, height)
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
 	
+	---name
+	love.graphics.setColor(218, 222, 95, 255)
 	love.graphics.print(player_name, start_x + 10, start_y + 10)
-	love.graphics.print("Level: " .. player_level, start_x + 10, start_y + 25)
-	love.graphics.print("XP: " .. player_exp, start_x + 10, start_y + 40)
+	love.graphics.setColor(255, 255, 255, 255)
+	--- level
+	love.graphics.setColor(204, 155, 63, 255)
+	love.graphics.print("Level : ", start_x + 10, start_y + 25)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.print(player_level, start_x + 10 + font:getWidth("Level : "), start_y + 25)
+	--- XP
+	love.graphics.setColor(204, 155, 63, 255)
+	love.graphics.print("XP : ", start_x + 10, start_y + 40)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.print(player_exp, start_x + 10 + font:getWidth("XP : "), start_y + 40)
 	
-	love.graphics.print("STR: " .. player_stats.str, start_x + 10, start_y + 65)
-	love.graphics.print("DEX: " .. player_stats.dex, start_x + 10, start_y + 80)
-	love.graphics.print("INT: " .. player_stats.int, start_x + 10, start_y + 95)
-	love.graphics.print("CON: " .. player_stats.con, start_x + 10, start_y + 110)
+	--- stats
+	tw = font:getWidth("STR : ")
+	love.graphics.setColor(204, 155, 63, 255)
+	love.graphics.print("STR : ", start_x + 10, start_y + 65)
+	love.graphics.print("DEX : ", start_x + 10, start_y + 80)
+	love.graphics.print("INT : ", start_x + 70, start_y + 65)
+	love.graphics.print("CON : ", start_x + 70, start_y + 80)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.print(player_stats.str, start_x + 10 + tw, start_y + 65)
+	love.graphics.print(player_stats.dex, start_x + 10 + tw, start_y + 80)
+	love.graphics.print(player_stats.int, start_x + 70 + tw, start_y + 65)
+	love.graphics.print(player_stats.con, start_x + 70 + tw, start_y + 80)
 	
-	love.graphics.print("Armor: " .. player:get_armor(), start_x + 10, start_y + 140)
+	--- armor
+	love.graphics.setColor(204, 155, 63, 255)
+	love.graphics.print("Armor : ", start_x + 10, start_y + 110)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.print(player:get_armor(), start_x + 10 + font:getWidth("Armor : "), start_y + 110)
+	--- evasion
+	love.graphics.setColor(204, 155, 63, 255)
+	love.graphics.print("Evasion : ", start_x + 10, start_y + 125)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.print(0, start_x + 10 + font:getWidth("Evasion : "), start_y + 125)
 	
-	love.graphics.print("HP:" .. player:get_hp_cur() .. "/" .. player:get_hp_max(), start_x + 10, start_y + 170)
-	love.graphics.print("MP:" .. player:get_mana_cur() .. "/" .. player:get_mana_max(), start_x + 10, start_y + 185)
+	--- HP
+	love.graphics.setColor(204, 155, 63, 255)
+	love.graphics.print("HP : ", start_x + 10, start_y + 155)
+	love.graphics.setColor(255, 255, 255, 255)
+	per = (player:get_hp_cur() / player:get_hp_max()) * 100
+	if per >= 70 then
+		love.graphics.setColor(95, 222, 106, 255)
+	elseif per < 70 and per > 25 then
+		love.graphics.setColor(216, 222, 95, 255)
+	elseif per < 55 and per >= 25 then
+		love.graphics.setColor(222, 190, 95, 255)
+	else
+		love.graphics.setColor(222, 95, 95, 255)
+	end
+	love.graphics.print(player:get_hp_cur() .. "/" .. player:get_hp_max(), start_x + 10 + font:getWidth("HP : "), start_y + 155)
+	love.graphics.setColor(255, 255, 255, 255)
+	--- Mana
+	love.graphics.setColor(204, 155, 63, 255)
+	love.graphics.print("MP : ", start_x + 10, start_y + 170)
+	love.graphics.setColor(255, 255, 255, 255)
+	per = (player:get_mana_cur() / player:get_mana_max()) * 100
+	if per >= 70 then
+		love.graphics.setColor(95, 222, 106, 255)
+	elseif per < 70 and per > 25 then
+		love.graphics.setColor(216, 222, 95, 255)
+	elseif per < 55 and per >= 25 then
+		love.graphics.setColor(222, 190, 95, 255)
+	else
+		love.graphics.setColor(222, 95, 95, 255)
+	end
+	love.graphics.print(player:get_mana_cur() .. "/" .. player:get_mana_max(), start_x + 10 + font:getWidth("MP : "), start_y + 170)
+	love.graphics.setColor(255, 255, 255, 255)
 	
+	--- is the player hungry or starving yet?
 	if player_food.level <= player_food.hungry and player_food.level > player_food.starving then
 		love.graphics.print('Hungry', start_x + 10, start_y + 200)
 	elseif player_food.level <= player_food.starving and player_food.level > player_food.weak then
@@ -1507,9 +1609,18 @@ function player_hud()
 	end
 	
 	love.graphics.print(player_stances[player_stance], start_x + 10, start_y + 370)
-	love.graphics.print("Gold: " .. player_gold, start_x + 10, start_y + 400)
+	
+	--- gold
+	love.graphics.setColor(204, 155, 63, 255)
+	love.graphics.print("Gold : ", start_x + 10, start_y + 400)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.print(player_gold, start_x + 10 + font:getWidth("Gold : "), start_y + 400)
+	--- level name and depth
+	love.graphics.setColor(204, 155, 63, 255)
 	love.graphics.print(level.name, start_x + 10, start_y + 430)
-	love.graphics.print("Depth: " .. level.depth, start_x + 10, start_y + 445)
+	love.graphics.print("Depth : ", start_x + 10, start_y + 445)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.print(level.depth, start_x + 10 + font:getWidth("Depth : "), start_y + 445)
 	
 end
 
@@ -2121,6 +2232,10 @@ function Creature:fight(x, y)
 			damage = damage + player_mod_get('damage')
 		end
 		
+		--- changes from player skill
+		damage = math.floor(damage * (1 + (player_skills.fighting * 0.01)))
+		player_skills.fighting = player_skills.fighting + 0.01
+		
 		--- changes from player stance
 		if player_stance == 1 then
 			damage = math.ceil(damage * .50)
@@ -2172,7 +2287,15 @@ function Creature:take_dam(dam, dtype, name)
 		if player_stance == 1 and dtype == 'phys' then
 			if math.random(1, 100) <= 20 then
 				dam = 0
+				player_skills.evasion = player_skills.evasion + 0.01
 			end		
+		end
+		
+		--- evasion
+		local evasion = player_skills.evasion
+		if math.random(1, 100) <= player_skills.evasion * 2 and dtype == 'phys' then
+			dam = 0
+			player_skills.evasion = player_skills.evasion + 0.01
 		end
 		
 		--- graze

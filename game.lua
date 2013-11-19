@@ -16,7 +16,7 @@ char_width = 14
 player = {}
 player_level = 1
 player_exp = 0
-player_gold = 1000
+player_gold = 0
 player_food = {level = 500, cap = 1000, hungry = 300, starving = 100, weak = 25}
 player_name = 'Reimu Hakurei'
 player_stances = { 'Graze', 'Defensive', 'Normal', 'Offensive', 'Trance' }
@@ -38,7 +38,7 @@ spells_open = false
 
 player_mods = {}
 
-player_inventory = {}
+player_inventory = {  }
 inventory_open = false
 inventory_action = false
 inventory_to_drop = {}
@@ -79,6 +79,7 @@ game_font = love.graphics.newFont("media/coolvetica.ttf", 14)
 
 function game:enter()
 		
+	starting_inventory()
 	setup_character()
 	map_hakurei_shrine('up')
 	map_back_canvas_draw()
@@ -315,11 +316,11 @@ function danmaku_fire(dx, dy)
 	if player_stance == 1 or player_stance == 2 then
 		bullets = 1
 	elseif player_stance == 3 then
-		bullets = 2
+		bullets = 1
 	elseif player_stance == 4 then
-		bullets = 3
+		bullets = 2
 	elseif player_stance == 5 then
-		bullets = 4
+		bullets = 2
 	end
 	
 	--- bullet num modifiers
@@ -330,11 +331,11 @@ function danmaku_fire(dx, dy)
 	end
 	
 	--- mana cost
-	mana_cost = bullets * 3
+	mana_cost = bullets * 5
 	if mana_cost > player:get_mana_cur() then
 		repeat
 			bullets = bullets - 1
-			mana_cost = bullets * 3
+			mana_cost = bullets * 5
 		until mana_cost <= player:get_mana_cur()
 	end
 	--- we don't have enough mana to fire any bullets
@@ -363,7 +364,7 @@ function danmaku_fire(dx, dy)
 				air = false 
 				local dam = math.floor(math.random(player_stats.int * 4, player_stats.int * 5) * ((((player_skills.danmaku + 1) * 2) * 0.01) + 1))
 				map[x][y]:get_holding():take_dam(dam, 'danmaku', 'whut')			
-				player_skills.danmaku = player_skills.danmaku + 0.05
+				player_skills.danmaku = player_skills.danmaku + 0.001
 			end
 			
 			if d == 8 then
@@ -1793,7 +1794,7 @@ function Creature:initialize(arg)
 	self.name = arg.name or 'Monster'
 	self.hp_max = arg.hp_max or 125
 	self.hp_cur = arg.hp_cur or self.hp_max
-	self.hp_regen = arg.hp_regen or 125
+	self.hp_regen = arg.hp_regen or 100
 	self.hp_regen_timer = arg.hp_regen_timer or self.hp_regen
 	self.mana_max = arg.mana_max or 100
 	self.mana_cur = arg.mana_cur or self.mana_max
@@ -1831,10 +1832,10 @@ function Creature:ai_take_turn()
 		self.turn_cd = self.speed
 		if self == player then 
 			self.turn_cd = self.speed - player_stats.dex - player_mod_get('speed') 
-			if player_stance == 1 then self.turn_cd = self.turn_cd + 3 end
-			if player_stance == 2 then self.turn_cd = self.turn_cd + 2 end
-			if player_stance == 4 then self.turn_cd = self.turn_cd - 2 end
-			if player_stance == 5 then self.turn_cd = self.turn_cd - 3 end
+			if player_stance == 1 then self.turn_cd = self.turn_cd + 1 end
+			if player_stance == 2 then self.turn_cd = self.turn_cd + 0 end
+			if player_stance == 4 then self.turn_cd = self.turn_cd - 0 end
+			if player_stance == 5 then self.turn_cd = self.turn_cd - 1 end
 		end
 		if self.name ~= "Player" then
 		
@@ -2239,13 +2240,13 @@ function Creature:fight(x, y)
 		
 		--- changes from player stance
 		if player_stance == 1 then
-			damage = math.ceil(damage * .50)
+			damage = math.ceil(damage * .30)
 		elseif player_stance == 2 then
-			damage = math.ceil(damage * .75)
+			damage = math.ceil(damage * .70)
 		elseif player_stance == 4 then
-			damage = math.ceil(damage * 1.25)
+			damage = math.ceil(damage * 1.30)
 		elseif player_stance == 5 then
-			damage = math.ceil(damage * 1.50)
+			damage = math.ceil(damage * 1.70)
 		end
 		
 		--- critical hits
@@ -2275,13 +2276,13 @@ function Creature:take_dam(dam, dtype, name)
 		
 		--- damage changes due to stances
 		if player_stance == 1 then
-			dam = math.ceil(dam * .50)
+			dam = math.ceil(dam * .65)
 		elseif player_stance == 2 then
 			dam = math.ceil(dam * .75)
 		elseif player_stance == 4 then
-			dam = math.ceil(dam * 1.25)
+			dam = math.ceil(dam * 1.30)
 		elseif player_stance == 5 then
-			dam = math.ceil(dam * 1.50)
+			dam = math.ceil(dam * 1.65)
 		end
 		
 		--- dodge
@@ -2294,7 +2295,7 @@ function Creature:take_dam(dam, dtype, name)
 		
 		--- evasion
 		local evasion = player_skills.evasion + self.evasion
-		if math.random(1, 100) <= player_skills.evasion * 2 and dtype == 'phys' then
+		if math.random(1, 100) <= player_skills.evasion + 1 * 2 and dtype == 'phys' then
 			dam = 0
 			player_skills.evasion = player_skills.evasion + 0.01
 		end
@@ -2507,6 +2508,11 @@ function Item:get_pname()
 		
 		if known then return self.name end
 		if not known then return self.pname end
+		
+	elseif self.gold then
+		if self.gold == 1 then return "1 gold piece" end
+		if self.gold > 1 then return self.gold .. " gold pieces" end
+		
 	end
 	
 	return self.pname
@@ -2649,5 +2655,13 @@ function setup_character()
 		end
 	end
 
+end
+
+function starting_inventory()
+
+	player_inventory = { {item = Item:new(game_items[# game_items]), quantity = 1} }
+	player_equipment.torso = shop_find_game_item('Sarashi')
+	player_equipment.hand = shop_find_game_item('Big Stick')
+	
 end
 

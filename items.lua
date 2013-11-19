@@ -19,6 +19,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Silk Dress', slot = 'legs', armor = 3, char = ']', prob = 30},
 				{name = 'Potion of Intellect', char = '!', prob = 31, quaff = true, potion = true, pname = 'Unknown Potion', affect = function () local dice = math.random(1, 2) player_stats.int = player_stats.int + dice end, message = "You feel much smarter."},
 				{name = 'Leather Shoes', slot = 'feet', armor = 1, char = '[', prob = 32},
+				{name = 'Big Stick', slot = 'hand', damage = 10, char = ')', prob = 32},
 				{name = 'Empty Bottle', char = '!', prob = 33},
 				{name = 'Potion of Strength', char = '!', prob = 34, quaff = true, potion = true, pname = 'Unknown Potion', affect = function () local dice = math.random(1, 2) player_stats.str = player_stats.str + dice end, message = "You feel much stronger."},
 				{name = 'Katana', slot = 'hand', damage = 20, char = ')', apply = true, afunc = function () add_modifier({name = 'Samurai Spirit', turn = 200, power = 5}) end, message = "You feel the spirits of the samurai rush through your veins.", prob = 35},
@@ -34,6 +35,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Scroll of Remove Armor', reads = true, scroll = true, pname = 'Unknown Scroll', char = '?', prob = 44, affect = function () player:armor_change(math.random(-2, -1)) end, message = "Your skin glows red for a moment."},
 				{name = 'Scroll of Remove Damage', reads = true, scroll = true, pname = 'Unknown Scroll', char = '?', prob = 45, affect = function () player:base_dam_change(math.random(-15, -10)) end, message = "Your hands glow red for a moment."},
 				{name = 'Robe', slot = 'torso', armor = 2, char = ']', prob = 55},
+				{name = 'Sarashi', slot = 'torso', armor = 1, char = ']', prob = 56},
 				{name = 'Potion of Harming', quaff = true, potion = true, pname = 'Unknown Potion', char = '!', prob = 57, affect = function () local dice = math.random(25, 55) player:take_dam(dice, 'pure', 'Potion of Harming') end, message = "That burns!"},
 				{name = 'Fish', edible = true, cook = true, nutrition = 100, char = '%', prob = 60},
 				{name = 'Broom', slot = 'hand', apply = true, afunc = function () end, message = "You sweep the ground.", damage = 10, char = ')', prob = 65},
@@ -47,9 +49,9 @@ game_items = {	--- items never randomly generated
 				{name = 'Cloth Pants', slot = 'legs', armor = 1, char = ']', prob = 89},
 				{name = 'Leather Vest', slot = 'torso', armor = 2, char = ']', prob = 90},
 				{name = 'Dagger', slot = 'hand', damage = 18, char = ')', prob = 91},
-				{name = 'Gold', char = '$', gold = math.random(15, 25), prob = 250},
+				{name = 'Gold', char = '$', gold = math.random(1, 100), prob = 275},
 				{name = 'Piece of Junk', char = ';', prob = 300},
-				{name = 'Loaf of Bread', edible = true, cook = true, nutrition = 135, char = '%', prob = 300},				
+				{name = 'Loaf of Bread', edible = true, cook = true, nutrition = 135, char = '%', prob = 325},				
 		}
 		
 known_potions = {}

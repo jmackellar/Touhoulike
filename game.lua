@@ -1560,7 +1560,7 @@ function player_hud()
 	love.graphics.setColor(204, 155, 63, 255)
 	love.graphics.print("Evasion : ", start_x + 10, start_y + 125)
 	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.print(0, start_x + 10 + font:getWidth("Evasion : "), start_y + 125)
+	love.graphics.print(player:get_evasion(), start_x + 10 + font:getWidth("Evasion : "), start_y + 125)
 	
 	--- HP
 	love.graphics.setColor(204, 155, 63, 255)
@@ -1803,6 +1803,7 @@ function Creature:initialize(arg)
 	self.base_damage = arg.base_damage or {15, 25}
 	self.bullet = arg.bullet or 1
 	self.armor = arg.armor or 1
+	self.evasion = arg.evasion or 0
 	self.speed = arg.speed or 10
 	self.shop = arg.shop or false
 	self.sell = arg.sell or false
@@ -2292,7 +2293,7 @@ function Creature:take_dam(dam, dtype, name)
 		end
 		
 		--- evasion
-		local evasion = player_skills.evasion
+		local evasion = player_skills.evasion + self.evasion
 		if math.random(1, 100) <= player_skills.evasion * 2 and dtype == 'phys' then
 			dam = 0
 			player_skills.evasion = player_skills.evasion + 0.01
@@ -2317,6 +2318,11 @@ function Creature:take_dam(dam, dtype, name)
 			end
 		end
 		
+	end
+	
+	--- enemy evasion
+	if math.random(1, 100) <= self.evasion then
+		dam = 0
 	end
 	
 	local dam_red = ((0.06 * armor) / (1 + 0.06 * armor)) * 100
@@ -2395,6 +2401,20 @@ function Creature:get_armor()
 
 end
 
+function Creature:get_evasion()
+
+	local evasion = self.evasion
+	if self == player then
+		if player_equipment.head then evasion = evasion + player_equipment.head:get_evasion() end
+		if player_equipment.torso then evasion = evasion + player_equipment.torso:get_evasion() end
+		if player_equipment.legs then evasion = evasion + player_equipment.legs:get_evasion() end
+		if player_equipment.feet then evasion = evasion + player_equipment.feet:get_evasion() end
+		evasion = evasion + player_mod_get('evasion')
+	end
+	return evasion
+	
+end
+
 function Creature:draw_ascii(x, y)
 
 	if map[x][y]:get_lit() then
@@ -2439,6 +2459,7 @@ function Item:initialize(arg)
 	self.wearable = arg.wearable or false
 	self.slot = arg.slot or false
 	self.armor = arg.armor or 0
+	self.evasion = arg.evasion or 0
 	self.damage = arg.damage or 5
 	self.crit = arg.crit or 0
 	self.bullet = arg.bullet or 0
@@ -2496,6 +2517,7 @@ function Item:get_name() return self.name end
 function Item:get_pname_real() return self.pname end
 function Item:get_slot() return self.slot end
 function Item:get_armor() return self.armor end
+function Item:get_evasion() return self.evasion end
 function Item:get_damage() return self.damage end
 function Item:get_crit() return self.crit end
 function Item:get_quaff() return self.quaff end

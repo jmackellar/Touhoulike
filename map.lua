@@ -16,6 +16,7 @@ function next_level(dir)
 		save_map_check()
 		save_player()
 		level_connection[dir](dir)
+		map_special_rooms = {}
 		map_back_canvas_draw()
 		player_fov()
 	end
@@ -176,7 +177,7 @@ function map_sdm(dir)
 			elseif level.depth > 1 and level.depth < 6 then
 				--- scarlet corridors
 				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) map_sdm(dir) end}
-				local stairs = map_gen_abstract(map_width, map_height, true, true)					
+				local stairs = map_gen_rogue(map_width, map_height, true, true, 'sdm')					
 				place_player_on_stairs(dir)
 				
 			elseif level.depth == 6 then
@@ -206,7 +207,7 @@ function map_sdm(dir)
 			elseif level.depth == 7 then
 				--- scarlet devil rooms and corridors
 				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) map_sdm(dir) end}
-				local stairs = map_gen_abstract(map_width, map_height, true, true)					
+				local stairs = map_gen_rogue(map_width, map_height, true, true, 'sdm')					
 				place_player_on_stairs(dir)
 				
 			elseif level.depth == 8 then
@@ -388,7 +389,7 @@ function map_easy_cave(dir)
 		
 			local dstairs = true
 			if level.depth == 5 then dstairs = false end
-			stairs = map_gen_rogue(map_width, map_height, true, dstairs)	
+			stairs = map_gen_rogue(map_width, map_height, true, dstairs, 'dungeon')	
 			
 			if dir == 'down' then
 				map_new_place_player(stairs.up.x, stairs.up.y)
@@ -834,17 +835,27 @@ function map_gen_forest(width, height, p_ustairs, p_dstairs)
 	
 end
 
-function map_gen_rogue(width, height, p_ustairs, p_dstairs)
+function map_gen_rogue(width, height, p_ustairs, p_dstairs, pal)
 	
 	local rooms = {}
 	local rooms_placed = 0
 	local UStairs = {}
 	local DStairs = {}
+	local wall_color = {r = 255, g = 255, b = 255}
+	local floor_color = {r = 255, g = 255, b = 255}
+	
+	if pal == 'sdm' then 
+		wall_color = {r=222,b=138,g=191}
+		floor_color = {r=110,b=8,g=8}
+	elseif pal == 'dungeon' then
+		wall_color = {r=255,b=255,g=255}
+		floor_color = {r=200,b=200,g=200}
+	end
 	
 	--- clear the map
 	for x = 1, width do
 		for y = 1, height do
-			map[x][y] = Tile:new({name = 'Wall', x = x, y = y})
+			map[x][y] = Tile:new({name = 'RogueWall', color = wall_color, block_sight = true, block_move = true, char = '#', x = x, y = y})
 		end
 	end
 	
@@ -869,28 +880,66 @@ function map_gen_rogue(width, height, p_ustairs, p_dstairs)
 			--- room floor
 			for dx = x, x + w do
 				for dy = y, y + h do
-					map[dx][dy] = Tile:new({name = 'Floor', x = dx, y = dy})					
+					map[dx][dy] = Tile:new({name = 'RogueFloor', color = floor_color, block_sight = false, block_move = false, char = ' .', x = dx, y = dy})					
 				end
 			end
 			--- room decorative walls
 			for dx = x, x + w do
-				map[dx][y] = Tile:new({name = 'Dwall', x = dx, y = y, char = '-', block_sight = true, block_move = true})
-				map[dx][y+h] = Tile:new({name = 'Dwall', x = dx, y = y+h, char = '-', block_sight = true, block_move = true})
+				map[dx][y] = Tile:new({name = 'Dwall', x = dx, y = y, color = wall_color, char = '-', block_sight = true, block_move = true})
+				map[dx][y+h] = Tile:new({name = 'Dwall', x = dx, y = y+h, color = wall_color, char = '-', block_sight = true, block_move = true})
 			end
 			for dy = y, y + h do
-				map[x][dy] = Tile:new({name = 'Dwall', x = x, y = dy, char = ' |', block_sight = true, block_move = true})
-				map[x+w][dy] = Tile:new({name = 'Dwall', x = x+w, y = dy, char = ' |', block_sight = true, block_move = true})
+				map[x][dy] = Tile:new({name = 'Dwall', x = x, y = dy, color = wall_color, char = ' |', block_sight = true, block_move = true})
+				map[x+w][dy] = Tile:new({name = 'Dwall', x = x+w, y = dy, color = wall_color, char = ' |', block_sight = true, block_move = true})
 			end
-			map[x][y] = Tile:new({name = 'Dwall', x = x, y = y, char = '+', block_sight = true, block_move = true})
-			map[x+w][y] = Tile:new({name = 'Dwall', x = x+w, y = y, char = '+', block_sight = true, block_move = true})
-			map[x][y+h] = Tile:new({name = 'Dwall', x = x, y = y+h, char = '+', block_sight = true, block_move = true})
-			map[x+w][y+h] = Tile:new({name = 'Dwall', x = x+w, y = y+h, char = '+', block_sight = true, block_move = true})
+			map[x][y] = Tile:new({name = 'Dwall', x = x, y = y, color = wall_color, char = '+', block_sight = true, block_move = true})
+			map[x+w][y] = Tile:new({name = 'Dwall', x = x+w, y = y, color = wall_color, char = '+', block_sight = true, block_move = true})
+			map[x][y+h] = Tile:new({name = 'Dwall', x = x, y = y+h, color = wall_color, char = '+', block_sight = true, block_move = true})
+			map[x+w][y+h] = Tile:new({name = 'Dwall', x = x+w, y = y+h, color = wall_color, char = '+', block_sight = true, block_move = true})
 			
 			table.insert(rooms, {x = x, y = y, w = w, h = h})
 			rooms_placed = rooms_placed + 1
 		end
 	
 	until rooms_placed > math.random(6, 8)
+	
+	--- special rooms, cant be in either stair room
+	for i = 2, # rooms - 1 do
+		if math.random(1, 100) <= 100 then
+		
+			local dice = math.random(1, 1)
+			
+			--- flood floor with walls first
+			for xx = rooms[i].x + 1, rooms[i].x + rooms[i].w - 1 do
+				for yy = rooms[i].y + 1, rooms[i].y + rooms[i].h - 1 do	
+					map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy})
+				end
+			end
+			
+			--- grass room
+			if dice == 1 then
+				--- add room to list for message
+				table.insert(map_special_rooms, {x = rooms[i].x, y = rooms[i].y, w = rooms[i].w, h = rooms[i].h, enter = false, message = "You enter an underground garden."})
+				for xx = rooms[i].x, rooms[i].x + rooms[i].w do
+					for yy = rooms[i].y, rooms[i].y + rooms[i].h do						
+						--- wall
+						if xx == rooms[i].x or xx == rooms[i].x + rooms[i].w then
+							map[xx][yy] = Tile:new({name = 'Tree', char = 'T', color = {r=0, g=255, b=0}, block_sight = true, block_move = true, x = xx, y = yy})
+						elseif yy == rooms[i].y or yy == rooms[i].y + rooms[i].h then				
+							map[xx][yy] = Tile:new({name = 'Tree', char = 'T', color = {r=0, g=255, b=0}, block_sight = true, block_move = true, x = xx, y = yy})							
+						end
+						--- floor
+						if xx > rooms[i].x and xx < rooms[i].x + rooms[i].w and yy > rooms[i].y and yy < rooms[i].y + rooms[i].h then
+							map[xx][yy] = Tile:new({name = 'Grass', char = " .", color = {r=0, g=255, b=0}, block_sight = false, block_move = false, x = xx, y = yy})
+						end						
+					end
+				end
+			end
+			
+			break
+			
+		end
+	end
 
 	--- place corridors between rooms, and add in stairs when appropriate
 	for i = 1, # rooms - 1 do
@@ -900,10 +949,10 @@ function map_gen_rogue(width, height, p_ustairs, p_dstairs)
 		local x2 = math.floor(rooms[i+1].x + rooms[i+1].w / 2)
 		local y2 = math.floor(rooms[i+1].y + rooms[i+1].h / 2)
 		for x = math.min(x1, x2), math.max(x1, x2) do
-			if map[x][y1]:get_block_move() then map[x][y1] = Tile:new({name = "Floor", x = x, y = y1}) end
+			if map[x][y1]:get_block_move() then map[x][y1] = Tile:new({name = "RogueFloor", char = " .", color = floor_color, block_sight = false, block_move = false, x = x, y = y1}) end
 		end
 		for y = math.min(y1, y2), math.max(y1, y2) do
-			if map[x2][y]:get_block_move() then map[x2][y] = Tile:new({name = "Floor", x = x2, y = y}) end
+			if map[x2][y]:get_block_move() then map[x2][y] = Tile:new({name = "RogueFloor", char = " .", color  = floor_color, block_sight = false, block_move = false, x = x2, y = y}) end
 		end
 		
 		--- stairs

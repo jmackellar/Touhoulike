@@ -8,6 +8,7 @@ require("characters")
 map = {}
 map_width = 46
 map_height = 33
+map_special_rooms = {}
 map_canvas = love.graphics.newCanvas(800, 600)
 map_back_canvas = love.graphics.newCanvas(800, 600)
 
@@ -1198,9 +1199,24 @@ function save_map()
 				end
 			end
 			text = text .. "x = " .. x .. ",y = " .. y .. ","
-			text = text .. "})\n"
+			text = text .. "})\n"			
 		end
 	end
+	
+	--- save special rooms
+	text = text .. "\n"
+	text = text .. "map_special_rooms = { "
+	if # map_special_rooms > 0 then
+		for i = 1, # map_special_rooms do
+			text = text .. "{x=" .. map_special_rooms[i].x .. ","
+			text = text .. "y=" .. map_special_rooms[i].y .. ","
+			text = text .. "w=" .. map_special_rooms[i].w .. ","
+			text = text .. "h=" .. map_special_rooms[i].h .. ","
+			text = text .. "enter=false,"
+			text = text .. "message=\"" .. map_special_rooms[i].message .. "\",}, "
+		end		
+	end
+	text = text .. " } \n"
 	
 	love.filesystem.write(level.name .. "_" .. level.depth .. ".lua", text)
 	
@@ -1788,6 +1804,25 @@ function shop_find_game_item(name)
 
 end
 
+function map_special_rooms_check()
+
+	if # map_special_rooms > 0 then
+		for i = 1, # map_special_rooms do
+			if player:get_x() >= map_special_rooms[i].x and player:get_x() <= map_special_rooms[i].x + map_special_rooms[i].w and
+			   player:get_y() >= map_special_rooms[i].y and player:get_y() <= map_special_rooms[i].y + map_special_rooms[i].h then
+				if not map_special_rooms[i].enter then
+					map_special_rooms[i].enter = true
+					message_add(map_special_rooms[i].message)
+				end
+			elseif player:get_x() < map_special_rooms[i].x or player:get_x() > map_special_rooms[i].x + map_special_rooms[i].w or
+			       player:get_y() < map_special_rooms[i].y or player:get_y() > map_special_rooms[i].y + map_special_rooms[i].h then
+					map_special_rooms[i].enter = false
+			end
+		end
+	end
+
+end
+
 Creature = Class('Creature')
 function Creature:initialize(arg)
 
@@ -2151,6 +2186,7 @@ function Creature:move(dx, dy)
 			if self == player then
 			
 				player_fov()
+				map_special_rooms_check()
 			
 				--- tile modifiers and message
 				if level.name ~= 'Overworld' then

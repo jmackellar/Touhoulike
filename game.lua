@@ -12,7 +12,7 @@ map_special_rooms = {}
 map_canvas = love.graphics.newCanvas(800, 600)
 map_back_canvas = love.graphics.newCanvas(800, 600)
 
-char_width = 15
+char_width = 14
 
 player = {}
 player_level = 1

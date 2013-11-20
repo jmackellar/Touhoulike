@@ -78,7 +78,7 @@ function border_shoot(sx, sy)
 		y = y + player_last_move.y
 		
 		if map[x][y]:get_holding() then
-			map[x][y]:get_holding():take_dam(dam, 'danmaku', 'Border Bullet')
+			map[x][y]:get_holding():take_dam(dam, 'pure', 'Border Bullet')
 			air = false
 		end
 		

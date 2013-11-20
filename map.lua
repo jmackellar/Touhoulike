@@ -12,11 +12,11 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) end, name = 'Overwor
 
 function next_level(dir)
 
-	if level_connection[dir] then
+	if level_connection[dir] then	
 		save_map_check()
 		save_player()
-		level_connection[dir](dir)
 		map_special_rooms = {}
+		level_connection[dir](dir)		
 		map_back_canvas_draw()
 		player_fov()
 	end
@@ -905,9 +905,9 @@ function map_gen_rogue(width, height, p_ustairs, p_dstairs, pal)
 	
 	--- special rooms, cant be in either stair room
 	for i = 2, # rooms - 1 do
-		if math.random(1, 100) <= 100 then
+		if math.random(1, 100) <= 10 + (level.depth * 5) then
 		
-			local dice = math.random(1, 1)
+			local dice = math.random(1, 3)
 			
 			--- flood floor with walls first
 			for xx = rooms[i].x + 1, rooms[i].x + rooms[i].w - 1 do
@@ -931,6 +931,43 @@ function map_gen_rogue(width, height, p_ustairs, p_dstairs, pal)
 						--- floor
 						if xx > rooms[i].x and xx < rooms[i].x + rooms[i].w and yy > rooms[i].y and yy < rooms[i].y + rooms[i].h then
 							map[xx][yy] = Tile:new({name = 'Grass', char = " .", color = {r=0, g=255, b=0}, block_sight = false, block_move = false, x = xx, y = yy})
+						end						
+					end
+				end
+			end
+			
+			--- water room
+			if dice == 2 then
+				--- add room to list for message
+				table.insert(map_special_rooms, {x = rooms[i].x, y = rooms[i].y, w = rooms[i].w, h = rooms[i].h, enter = false, message = "You enter an underground pool."})
+				for xx = rooms[i].x, rooms[i].x + rooms[i].w do
+					for yy = rooms[i].y, rooms[i].y + rooms[i].h do						
+						--- wall
+						if xx == rooms[i].x or xx == rooms[i].x + rooms[i].w then
+							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy})
+						elseif yy == rooms[i].y or yy == rooms[i].y + rooms[i].h then				
+							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy})							
+						end
+						--- floor
+						if xx > rooms[i].x and xx < rooms[i].x + rooms[i].w and yy > rooms[i].y and yy < rooms[i].y + rooms[i].h then
+							map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy})
+							if xx > rooms[i].x + 1 and xx < rooms[i].x + rooms[i].w - 1 and yy > rooms[i].y + 1 and yy < rooms[i].y + rooms[i].h - 1 then
+								map[xx][yy] = Tile:new({name = 'Water', x = xx, y = yy})
+							end						
+						end						
+					end
+				end
+			end
+			
+			--- foggy room
+			if dice == 3 then
+				--- add room to list for message
+				table.insert(map_special_rooms, {x = rooms[i].x, y = rooms[i].y, w = rooms[i].w, h = rooms[i].h, enter = false, message = "This room is covered by a thick layer of fog."})
+				for xx = rooms[i].x, rooms[i].x + rooms[i].w do
+					for yy = rooms[i].y, rooms[i].y + rooms[i].h do						
+						--- floor
+						if xx > rooms[i].x and xx < rooms[i].x + rooms[i].w and yy > rooms[i].y and yy < rooms[i].y + rooms[i].h then
+							map[xx][yy] = Tile:new({name = 'Fog', char = "█", color = {r=175, g=175, b=175}, block_sight = true, block_move = false, x = xx, y = yy})
 						end						
 					end
 				end

@@ -1728,25 +1728,35 @@ function draw_inventory()
 	
 	--- calculate the height of the window
 	for i = 1, # player_inventory do
-		if player_inventory[i].item:get_slot() == 'hand' and not draw_title[1] then						
-			draw_title[1] = true
-			height_add = height_add + 1
-		elseif player_inventory[i].item:get_slot() and player_inventory[i].item:get_slot() ~= 'hand' and not draw_title[2] then
-			draw_title[2] = true
-			height_add = height_add + 1
-		elseif player_inventory[i].item:get_edible() and not draw_title[3] then
-			draw_title[3] = true
-			height_add = height_add + 1			
-		elseif player_inventory[i].item:get_read() and not draw_title[4] then
-			draw_title[4] = true
-			height_add = height_add + 1
-		elseif player_inventory[i].item:get_quaff() and not draw_title[5] then
-			draw_title[5] = true
-			height_add = height_add + 1
+		if player_inventory[i].item:get_slot() == 'hand' then		
+			if not draw_title[1] then
+				draw_title[1] = true
+				height_add = height_add + 1
+			end
+		elseif player_inventory[i].item:get_slot() and player_inventory[i].item:get_slot() ~= 'hand' then
+			if not draw_title[2] then
+				draw_title[2] = true
+				height_add = height_add + 1
+			end
+		elseif player_inventory[i].item:get_edible() then
+			if not draw_title[3] then
+				draw_title[3] = true
+				height_add = height_add + 1		
+			end
+		elseif player_inventory[i].item:get_read() then
+			if not draw_title[4] then
+				draw_title[4] = true
+				height_add = height_add + 1
+			end
+		elseif player_inventory[i].item:get_quaff() then
+			if not draw_title[5] then
+				draw_title[5] = true
+				height_add = height_add + 1
+			end
 		else
 			if not draw_title[6] then
 				draw_title[6] = true
-				print_add = print_add + 1
+				height_add = height_add + 1
 			end
 		end
 	end
@@ -1804,29 +1814,39 @@ function draw_inventory()
 	
 		--- titles
 		love.graphics.setColor(204, 155, 63, 255)
-		if player_inventory[i].item:get_slot() == 'hand' and not draw_title[1] then						
-			love.graphics.print("Weapons -   )", start_x + 10, start_y + (i + print_add) * 15 + 4)
-			draw_title[1] = true
-			print_add = print_add + 1
-		elseif player_inventory[i].item:get_slot() and player_inventory[i].item:get_slot() ~= 'hand' and not draw_title[2] then
-			love.graphics.print("Armor -   ] , [", start_x + 10, start_y + (i + print_add) * 15 + 4)
-			draw_title[2] = true
-			print_add = print_add + 1
-		elseif player_inventory[i].item:get_edible() and not draw_title[3] then
-			love.graphics.print("Comestibles -   %", start_x + 10, start_y + (i + print_add) * 15 + 4)
-			draw_title[3] = true
-			print_add = print_add + 1
-		elseif player_inventory[i].item:get_read() and not draw_title[4] then
-			love.graphics.print("Scrolls -   ?", start_x + 10, start_y + (i + print_add) * 15 + 4)
-			draw_title[4] = true
-			print_add = print_add + 1
-		elseif player_inventory[i].item:get_quaff() and not draw_title[5] then
-			love.graphics.print("Potions -   !", start_x + 10, start_y + (i + print_add) * 15 + 4)
-			draw_title[5] = true
-			print_add = print_add + 1
+		if player_inventory[i].item:get_slot() == 'hand' then			
+			if not draw_title[1] then
+				love.graphics.print("Weapons -   )", start_x + 10, start_y + (i + print_add) * 15 + 4)
+				draw_title[1] = true
+				print_add = print_add + 1
+			end
+		elseif player_inventory[i].item:get_slot() and player_inventory[i].item:get_slot() ~= 'hand' then
+			if not draw_title[2] then
+				love.graphics.print("Armor -   ] , [", start_x + 10, start_y + (i + print_add) * 15 + 4)
+				draw_title[2] = true
+				print_add = print_add + 1
+			end
+		elseif player_inventory[i].item:get_edible() then
+			if not draw_title[3] then
+				love.graphics.print("Comestibles -   %", start_x + 10, start_y + (i + print_add) * 15 + 4)
+				draw_title[3] = true
+				print_add = print_add + 1
+			end
+		elseif player_inventory[i].item:get_read() then
+			if not draw_title[4] then
+				love.graphics.print("Scrolls -   ?", start_x + 10, start_y + (i + print_add) * 15 + 4)
+				draw_title[4] = true
+				print_add = print_add + 1
+			end
+		elseif player_inventory[i].item:get_quaff() then
+			if not draw_title[5] then
+				love.graphics.print("Potions -   !", start_x + 10, start_y + (i + print_add) * 15 + 4)
+				draw_title[5] = true
+				print_add = print_add + 1
+			end
 		else
 			if not draw_title[6] then
-				love.graphics.print("Misc", start_x + 10, start_y + (i + print_add) * 15 + 4)
+				love.graphics.print("Miscellaneous", start_x + 10, start_y + (i + print_add) * 15 + 4)
 				draw_title[6] = true
 				print_add = print_add + 1
 			end

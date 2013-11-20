@@ -40,7 +40,7 @@ spells_open = false
 
 player_mods = {}
 
-player_inventory = {  }
+player_inventory = { }
 inventory_open = false
 inventory_action = false
 inventory_to_drop = {}
@@ -142,15 +142,15 @@ function game:keypressed(key)
 			
 			if level.name ~= 'Overworld' then
 				if key == 'g' then pickup_item() next_turn = true end
-				if key == 'i' then inventory_open = true inventory_action = 'look' end
-				if key == 'd' then inventory_open = true inventory_action = 'drop' inventory_to_drop = {} end
-				if key == 'w' then inventory_open = true inventory_action = 'wield' end
-				if key == 'p' then inventory_open = true inventory_action = 'wear' end
-				if key == 't' then inventory_open = true inventory_action = 'remove' end
-				if key == 'q' then inventory_open = true inventory_action = 'quaff' end
-				if key == 'e' then inventory_open = true inventory_action = 'eat' end
-				if key == 'r' then inventory_open = true inventory_action = 'read' end
-				if key == 'a' then inventory_open = true inventory_action = 'apply' end
+				if key == 'i' then inventory_open = true inventory_action = 'look' sort_player_inventory() end
+				if key == 'd' then inventory_open = true inventory_action = 'drop' inventory_to_drop = {} sort_player_inventory() end
+				if key == 'w' then inventory_open = true inventory_action = 'wield' sort_player_inventory() end
+				if key == 'p' then inventory_open = true inventory_action = 'wear' sort_player_inventory() end
+				if key == 't' then inventory_open = true inventory_action = 'remove' sort_player_inventory() end
+				if key == 'q' then inventory_open = true inventory_action = 'quaff' sort_player_inventory() end
+				if key == 'e' then inventory_open = true inventory_action = 'eat' sort_player_inventory() end
+				if key == 'r' then inventory_open = true inventory_action = 'read' sort_player_inventory() end
+				if key == 'a' then inventory_open = true inventory_action = 'apply' sort_player_inventory() end
 				
 				if key == 'c' then spells_open = true end
 				if key == 'u' then map_use_tile() end	
@@ -305,6 +305,12 @@ function aoe_danmaku_dam(x, y, range, delay)
 			
 		end
 	end
+
+end
+
+function sort_player_inventory()
+
+	player_inventory = sort_items_categories(player_inventory)
 
 end
 
@@ -1372,6 +1378,70 @@ function many_items_sorted(items)
 		end
 		
 	end
+	
+	items_sorted = sort_items_categories(items_sorted)
+
+end
+
+function sort_items_categories(items)
+
+	local items = items
+	local items_two = {}
+	local index = 0
+	local sortindex = 1
+
+	repeat
+	
+		index = index + 1
+		
+		if index <= # items and index > 0 then
+			if sortindex == 1 then
+				if items[index].item:get_slot() and items[index].item:get_slot() == 'hand' then
+					table.insert(items_two, items[index])
+					table.remove(items, index)
+					index = 0
+				end
+			elseif sortindex == 2 then
+				if items[index].item:get_slot() and items[index].item:get_slot() ~= 'hand' then
+					table.insert(items_two, items[index])
+					table.remove(items, index)
+					index = 0
+				end
+			elseif sortindex == 3 then
+				if items[index].item:get_edible() then
+					table.insert(items_two, items[index])
+					table.remove(items, index)
+					index = 0
+				end
+			elseif sortindex == 4 then
+				if items[index].item:get_quaff() then
+					table.insert(items_two, items[index])
+					table.remove(items, index)
+					index = 0
+				end
+			elseif sortindex == 5 then
+				if items[index].item:get_read() then
+					table.insert(items_two, items[index])
+					table.remove(items, index)
+					index = 0
+				end
+			else
+				table.insert(items_two, items[index])
+				table.remove(items, index)
+				index = 0
+			end
+						
+		end
+		
+		if index > # items then
+			index = 0			
+			sortindex = sortindex + 1
+		end
+	
+	until # items == 0
+	
+	items = items_two
+	return items
 
 end
 
@@ -1650,52 +1720,120 @@ function draw_inventory()
 	local start_y = 0
 	local width = 300
 	local height = (# player_inventory + 2) * 15 + 8
+	local height_add = 0
+	local print_add = 0
+	local draw_title = {false, false, false, false, false, false}
+	local font = love.graphics.getFont()
+	local tw = 0
 	
+	--- calculate the height of the window
+	for i = 1, # player_inventory do
+		if player_inventory[i].item:get_slot() == 'hand' and not draw_title[1] then						
+			draw_title[1] = true
+			height_add = height_add + 1
+		elseif player_inventory[i].item:get_slot() and player_inventory[i].item:get_slot() ~= 'hand' and not draw_title[2] then
+			draw_title[2] = true
+			height_add = height_add + 1
+		elseif player_inventory[i].item:get_edible() and not draw_title[3] then
+			draw_title[3] = true
+			height_add = height_add + 1			
+		elseif player_inventory[i].item:get_read() and not draw_title[4] then
+			draw_title[4] = true
+			height_add = height_add + 1
+		elseif player_inventory[i].item:get_quaff() and not draw_title[5] then
+			draw_title[5] = true
+			height_add = height_add + 1
+		else
+			if not draw_title[6] then
+				draw_title[6] = true
+				print_add = print_add + 1
+			end
+		end
+	end
+	
+	height = (# player_inventory + 2 + height_add) * 15 + 8
+	draw_title = {false, false, false, false, false, false}
+	
+	--- start the real drawing now
 	love.graphics.setColor(0, 0, 0, 255)
 	love.graphics.rectangle('fill', start_x, start_y, width, height)
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
 	
+	love.graphics.setColor(218, 222, 95, 255)
 	if inventory_action == 'look' then
 		love.graphics.print("Inventory", start_x + 24, start_y + 4)
-		love.graphics.print("Press any key to continue...", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+		love.graphics.print("Press any key to continue...", start_x + 24, height - 19)
 	elseif inventory_action == 'drop' then
 		love.graphics.print("Drop what?", start_x + 24, start_y + 4)
-		love.graphics.print("Press ENTER to drop marked items...", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+		love.graphics.print("Press ENTER to drop marked items...", start_x + 24, height - 19)
 	elseif inventory_action == 'wield' then
 		love.graphics.print("Wield what?", start_x + 24, start_y + 4)
-		love.graphics.print("ENTER for empty hands, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+		love.graphics.print("ENTER for empty hands, ESC to cancel", start_x + 24, height - 19)
 	elseif inventory_action == 'wear' then
 		love.graphics.print("Wear what?", start_x + 24, start_y + 4)
-		love.graphics.print("Choose what to wear, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+		love.graphics.print("Choose what to wear, ESC to cancel", start_x + 24, height - 19)
 	elseif inventory_action == 'remove' then
 		love.graphics.print("Remove what?", start_x + 24, start_y + 4)
-		love.graphics.print("Choose what to remove, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+		love.graphics.print("Choose what to remove, ESC to cancel", start_x + 24, height - 19)
 	elseif inventory_action == 'quaff' then
 		love.graphics.print("Quaff what?", start_x + 24, start_y + 4)
-		love.graphics.print("Choose what to quaff, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+		love.graphics.print("Choose what to quaff, ESC to cancel", start_x + 24, height - 19)
 	elseif inventory_action == 'cook' then
 		love.graphics.print("Cook what?", start_x + 24, start_y + 4)
-		love.graphics.print("Choose what to cook, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+		love.graphics.print("Choose what to cook, ESC to cancel", start_x + 24, height - 19)
 	elseif inventory_action == 'eat' then
 		love.graphics.print("Eat what?", start_x + 24, start_y + 4)
-		love.graphics.print("Choose what to eat, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+		love.graphics.print("Choose what to eat, ESC to cancel", start_x + 24, height - 19)
 	elseif inventory_action == 'sell' then
 		love.graphics.print("Sell what?", start_x + 24, start_y + 4)
-		love.graphics.print("Choose what to sell, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+		love.graphics.print("Choose what to sell, ESC to cancel", start_x + 24, height - 19)
 	elseif inventory_action == 'read' then
 		love.graphics.print("Read what?", start_x + 24, start_y + 4)
-		love.graphics.print("Choose what to read, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+		love.graphics.print("Choose what to read, ESC to cancel", start_x + 24, height - 19)
 	elseif inventory_action == 'apply' then
 		love.graphics.print("Apply what?", start_x + 24, start_y + 4)
-		love.graphics.print("Choose what to apply, ESC to cancel", start_x + 24, start_y + ((# player_inventory) + 1) * 15 + 4)
+		love.graphics.print("Choose what to apply, ESC to cancel", start_x + 24, height - 19)
 	end
+	love.graphics.setColor(255, 255, 255, 255)
 	
 	local message = ""
 	
 	--- inventory 
 	for i = 1, # player_inventory do
 	
+		--- titles
+		love.graphics.setColor(204, 155, 63, 255)
+		if player_inventory[i].item:get_slot() == 'hand' and not draw_title[1] then						
+			love.graphics.print("Weapons -   )", start_x + 10, start_y + (i + print_add) * 15 + 4)
+			draw_title[1] = true
+			print_add = print_add + 1
+		elseif player_inventory[i].item:get_slot() and player_inventory[i].item:get_slot() ~= 'hand' and not draw_title[2] then
+			love.graphics.print("Armor -   ] , [", start_x + 10, start_y + (i + print_add) * 15 + 4)
+			draw_title[2] = true
+			print_add = print_add + 1
+		elseif player_inventory[i].item:get_edible() and not draw_title[3] then
+			love.graphics.print("Comestibles -   %", start_x + 10, start_y + (i + print_add) * 15 + 4)
+			draw_title[3] = true
+			print_add = print_add + 1
+		elseif player_inventory[i].item:get_read() and not draw_title[4] then
+			love.graphics.print("Scrolls -   ?", start_x + 10, start_y + (i + print_add) * 15 + 4)
+			draw_title[4] = true
+			print_add = print_add + 1
+		elseif player_inventory[i].item:get_quaff() and not draw_title[5] then
+			love.graphics.print("Potions -   !", start_x + 10, start_y + (i + print_add) * 15 + 4)
+			draw_title[5] = true
+			print_add = print_add + 1
+		else
+			if not draw_title[6] then
+				love.graphics.print("Misc", start_x + 10, start_y + (i + print_add) * 15 + 4)
+				draw_title[6] = true
+				print_add = print_add + 1
+			end
+		end
+		love.graphics.setColor(255, 255, 255, 255)
+		
+		--- items
 		message = ""
 	
 		if inventory_action == 'look' then
@@ -1718,7 +1856,7 @@ function draw_inventory()
 			message = message .. ", Sell For: 5"
 		end
 		
-		love.graphics.print(message, start_x + 4, start_y + (i) * 15 + 4)
+		love.graphics.print(message, start_x + 4, start_y + (i + print_add) * 15 + 4)
 	end
 	
 	--- equipment
@@ -1727,35 +1865,99 @@ function draw_inventory()
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.rectangle('line', start_x+2 + width + start_x, start_y+2, width-2, 8 * 15 + 8 - 2)
 	
-	love.graphics.print("Equipment", start_x + width + start_x + 24, start_y + 4)
+	love.graphics.setColor(218, 222, 95, 255)
+	love.graphics.print("Equipment", start_x + width + start_x + 24, start_y + 4)	
+	love.graphics.setColor(204, 155, 63, 255)
 	love.graphics.print("---Armor---", start_x + width + start_x + 24, start_y + 15 + 4)
+	love.graphics.setColor(255, 255, 255, 255)
 	
-	if inventory_action == 'remove' then message = 'a: ' 
-		else message = "Head: " end
-	if player_equipment.head then message = message .. player_equipment.head:get_pname() end
+	--- head slot
+	if inventory_action == 'remove' then 
+		message = 'a: ' 
+	else 
+		message = "Head: " 
+	end
+	love.graphics.setColor(204, 155, 63, 255)
 	love.graphics.print(message, start_x + width + start_x + 4, start_y + 30 + 4)
+	love.graphics.setColor(255, 255, 255, 255)
+	tw = font:getWidth(message)
+	if player_equipment.head then 
+		message = player_equipment.head:get_pname() 
+	else
+		message = ""
+	end
+	love.graphics.print(message, start_x + width + start_x + 4 + tw, start_y + 30 + 4)
 	
-	if inventory_action == 'remove' then message = 'b: ' 
-		else message = "Body: " end
-	if player_equipment.torso then message = message .. player_equipment.torso:get_pname() end
+	--- body
+	if inventory_action == 'remove' then 
+		message = 'b: ' 
+	else 
+		message = "Body: " 
+	end
+	love.graphics.setColor(204, 155, 63, 255)
 	love.graphics.print(message, start_x + width + start_x + 4, start_y + 45 + 4)
+	love.graphics.setColor(255, 255, 255, 255)
+	tw = font:getWidth(message)
+	if player_equipment.torso then 
+		message = player_equipment.torso:get_pname() 
+	else
+		message = ""
+	end
+	love.graphics.print(message, start_x + width + start_x + 4 + tw, start_y + 45 + 4)
 	
-	if inventory_action == 'remove' then message = 'c: ' 
-		else message = "Legs: " end
-	if player_equipment.legs then message = message .. player_equipment.legs:get_pname() end
+	--- legs
+	if inventory_action == 'remove' then 
+		message = 'c: ' 
+	else 
+		message = "Legs: " 
+	end
+	love.graphics.setColor(204, 155, 63, 255)
 	love.graphics.print(message, start_x + width + start_x + 4, start_y + 60 + 4)
+	love.graphics.setColor(255, 255, 255, 255)
+	tw = font:getWidth(message)
+	if player_equipment.legs then 
+		message = player_equipment.legs:get_pname() 
+	else 
+		message = ""
+	end
+	love.graphics.print(message, start_x + width + start_x + 4 + tw, start_y + 60 + 4)
 	
-	if inventory_action == 'remove' then message = 'd: ' 
-		else message = "Feet: " end
-	if player_equipment.feet then message = message .. player_equipment.feet:get_pname() end
+	--- feet
+	if inventory_action == 'remove' then 
+		message = 'd: ' 
+	else 
+		message = "Feet: " 
+	end
+	love.graphics.setColor(204, 155, 63, 255)
 	love.graphics.print(message, start_x + width + start_x + 4, start_y + 75 + 4)
+	love.graphics.setColor(255, 255, 255, 255)
+	tw = font:getWidth(message)
+	if player_equipment.feet then 
+		message = player_equipment.feet:get_pname() 
+	else
+		message = ""
+	end
+	love.graphics.print(message, start_x + width + start_x + 4 + tw, start_y + 75 + 4)
 	
+	love.graphics.setColor(218, 222, 95, 255)
 	love.graphics.print("---Weapon---", start_x + width + start_x + 24, start_y + 90 + 4)
+	love.graphics.setColor(255, 255, 255, 255)
 	
-	if inventory_action == 'remove' then message = 'e: ' 
-		else message = "Hands: " end
-	if player_equipment.hand then message = message .. player_equipment.hand:get_pname() end
+	if inventory_action == 'remove' then 
+		message = 'e: ' 
+	else
+		message = "Hands: " 
+	end
+	love.graphics.setColor(204, 155, 63, 255)
 	love.graphics.print(message, start_x + width + start_x + 4, start_y + 105 + 4)
+	love.graphics.setColor(255, 255, 255, 255)
+	tw = font:getWidth(message)
+	if player_equipment.hand then 
+		message = player_equipment.hand:get_pname() 
+	else
+		message = ""
+	end
+	love.graphics.print(message, start_x + width + start_x + 4 + tw, start_y + 105 + 4)
 
 end
 

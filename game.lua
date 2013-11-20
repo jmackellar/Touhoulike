@@ -12,7 +12,7 @@ map_special_rooms = {}
 map_canvas = love.graphics.newCanvas(800, 600)
 map_back_canvas = love.graphics.newCanvas(800, 600)
 
-char_width = 14
+char_width = 15
 
 player = {}
 player_level = 1
@@ -22,6 +22,7 @@ player_food = {level = 500, cap = 1000, hungry = 300, starving = 100, weak = 25}
 player_name = 'Reimu Hakurei'
 player_stances = { 'Graze', 'Defensive', 'Normal', 'Offensive', 'Trance' }
 player_stance = 3
+player_last_move = {x = 0, y = 0}
 
 player_stats = { str = 6,
 				 dex = 9,
@@ -214,21 +215,23 @@ function game:update(dt)
 	if not danmaku and # ascii_effects == 0 then turn_machine() end
 	stair_cd = stair_cd - 1
 	
-	if player:get_turn_cd() <= 1 and stair_cd <= 1 and not danmaku and # ascii_effects == 0 then
-		--- movement keys
-		if love.keyboard.isDown('kp8') then player:move(0, -1) next_turn = true end
-		if love.keyboard.isDown('kp2') then player:move(0, 1) next_turn = true end
-		if love.keyboard.isDown('kp4') then player:move(-1, 0) next_turn = true end
-		if love.keyboard.isDown('kp6') then player:move(1, 0) next_turn = true end
-		if love.keyboard.isDown('kp7') then player:move(-1, -1) next_turn = true end
-		if love.keyboard.isDown('kp9') then player:move(1, -1) next_turn = true end
-		if love.keyboard.isDown('kp1') then player:move(-1, 1) next_turn = true end
-		if love.keyboard.isDown('kp3') then player:move(1, 1) next_turn = true end
-		--- up and down stairs in levels
-		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and map[player:get_x()][player:get_y()]:get_name() == 'DStairs' then stair_machine('down') end
-		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown(',') and map[player:get_x()][player:get_y()]:get_name() == 'UStairs'  then stair_machine('up') end
-		--- down for the overworld
-		if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and level.name == 'Overworld' then overworld_down() end
+	if not inventory_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
+		if player:get_turn_cd() <= 1 and stair_cd <= 1 and not danmaku and # ascii_effects == 0 then
+			--- movement keys
+			if love.keyboard.isDown('kp8') then player:move(0, -1) next_turn = true end
+			if love.keyboard.isDown('kp2') then player:move(0, 1) next_turn = true end
+			if love.keyboard.isDown('kp4') then player:move(-1, 0) next_turn = true end
+			if love.keyboard.isDown('kp6') then player:move(1, 0) next_turn = true end
+			if love.keyboard.isDown('kp7') then player:move(-1, -1) next_turn = true end
+			if love.keyboard.isDown('kp9') then player:move(1, -1) next_turn = true end
+			if love.keyboard.isDown('kp1') then player:move(-1, 1) next_turn = true end
+			if love.keyboard.isDown('kp3') then player:move(1, 1) next_turn = true end
+			--- up and down stairs in levels
+			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and map[player:get_x()][player:get_y()]:get_name() == 'DStairs' then stair_machine('down') end
+			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown(',') and map[player:get_x()][player:get_y()]:get_name() == 'UStairs'  then stair_machine('up') end
+			--- down for the overworld
+			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and level.name == 'Overworld' then overworld_down() end
+		end
 	end
 	
 	--- ascii effects update
@@ -2187,6 +2190,9 @@ function Creature:move(dx, dy)
 			
 				player_fov()
 				map_special_rooms_check()
+				
+				--- update last move
+				player_last_move = {x = dx, y = dy}
 			
 				--- tile modifiers and message
 				if level.name ~= 'Overworld' then

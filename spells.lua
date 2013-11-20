@@ -8,7 +8,95 @@ game_spells = {	{name = 'Omamori of Health', mp_cost = 75, func = function () pl
 				{name = 'High Frequency Danmaku', mp_cost = 55, func = function () add_modifier({name = 'Hi Freq', turn = 60, danmaku_explosive = 2}) end},
 				{name = 'Fantasy Seal Spread', mp_cost = 200, func = function () fantasy_seal(player:get_x(), player:get_y(), 5, 'int') end},
 				{name = 'Merciless Purification Rod', mp_cost = 250, func = function () fantasy_seal(player:get_x(), player:get_y(), 1, 'str') end},
+				{name = 'Border of Danmaku', mp_cost = 75, func = function () border_shoot(player:get_x(), player:get_y()) end},
+				{name = 'Border Jumper', mp_cost = 15, func = function () border_jumper(player:get_x(), player:get_y(), 8) end},
 				}
+				
+function border_jumper(sx, sy, range)
+
+	local sx = sx
+	local sy = sy
+	local x = sx
+	local y = sy
+	local ex = 0
+	local ey = 0
+	local dx = player_last_move.x
+	local dy = player_last_move.y
+	local air = true
+	
+	for i = 1, range do
+		
+		x = x + dx
+		y = y + dy
+		
+		if map[x][y]:get_block_move() or map[x][y]:get_holding() then
+			air = false
+			x = x - dx
+			y = y - dy
+		end
+		
+		table.insert(ascii_effects, {char = '@', time = 3 + range * 3 - i, delay = i * 3 - 3, x = x, y = y, color = function () love.graphics.setColor(0, 100, 255, 255) end})
+		
+		ex = x
+		ey = y
+		
+	end
+	
+	table.insert(ascii_effects, {char = ' ', time = range * 3, delay = 0, x = x, y = y, color = function () love.graphics.setColor(0, 100, 255, 255) end})
+	
+	map_unlit_all()
+	map[player:get_x()][player:get_y()]:set_holding(nil)
+	map_new_place_player(ex, ey)
+	player_fov()
+
+end
+				
+function border_shoot(sx, sy)
+
+	local sx = sx 
+	local sy = sy 
+	local ex = 0
+	local ey = 0
+	local x = 0
+	local y = 0
+	local dam = math.random(player_stats.int * 15)
+	local air = true
+	
+	sx = sx - 5 * player_last_move.x
+	sy = sy - 5 * player_last_move.y
+	
+	if sx < 1 then sx = 1 end
+	if sy < 1 then sy = 1 end
+	if sx > map_width then sx = map_width end
+	if sy > map_height then sy = map_height end
+	
+	x = sx
+	y = sy
+	
+	for i = 1, 5 do
+		x = x + player_last_move.x
+		y = y + player_last_move.y
+		
+		if map[x][y]:get_holding() then
+			map[x][y]:get_holding():take_dam(dam, 'danmaku', 'Border Bullet')
+			air = false
+		end
+		
+		if map[x][y]:get_block_move() then 
+			air = false
+		end
+		
+		ex = x
+		ey = y
+		
+		if not air then break end
+	end
+	
+	table.insert(ascii_effects, {char = 'O', time = 10, delay = 0, x = sx, y = sy, color = function () love.graphics.setColor(0, 100, 255, 255) end})
+	
+	danmaku = {x = sx, y = sy, dx = player_last_move.x, dy = player_last_move.y, ex = ex, ey = ey, cd = 3, char = '*', color = function () love.graphics.setColor(0, 100, 255, 255) end}
+
+end
 	
 function fantasy_seal(sx, sy, range, stat)
 

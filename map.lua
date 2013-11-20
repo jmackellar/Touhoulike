@@ -1212,6 +1212,21 @@ function map_draw()
 		end
 	end
 	
+	if danmaku then
+		love.graphics.setColor(0, 0, 0, 255)
+		love.graphics.rectangle('fill', ascii_draw_point(danmaku.x), ascii_draw_point(danmaku.y), char_width, char_width)
+		love.graphics.setColor(255, 255, 255, 255)
+	end
+	if # ascii_effects > 0 then
+		for i = 1, # ascii_effects do
+			if ascii_effects[i].delay < 1 then
+				love.graphics.setColor(0, 0, 0, 255)
+				love.graphics.rectangle('fill', ascii_draw_point(ascii_effects[i].x), ascii_draw_point(ascii_effects[i].y), char_width, char_width)
+				love.graphics.setColor(255, 255, 255, 255)
+			end
+		end
+	end
+	
 	
 	love.graphics.setCanvas()
 	love.graphics.draw(map_back_canvas)
@@ -1252,6 +1267,24 @@ function map_overworld_fov(x, y, range)
 			if map[x][y] then
 				map[x][y]:set_seen()
 				map[x][y]:set_lit()
+			end
+		end
+	end
+
+end
+
+function map_unlit_all()
+
+	local start_x = 1
+	local start_y = 1
+	local end_x = map_width
+	local end_y = map_height
+
+	for x = start_x, end_x do
+		for y = start_y, end_y do
+			if map[x][y] and map[x][y]:get_lit() then
+				map[x][y]:set_unlit()
+				map[x][y]:set_seen()
 			end
 		end
 	end

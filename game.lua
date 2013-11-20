@@ -24,6 +24,8 @@ player_stances = { 'Graze', 'Defensive', 'Normal', 'Offensive', 'Trance' }
 player_stance = 3
 player_last_move = {x = 0, y = 0}
 
+player_encumbrance = 0
+
 player_stats = { str = 6,
 				 dex = 9,
 				 int = 5,
@@ -232,6 +234,15 @@ function game:update(dt)
 			--- down for the overworld
 			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and level.name == 'Overworld' then overworld_down() end
 		end
+	end
+	
+	--- check for encumbrance
+	if player_held_weight() < player_stats.str * 10 then
+		player_encumbrance = 0
+	elseif player_held_weight() >= player_stats.str * 10 then
+		player_encumbrance = 1
+	elseif player_held_weight() >= player_stats.str * 12 then
+		player_encumbrance = 2
 	end
 	
 	--- ascii effects update
@@ -806,13 +817,19 @@ end
 
 function pickup_many_items_key(key)
 
+	local toomany = false
+
 	if key  == 'return' or key == 'kpenter' then	
 		--- add items to player inventory
 		for i = 1, # alphabet do
 			if pickup_many_items_choice[alphabet[i]] and items_sorted[i] then
-				for k = 1, items_sorted[i].quantity do
-					add_item_to_inventory(items_sorted[i].item)
-					items_sorted[i].quantity = items_sorted[i].quantity - 1
+				if # player_inventory < # alphabet then
+					for k = 1, items_sorted[i].quantity do
+						add_item_to_inventory(items_sorted[i].item)
+						items_sorted[i].quantity = items_sorted[i].quantity - 1
+					end
+				else
+					toomany = true
 				end
 			end
 		end
@@ -841,6 +858,10 @@ function pickup_many_items_key(key)
 		pickup_many_items = false
 		pickup_many_items_choice = {}
 		items_sorted = {}
+		
+		if toomany then
+			message_add("You weren't able to fit everything into your knapsack.")
+		end
 		
 	else
 		--- select which items will be picked up or not
@@ -926,10 +947,11 @@ function pickup_item()
 	
 		many_items_sorted(map[player:get_x()][player:get_y()]:get_items())
 		if # map[player:get_x()][player:get_y()]:get_items() == 1 then
-			add_item_to_inventory(map[player:get_x()][player:get_y()]:get_items()[1])
-			message_add('You picked up the ' .. map[player:get_x()][player:get_y()]:get_items()[1]:get_pname() .. '.')
-			map[player:get_x()][player:get_y()]:set_items(nil)
-			pickuped = true
+			pickuped = add_item_to_inventory(map[player:get_x()][player:get_y()]:get_items()[1])
+			if pickuped then
+				message_add('You picked up the ' .. map[player:get_x()][player:get_y()]:get_items()[1]:get_pname() .. '.')
+				map[player:get_x()][player:get_y()]:set_items(nil)
+			end
 		else
 			pickup_many_items = true
 			pickup_many_items_choice = {}			
@@ -942,25 +964,38 @@ end
 
 function add_item_to_inventory(item)
 
+	local pickuped = false
+
 	if item:get_gold() then
 		player_gold = player_gold + item:get_gold()
-		return
+		pickuped = true
+		return pickuped
 	end
 
 	if # player_inventory == 0 then
 		table.insert(player_inventory, {item = item, quantity = 1})
+		pickuped = true
 	else
 		local similar = false
 		for i = 1, # player_inventory do
 			if player_inventory[i].item:get_name() == item:get_name() then
 				player_inventory[i].quantity = player_inventory[i].quantity + 1
+				pickuped = true
 				similar = true
 			end
 		end
 		if not similar then
-			table.insert(player_inventory, {item = item, quantity = 1})
+			if # player_inventory < # alphabet then
+				table.insert(player_inventory, {item = item, quantity = 1})
+				pickuped = true
+			else
+				message_add("You can't fit anything else into your knapsack.")
+				pickuped = false
+			end
 		end
 	end
+	
+	return pickuped
 				
 end
 
@@ -1694,8 +1729,16 @@ function player_hud()
 		love.graphics.print('Weak', start_x + 10, start_y + 200)
 	end
 	
+	--- encumbrance
+	if player_encumbrance == 1 then
+		love.graphics.print("Burdened", start_x + 10, start_y + 215)
+	elseif player_encumbrance == 2 then
+		love.graphics.print("Strained", start_x + 10, start_y + 215)
+	end
+	
+	--- modifiers
 	for i = 1, # player_mods do
-		love.graphics.print(player_mods[i].name, start_x + 10, start_y + 215 + ((i - 1) * 15))
+		love.graphics.print(player_mods[i].name, start_x + 10, start_y + 230 + ((i - 1) * 15))
 	end
 	
 	love.graphics.print(player_stances[player_stance], start_x + 10, start_y + 370)
@@ -1981,6 +2024,16 @@ function draw_inventory()
 
 end
 
+function player_held_weight()
+
+	local weight = 0
+	for i = 1, # player_inventory do
+		weight = weight + (player_inventory[i].item:get_weight() * player_inventory[i].quantity)
+	end
+	return weight
+
+end
+
 function player_fov()
 
 	if level.name ~= 'Overworld' then map_calc_fov(player:get_x(), player:get_y(), world_see_distance)		
@@ -2091,11 +2144,15 @@ function Creature:ai_take_turn()
 	if self.turn_cd < 1 then
 		self.turn_cd = self.speed
 		if self == player then 
+			--- dex speed changes
 			self.turn_cd = self.speed - player_stats.dex - player_mod_get('speed') 
+			--- stance speed changes
 			if player_stance == 1 then self.turn_cd = self.turn_cd + 1 end
 			if player_stance == 2 then self.turn_cd = self.turn_cd + 0 end
 			if player_stance == 4 then self.turn_cd = self.turn_cd - 0 end
 			if player_stance == 5 then self.turn_cd = self.turn_cd - 1 end
+			--- encumbrance speed changes
+			self.turn_cd = self.turn_cd + player_encumbrance * 3
 		end
 		if self.name ~= "Player" then
 		
@@ -2802,6 +2859,7 @@ function Item:get_scroll() return self.scroll end
 function Item:get_apply() return self.apply end
 function Item:get_afunc() return self.afunc end
 function Item:get_bullet() return self.bullet end
+function Item:get_weight() return self.weight end
 	
 Tile = Class('Tile')
 function Tile:initialize(arg)

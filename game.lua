@@ -17,7 +17,7 @@ char_width = 14
 player = {}
 player_level = 1
 player_exp = 0
-player_gold = 0
+player_gold = 1110
 player_food = {level = 500, cap = 1000, hungry = 300, starving = 100, weak = 25}
 player_name = 'Reimu Hakurei'
 player_stances = { 'Graze', 'Defensive', 'Normal', 'Offensive', 'Trance' }
@@ -31,7 +31,7 @@ player_stats = { str = 6,
 				 int = 5,
 				 con = 7,}
 	
-player_skills = { fighting = 0, evasion = 0, danmaku = 0, cooking = 0, shinto = 0, stick = 0, longsword = 0, shortblade = 0 }
+player_skills = { fighting = 0, evasion = 0, danmaku = 0, cooking = 0, shinto = 0, stick = 0, longsword = 0, shortblade = 0, axe = 0 }
 skills_open = false
 
 feats_open = false
@@ -40,6 +40,7 @@ player_feats = {	{name = 'Stick Proficiency', desc = 'Increases damage done by a
 					{name = 'Long Sword Proficiency', desc = 'Increases damage done by all long sword weapons by 5%', have = false, longsword = 1.05},
 					{name = 'Short Blade Proficiency', desc = 'Increases damage done by all short blade weapons by 5%', have = false, shortblade = 1.05},
 					{name = 'Shinto Proficiency', desc =  'Increases damage done by all shinto weapons by 5%', have = false, shinto = 1.05},
+					{name = 'Axe Proficiency', desc = 'Increases damage done by all axe weapons by 5%', have = false, axe = 1.05},
 					{name = 'Athletics', desc = 'Increases speed once and strength and dexterity on levelup', have = false, speed = 1, athletics = 5},
 					{name = 'Iron Skin', desc = 'Decreases damage recieved from all sources by 5%', have = false, damred = 0.95},
 					{name = 'First Aid', desc = 'Regenerates hit points at a faster rate', have = false, hpregen = 15},
@@ -2160,6 +2161,7 @@ function shop_load_items(shop)
 						{ name = 'Gohei Stick', cost = 45, item = shop_find_game_item('Gohei Stick') },
 						{ name = 'Dagger', cost = 125, item = shop_find_game_item('Dagger') },
 						{ name = 'Katana', cost = 250, item = shop_find_game_item('Katana') },
+						{ name = 'Hatchet', cost = 25, item = shop_find_game_item('Hatchet') },
 						}
 	elseif shop == 'Armor' then
 		shop_items = {	{ name = 'Leather Vest', cost = 50, item = shop_find_game_item('Leather Vest') },
@@ -2681,6 +2683,18 @@ function Creature:move(dx, dy)
 			inventory_open = true
 			inventory_action = 'sell'			
 		end
+	
+	elseif map[new_x][new_y]:get_block_move() and map[new_x][new_y]:get_name() == "BambooShoot" then
+		if player_equipment.hand then
+			if player_equipment.hand:get_weptype() == 'axe' then
+				message_add("You chop down the bamboo shoot with your " .. player_equipment.hand:get_name() .. ".")				
+				map[new_x][new_y] = Tile:new({name = 'Floor', x = new_x, y = new_y})
+				player_fov()
+				map_back_canvas_update(new_x, new_y)
+				next_turn = true
+			end
+		end
+		
 	end
 	
 end

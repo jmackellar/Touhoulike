@@ -8,6 +8,7 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) end, name = 'Overwor
 						{x = 21, y = 8, func = function (dir) map_sdm(dir) end, name = 'Scarlet Devil Mansion', persist = true, mon_gen = 5},
 						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Forest', persist = false, mon_gen = 4},
 						{x = 21, y = 18, func = function (dir) map_kourindou(dir) end, name = 'Kourindou', persist = false},
+						{x = 24, y = 27, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = true},
 					}
 
 function next_level(dir)
@@ -52,10 +53,41 @@ function map_overworld(dir)
 		map_new_place_player(39, 24)
 	elseif prev_level == 'Kourindou' then
 		map_new_place_player(21, 18)
+	elseif prev_level == 'Bamboo Forest' then
+		map_new_place_player(24, 27)
 	else
 		map_new_place_player(23, 23)
 	end
 		
+end
+
+function map_eientei(dir)
+
+	if level.name == 'Eientei' or level.name == 'Bamboo Forest' then
+		if dir == 'down' then
+			level.depth = level.depth + 1
+		elseif dir == 'up' then
+			level.depth = level.depth - 1
+		end
+	else
+		level.depth = 1
+	end
+	
+	level.name = 'Eientei'
+	level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) map_eientei(dir) end}
+
+	if level.depth == 1 then
+		level.name = 'Bamboo Forest'
+		map_gen_bamboo(map_width, map_height, true, true)
+		level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) map_eientei(dir) end}
+	elseif level.depth > 1 and level.depth <= 3 then
+		level.name = 'Bamboo Forest'
+		map_gen_bamboo(map_width, map_height, true, true)
+		level_connection = {up = function (dir) map_eientei(dir) end, down = function (dir) map_eientei(dir) end}
+	end
+	
+	place_player_on_stairs(dir)
+
 end
 
 function map_youkai_dungeon(dir)
@@ -835,6 +867,131 @@ function map_gen_forest(width, height, p_ustairs, p_dstairs)
 	
 end
 
+function map_gen_bamboo(width, height, p_ustairs, p_dstairs)
+
+	local new_map = {}
+	
+	--- make the new map
+	new_map = {}
+	for x = 1, width do
+		new_map[x] = {}
+		for y = 1, height do
+			new_map[x][y] = {}
+		end
+	end
+
+	--- flood initial map
+	for x = 1, width do
+		for y = 1, height do
+			map[x][y] = Tile:new({name = 'Grass', color = {r=255,g=255,b=255}, block_sight = false, block_move = false, char = 'T', x = x, y = y})
+		end
+	end
+	
+	--- place initial bamboo tress
+	local placed = 0
+	repeat
+	
+		local x = math.random(2, width-1)
+		local y = math.random(2, height-1)
+		
+		if not map[x][y]:get_block_move() then
+			placed = placed + 1
+			map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 'T', x = x, y = y})
+		end
+	
+	until placed >= math.floor( (width * height) * 0.45 )
+	
+	--- cellular automata generator
+	for i = 1, 6 do
+		
+		for x = 1, width do
+			for y = 1, height do			
+				if map[x][y]:get_block_move() then
+					new_map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 'T', x = x, y = y})
+				else
+					new_map[x][y] = Tile:new({name = 'Grass', color = {r=0,g=255,b=0}, block_sight = false, block_move = false, char = ' .', x = x, y = y})		
+				end
+			end
+		end
+		
+		for x = 2, width-1 do
+			for y = 2, height-1 do
+				
+				if i >= 1 and i <= 2 then
+					if map_get_surrounding_blocked(x, y) >= 5 or map_get_surrounding_blocked(x, y) == 0 then
+						new_map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 'T', x = x, y = y})
+					else
+						new_map[x][y] = Tile:new({name = 'Grass', color = {r=0,g=255,b=0}, block_sight = false, block_move = false, char = ' .', x = x, y = y})					
+					end
+				else
+					if map_get_surrounding_blocked(x, y) >= 5 or map_get_surrounding_blocked(x, y) == 0 then
+						new_map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 'T', x = x, y = y})
+					else
+						new_map[x][y] = Tile:new({name = 'Grass', color = {r=0,g=255,b=0}, block_sight = false, block_move = false, char = ' .', x = x, y = y})					
+					end
+				end
+			
+			end
+		end
+		
+		for x = 1, width do
+			for y = 1, height do
+				if new_map[x][y]:get_block_move() then
+					map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 'T', x = x, y = y})
+				else
+					map[x][y] = Tile:new({name = 'Grass', color = {r=0,g=255,b=0}, block_sight = false, block_move = false, char = ' .', x = x, y = y})		
+				end
+			end
+		end
+			
+	end
+	
+	--- replace grass with dirt 
+	for x = 2, width-2 do
+		for y = 2, height-2 do
+			if not map[x][y]:get_block_move() and map_get_surrounding_blocked(x, y) == 0 then
+				map[x][y] = Tile:new({name = 'dirt', color = {r=149,g=107,b=64}, block_sight = false, block_move = false, char = ' .', x = x, y = y})
+			end
+		end
+	end
+	
+	--- surround map with walls
+	for x = 1, width do
+		map[x][1] = Tile:new({name = 'Tree', x = x, y = 1})
+		map[x][height] = Tile:new({name = 'Tree', x = x, y = height})
+	end
+	for y = 1, height do
+		map[1][y] = Tile:new({name = 'Tree', x = 1, y = y})
+		map[width][y] = Tile:new({name = 'Tree', x = width, y = y})
+	end
+	
+	--- place stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, width)
+		local y1 = math.random(1, height)
+		local x2 = math.random(1, width)
+		local y2 = math.random(1, height)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				if p_ustairs then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if p_dstairs then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs		
+	return stairs
+	
+end
+
 function map_gen_rogue(width, height, p_ustairs, p_dstairs, pal)
 	
 	local rooms = {}
@@ -1268,6 +1425,19 @@ function map_draw()
 	love.graphics.setCanvas()
 	love.graphics.draw(map_back_canvas)
 	love.graphics.draw(map_canvas)
+	
+end
+
+function map_back_canvas_update(x, y)
+
+	love.graphics.setCanvas(map_back_canvas)
+	love.graphics.setFont(game_font)
+	love.graphics.setBlendMode('alpha')
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', ascii_draw_point(x), ascii_draw_point(y), char_width, char_width)
+	map[x][y]:draw_ascii()
+	love.graphics.setCanvas()
 	
 end
 

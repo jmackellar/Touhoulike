@@ -12,6 +12,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Bullet-Proof Vest', slot = 'torso', weight = 15, armor = 5, char = ']', prob = 0},
 				{name = 'Game Boy', apply = true, afunc = function () end, weight = 0, message = "You activate the doomsday device...", char = '(', prob = 0},
 				{name = 'Purification Rod', slot = 'hand', weptype = 'shinto', weight = 4, damage = 15, char = ')', prob = 0, bullet = 1},
+				{name = 'Hatchet', slot = 'hand', weptype = 'axe', weight = 8, damage = 5, char = ')', prob = 0},
 				--- items randomly generated
 				{name = 'Miko Outfit', slot = 'torso', armor = 2, weight = 5, char = ']', prob = 20},
 				{name = 'Scroll of Enlightenment', reads = true, scroll = true, pname = 'Unknown Golden Scroll', char = '?', prob = 28, affect = function() enlightenment() end, message = "You feel more knowledgeable about the unknown."},

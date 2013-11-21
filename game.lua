@@ -31,7 +31,7 @@ player_stats = { str = 6,
 				 int = 5,
 				 con = 7,}
 	
-player_skills = { fighting = 0, evasion = 0, danmaku = 0, cooking = 0 }
+player_skills = { fighting = 0, evasion = 0, danmaku = 0, cooking = 0, shinto = 0, stick = 0, longsword = 0, shortblade = 0 }
 skills_open = false
 	
 player_spells = {	{name = 'Omamori of Health', mp_cost = 75, func = function () player:heal(35) end},
@@ -2556,8 +2556,16 @@ function Creature:fight(x, y)
 		end
 		
 		--- changes from player skill
+		--- fighting skill
 		damage = math.floor(damage * (1 + (player_skills.fighting * 0.01)))
 		player_skills.fighting = player_skills.fighting + 0.01
+		--- weapon skill
+		if player_equipment.hand then
+			if player_skills[player_equipment.hand:get_weptype()] then
+				damage = math.floor(damage * (1.05 * (player_skills[player_equipment.hand:get_weptype()] + 1)))
+				player_skills[player_equipment.hand:get_weptype()] = player_skills[player_equipment.hand:get_weptype()] + 0.01
+			end
+		end
 		
 		--- changes from player stance
 		if player_stance == 1 then
@@ -2783,6 +2791,7 @@ function Item:initialize(arg)
 	self.armor = arg.armor or 0
 	self.evasion = arg.evasion or 0
 	self.damage = arg.damage or 5
+	self.weptype = arg.weptype or "DNE"
 	self.crit = arg.crit or 0
 	self.bullet = arg.bullet or 0
 	self.weight = arg.weight or 3
@@ -2859,6 +2868,7 @@ function Item:get_scroll() return self.scroll end
 function Item:get_apply() return self.apply end
 function Item:get_afunc() return self.afunc end
 function Item:get_bullet() return self.bullet end
+function Item:get_weptype() return self.weptype end
 function Item:get_weight() return self.weight end
 	
 Tile = Class('Tile')

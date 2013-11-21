@@ -1,5 +1,6 @@
 local state = 'enter'
 local option = 1
+local feats_chosen = 0
 local main_options = {	'New Game',
 						'Load Game',
 						'Quit Game',
@@ -20,22 +21,77 @@ choice = ''
 
 function menu:enter()
 	state = 'enter'
+	choice = ''
+	feats_chosen = 0
 end
 
 function menu:draw()
 	if state == 'main' then main_draw() 
 	elseif state == 'char' then char_draw() 
-	elseif state == 'enter' then enter_draw() end
+	elseif state == 'enter' then enter_draw() 
+	elseif state == 'feat' then feat_draw() end
 end
 
 function menu:keypressed(key)
 	if state == 'main' then main_key(key)
 	elseif state == 'char' then char_key(key)
-	elseif state == 'enter' then enter_key(key) end
+	elseif state == 'enter' then enter_key(key)
+	elseif state == 'feat' then feat_key(key) end
 end
 
-function menu:update(dt)
-	choice = ''
+function feat_draw()
+
+	love.graphics.draw(bg, 0, 0)
+	
+	local start_x = 100
+	local start_y = 100
+	local height = 30
+	local width = 600
+	local message = ""
+	
+	for i = 1, # player_feats do
+		height = height + 30
+	end
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', start_x, start_y - 10, width, height + 20)
+	love.graphics.setColor(255, 255, 255, 255)
+	
+	love.graphics.print("Choose your feats.  " .. 2 - feats_chosen .. " choices remaining.  Press ENTER to continue.", start_x + 20, start_y)
+	for i = 1, # player_feats do
+		message = ""
+		if player_feats[i].have then
+			message = message .. "[" .. alphabet[i] .. "]: "
+			message = message .. player_feats[i].name
+		else
+			message = message .. alphabet[i] .. ": " .. player_feats[i].name
+		end
+		love.graphics.print(message, start_x + 10, start_y + (i * 30))
+		love.graphics.print(player_feats[i].desc, start_x + 20, start_y + (i * 30) + 15)
+	end
+	
+end
+
+function feat_key(key)
+	
+	for i = 1, # player_feats do
+		if key == alphabet[i] then
+			if not player_feats[i].have then 
+				if feats_chosen < 2 then
+					player_feats[i].have = true
+					feats_chosen = feats_chosen + 1
+				end
+			else
+				player_feats[i].have = false
+				feats_chosen = feats_chosen - 1
+			end
+		end
+	end
+	
+	if key == 'return' or key == 'kpenter' then
+		Gamestate.switch(game)
+	end
+
 end
 
 function enter_draw()
@@ -116,7 +172,7 @@ function char_key(key)
 			love.filesystem.remove(file)
 		end
 		choice = char_options[option]
-		Gamestate.switch(game)
+		state = 'feat'
 	end
 	
 end

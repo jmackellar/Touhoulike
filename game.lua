@@ -33,6 +33,17 @@ player_stats = { str = 6,
 	
 player_skills = { fighting = 0, evasion = 0, danmaku = 0, cooking = 0, shinto = 0, stick = 0, longsword = 0, shortblade = 0 }
 skills_open = false
+
+feats_open = false
+feats_gain_open = false
+player_feats = {	{name = 'Stick Proficiency', desc = 'Increases damage done by all stick weapons by 5%', have = false, stick = 1.05},
+					{name = 'Long Sword Proficiency', desc = 'Increases damage done by all long sword weapons by 5%', have = false, longsword = 1.05},
+					{name = 'Short Blade Proficiency', desc = 'Increases damage done by all short blade weapons by 5%', have = false, shortblade = 1.05},
+					{name = 'Shinto Proficiency', desc =  'Increases damage done by all shinto weapons by 5%', have = false, shinto = 1.05},
+					{name = 'Athletics', desc = 'Increases speed once and strength and dexterity on levelup', have = false, speed = 1, athletics = 5},
+					{name = 'Iron Skin', desc = 'Decreases damage recieved from all sources by 5%', have = false, damred = 0.95},
+					{name = 'First Aid', desc = 'Regenerates hit points at a faster rate', have = false, hpregen = 15},
+					}
 	
 player_spells = {	{name = 'Omamori of Health', mp_cost = 75, func = function () player:heal(35) end},
 					{name = 'Ofuda of Protection', mp_cost = 50, func = function () add_modifier({name = 'Protection', turn = 60, armor = 5}) end},
@@ -105,6 +116,8 @@ function game:draw()
 	if spells_open then draw_spells() end
 	if shop_window then draw_shop() end
 	if skills_open then draw_skills() end
+	if feats_open then draw_feats() end
+	if feats_gain_open then draw_feats_gain() end
 
 	--- ascii effects draw
 	if # ascii_effects > 0 then
@@ -132,7 +145,7 @@ end
 function game:keypressed(key)
 
 	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
-		if not inventory_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
+		if not inventory_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
 			
 			if key == 'kp5' then next_turn = true end
 			
@@ -141,6 +154,8 @@ function game:keypressed(key)
 			
 			if player_stance > 5 then player_stance = 5 end
 			if player_stance < 1 then player_stance = 1 end
+			
+			if key == ' ' then player_exp = player_exp + 1000000 player:levelup() end
 			
 			if level.name ~= 'Overworld' then
 				if key == 'g' then pickup_item() next_turn = true end
@@ -157,7 +172,8 @@ function game:keypressed(key)
 				if key == 'c' then spells_open = true end
 				if key == 'u' then map_use_tile() end	
 				
-				if key == 's' then skills_open = true end
+				if key == 'm' then skills_open = true end
+				if key == 'n' then feats_open = true end
 
 				if key == 'f' then danmaku_dir = true message_add("Fire danmaku in which direction? ESC to cancel.") end
 			end
@@ -193,6 +209,10 @@ function game:keypressed(key)
 			shop_key(key)
 		elseif skills_open then
 			if key then skills_open = false end
+		elseif feats_open then
+			if key then feats_open = false end
+		elseif feats_gain_open then	
+			feats_gain_key(key)
 			
 		elseif danmaku_dir then
 			if key == 'escape' or key == 'return' or key == 'kpenter' then danmaku_dir = false message_add("Never mind.") end
@@ -217,7 +237,7 @@ function game:update(dt)
 	if not danmaku and # ascii_effects == 0 then turn_machine() end
 	stair_cd = stair_cd - 1
 	
-	if not inventory_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
+	if not inventory_open and not feats_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
 		if player:get_turn_cd() <= 1 and stair_cd <= 1 and not danmaku and # ascii_effects == 0 then
 			--- movement keys
 			if love.keyboard.isDown('kp8') then player:move(0, -1) next_turn = true end
@@ -455,6 +475,18 @@ function enemy_danmaku_fire(sx, sy, dx, dy, bullets, dam, name)
 	danmaku = {x = sx, y = sy, dx = dx, dy = dy, ex = ex, ey = ey, cd = 3, char = '*', color = function () love.graphics.setColor(0, 255, 100, 255) end}
 	for i = 1, bullets - 1 do
 		table.insert(danmaku_add, {x = sx, y = sy, dx = dx, dy = dy, ex = ex, ey = ey, cd = 3, char = '*', color = function () love.graphics.setColor(0, 255, 100, 255) end})
+	end
+
+end
+
+function feats_gain_key(key)
+
+	for i = 1, # player_feats do
+		if alphabet[i] == key and not player_feats[i].have then
+			player_feats[i].have = true
+			message_add("You gain " .. player_feats[i].name)
+			feats_gain_open = false
+		end
 	end
 
 end
@@ -1115,6 +1147,14 @@ function save_player()
 		text = text .. k .. " = " .. v .. ", "
 	end
 	text = text .. "  } \n"
+	--- feats
+	text = text .. "player_feats_load = { "
+	for i = 1, # player_feats do
+		if player_feats[i].have then
+			text = text .. "\'" .. player_feats[i].name .. "\', "
+		end
+	end
+	text = text .. "} \n"
 	--- food
 	text = text .. "player_food = {  "
 	for k, v in pairs(player_food) do
@@ -1490,6 +1530,66 @@ function player_mod_get(get)
 	end
 	return amount
 
+end
+
+function draw_feats_gain()
+
+	local start_x = 0
+	local start_y = 0
+	local width = 650
+	local height = 470
+	local font = love.graphics.getFont()
+	local tw = 0
+	local index = 1
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', start_x, start_y, width, height)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
+	
+	love.graphics.print("Feats:  Choose what feat you would like to gain.", start_x + 4, start_y + 4)
+	
+	for i = 1, # player_feats do
+		if not player_feats[i].have then
+			love.graphics.setColor(255, 255, 255, 255)
+			love.graphics.print(alphabet[i] .. ": ", start_x + 10, start_y + (index * 30))
+			love.graphics.setColor(204, 155, 63, 255)
+			love.graphics.print(player_feats[i].name, start_x + 10 + font:getWidth(alphabet[i] .. ": "), start_y + (index * 30))
+			love.graphics.setColor(255, 255, 255, 255)
+			love.graphics.print(player_feats[i].desc, start_x + 20, start_y + (index * 30) + 15)
+			index = index + 1
+		end
+	end
+
+end
+
+function draw_feats()
+
+	local start_x = 0
+	local start_y = 0
+	local width = 650
+	local height = 470
+	local font = love.graphics.getFont()
+	local tw = 0
+	local index = 1
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', start_x, start_y, width, height)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
+	
+	love.graphics.print("Feats:  Press any key to return", start_x + 4, start_y + 4)
+	
+	for i = 1, # player_feats do
+		if player_feats[i].have then
+			love.graphics.setColor(204, 155, 63, 255)
+			love.graphics.print(player_feats[i].name, start_x + 10, start_y + (index * 30))
+			love.graphics.setColor(255, 255, 255, 255)
+			love.graphics.print(player_feats[i].desc, start_x + 20, start_y + (index * 30) + 15)
+			index = index + 1
+		end
+	end
+	
 end
 
 function draw_skills()
@@ -2034,6 +2134,18 @@ function player_held_weight()
 
 end
 
+function player_feat_search(skill)
+
+	local amnt = 0
+	for i = 1, # player_feats do
+		if player_feats[i].have and player_feats[i][skill] then
+			amnt = amnt + player_feats[i][skill]
+		end
+	end
+	return amnt
+
+end
+
 function player_fov()
 
 	if level.name ~= 'Overworld' then map_calc_fov(player:get_x(), player:get_y(), world_see_distance)		
@@ -2146,13 +2258,18 @@ function Creature:ai_take_turn()
 		if self == player then 
 			--- dex speed changes
 			self.turn_cd = self.speed - player_stats.dex - player_mod_get('speed') 
-			--- stance speed changes
-			if player_stance == 1 then self.turn_cd = self.turn_cd + 1 end
+			--- stance speed changes (removed)
+			if player_stance == 1 then self.turn_cd = self.turn_cd + 0 end
 			if player_stance == 2 then self.turn_cd = self.turn_cd + 0 end
 			if player_stance == 4 then self.turn_cd = self.turn_cd - 0 end
-			if player_stance == 5 then self.turn_cd = self.turn_cd - 1 end
+			if player_stance == 5 then self.turn_cd = self.turn_cd - 0 end
 			--- encumbrance speed changes
 			self.turn_cd = self.turn_cd + player_encumbrance * 3
+			--- feat speed changes
+			self.turn_cd = self.turn_cd - player_feat_search('speed')
+			
+			--- feat hp regen
+			self.hp_regen_timer = self.hp_regen_timer - player_feat_search('hpregen')
 		end
 		if self.name ~= "Player" then
 		
@@ -2214,8 +2331,18 @@ function Creature:levelup()
 
 	if player_exp >= player_level^5 + 200 then
 	
+		local message = "You've grown stronger."
+	
 		player_exp = 0
 		player_level = player_level + 1
+		
+		if player_level == 3 then
+			feats_gain_open = true
+		elseif player_level == 6 then
+			feats_gain_open = true
+		elseif player_level == 9 then
+			feats_gain_open = true
+		end
 		
 		self.hp_max = self.hp_max + player_stats.con * 5
 		self.mana_max = self.mana_max + player_stats.int * 5
@@ -2229,6 +2356,21 @@ function Creature:levelup()
 				break
 			end
 		end
+		
+		--- athletics
+		if player_feat_search('athletics') > 0 then
+			print('search')
+			if math.random(1, 100) <= 30 then
+				message = message .. "  Your muscles feel stronger."
+				player_stats.str = player_stats.str + 1
+			end
+			if math.random(1, 100) <= 30 then
+				message = message .. "  Your body feels more flexible."
+				player_stats.dex = player_stats.dex + 1
+			end
+		end
+		
+		message_add(message)
 		
 	end
 
@@ -2567,6 +2709,13 @@ function Creature:fight(x, y)
 			end
 		end
 		
+		--- changes from player feats
+		if player_equipment.hand then
+			if player_feat_search(player_equipment.hand:get_weptype()) > 0 then
+				damage = math.floor( damage * (player_feat_search(player_equipment.hand:get_weptype())) )
+			end
+		end
+		
 		--- changes from player stance
 		if player_stance == 1 then
 			damage = math.ceil(damage * .30)
@@ -2612,6 +2761,11 @@ function Creature:take_dam(dam, dtype, name)
 			dam = math.ceil(dam * 1.30)
 		elseif player_stance == 5 then
 			dam = math.ceil(dam * 1.65)
+		end
+		
+		--- damage reduction from feats
+		if player_feat_search('damred') ~= 0 then
+			dam = math.ceil( dam * player_feat_search('damred') )
 		end
 		
 		--- dodge
@@ -2973,6 +3127,18 @@ function map_setup(width, height)
 	
 end
 
+function load_feats()
+
+	for i = 1, # player_feats_load do
+		for k = 1, # player_feats do
+			if player_feats_load[i] == player_feats[k].name then
+				player_feats[k].have = true
+			end
+		end
+	end
+
+end
+
 function setup_character()
 
 	for i = 1, # game_characters do 
@@ -2982,8 +3148,10 @@ function setup_character()
 			player_stats = game_characters[i].player_stats
 			player_spells = game_characters[i].starting_spells
 			player_spells_learn = game_characters[i].player_spells_learn
+			player_feats_load = {}
 			--- if a player file exists then load it!
 			load_player()
+			load_feats()
 		end
 	end
 

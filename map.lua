@@ -63,6 +63,8 @@ end
 
 function map_eientei(dir)
 
+	--- bamboo forest of the lost does not persist, but eientei levels do
+
 	if level.name == 'Eientei' or level.name == 'Bamboo Forest' then
 		if dir == 'down' then
 			level.depth = level.depth + 1
@@ -80,10 +82,24 @@ function map_eientei(dir)
 		level.name = 'Bamboo Forest'
 		map_gen_bamboo(map_width, map_height, true, true)
 		level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) map_eientei(dir) end}
+		monster_maker(math.random(20,30))
+		item_maker(math.random(10,20))
 	elseif level.depth > 1 and level.depth <= 3 then
 		level.name = 'Bamboo Forest'
 		map_gen_bamboo(map_width, map_height, true, true)
 		level_connection = {up = function (dir) map_eientei(dir) end, down = function (dir) map_eientei(dir) end}
+		monster_maker(math.random(20,30))
+		item_maker(math.random(10,20))
+	elseif level.depth == 4 then
+		--- yard
+		if not load_map() then
+			level.name = 'Eientei'
+			level_connection = {up = function (dir) map_eientei() end, down = function (dir) map_eientei(dir) end}
+			local chunk = love.filesystem.load('map/eientei_yard.lua')
+			chunk()
+			monster_maker(math.random(35,45))
+			item_maker(math.random(20,30))
+		end
 	end
 	
 	place_player_on_stairs(dir)
@@ -279,6 +295,9 @@ function map_sdm(dir)
 				level_connection = {up = function (dir) map_sdm(dir) end, down = function (dir) end}
 				
 			end
+			
+			monster_maker(math.random(15,25))
+			item_maker(math.random(10,20))
 			
 		else
 			place_player_on_stairs(dir)
@@ -896,7 +915,7 @@ function map_gen_bamboo(width, height, p_ustairs, p_dstairs)
 		
 		if not map[x][y]:get_block_move() then
 			placed = placed + 1
-			map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 'T', x = x, y = y})
+			map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 't', x = x, y = y})
 		end
 	
 	until placed >= math.floor( (width * height) * 0.45 )
@@ -907,7 +926,7 @@ function map_gen_bamboo(width, height, p_ustairs, p_dstairs)
 		for x = 1, width do
 			for y = 1, height do			
 				if map[x][y]:get_block_move() then
-					new_map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 'T', x = x, y = y})
+					new_map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 't', x = x, y = y})
 				else
 					new_map[x][y] = Tile:new({name = 'Grass', color = {r=0,g=255,b=0}, block_sight = false, block_move = false, char = ' .', x = x, y = y})		
 				end
@@ -919,13 +938,13 @@ function map_gen_bamboo(width, height, p_ustairs, p_dstairs)
 				
 				if i >= 1 and i <= 2 then
 					if map_get_surrounding_blocked(x, y) >= 5 or map_get_surrounding_blocked(x, y) == 0 then
-						new_map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 'T', x = x, y = y})
+						new_map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 't', x = x, y = y})
 					else
 						new_map[x][y] = Tile:new({name = 'Grass', color = {r=0,g=255,b=0}, block_sight = false, block_move = false, char = ' .', x = x, y = y})					
 					end
 				else
 					if map_get_surrounding_blocked(x, y) >= 5 or map_get_surrounding_blocked(x, y) == 0 then
-						new_map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 'T', x = x, y = y})
+						new_map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 't', x = x, y = y})
 					else
 						new_map[x][y] = Tile:new({name = 'Grass', color = {r=0,g=255,b=0}, block_sight = false, block_move = false, char = ' .', x = x, y = y})					
 					end
@@ -937,7 +956,7 @@ function map_gen_bamboo(width, height, p_ustairs, p_dstairs)
 		for x = 1, width do
 			for y = 1, height do
 				if new_map[x][y]:get_block_move() then
-					map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 'T', x = x, y = y})
+					map[x][y] = Tile:new({name = 'BambooShoot', color = {r=153,g=224,b=153}, block_sight = true, block_move = true, char = 't', x = x, y = y})
 				else
 					map[x][y] = Tile:new({name = 'Grass', color = {r=0,g=255,b=0}, block_sight = false, block_move = false, char = ' .', x = x, y = y})		
 				end

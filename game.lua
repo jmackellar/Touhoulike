@@ -70,6 +70,12 @@ ascii_effects = {}
 shop_window = false
 shop_items = { }
 
+help_open = false
+help_img = love.graphics.newImage("media/help.png")
+
+look_open = false
+look_cursor = { x = 25, y = 25 }
+
 player_equipment = {	head = nil,
 						torso = nil,
 						legs = nil,
@@ -121,6 +127,8 @@ function game:draw()
 	if skills_open then draw_skills() end
 	if feats_open then draw_feats() end
 	if feats_gain_open then draw_feats_gain() end
+	if help_open then draw_help() end
+	if look_open then draw_look() end
 
 	--- ascii effects draw
 	if # ascii_effects > 0 then
@@ -148,7 +156,7 @@ end
 function game:keypressed(key)
 
 	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
-		if not inventory_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
+		if not inventory_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
 			
 			--- keypad movement
 			if key == 'kp8' then player:move(0, -1) next_turn = true end
@@ -240,6 +248,42 @@ function game:keypressed(key)
 			if key then feats_open = false end
 		elseif feats_gain_open then	
 			feats_gain_key(key)
+		elseif help_open then
+			if key then help_open = false end
+			
+		elseif look_open then
+			--- keypad movement
+			if key == 'kp8' then look_cursor.y = look_cursor.y - 1 end
+			if key == 'kp2' then look_cursor.y = look_cursor.y + 1 end
+			if key == 'kp4' then look_cursor.x = look_cursor.x - 1 end
+			if key == 'kp6' then look_cursor.x = look_cursor.x + 1 end
+			if key == 'kp7' then look_cursor.y = look_cursor.y - 1 look_cursor.x = look_cursor.x - 1 end
+			if key == 'kp9' then look_cursor.y = look_cursor.y - 1 look_cursor.x = look_cursor.x + 1 end
+			if key == 'kp1' then look_cursor.y = look_cursor.y + 1 look_cursor.x = look_cursor.x - 1 end
+			if key == 'kp3' then look_cursor.y = look_cursor.y + 1 look_cursor.x = look_cursor.x + 1 end
+			--- vi keys
+			if key == 'k' then look_cursor.y = look_cursor.y - 1 end
+			if key == 'j' then look_cursor.y = look_cursor.y + 1 end
+			if key == 'h' then look_cursor.x = look_cursor.x - 1 end
+			if key == 'l' then look_cursor.x = look_cursor.x + 1 end
+			if key == 'y' then look_cursor.y = look_cursor.y - 1 look_cursor.x = look_cursor.x - 1 end
+			if key == 'u' then look_cursor.y = look_cursor.y - 1 look_cursor.x = look_cursor.x + 1 end
+			if key == 'b' then look_cursor.y = look_cursor.y + 1 look_cursor.x = look_cursor.x - 1 end
+			if key == 'n' then look_cursor.y = look_cursor.y + 1 look_cursor.x = look_cursor.x + 1 end
+			--- movement keys
+			if key == 'up' then look_cursor.y = look_cursor.y - 1 end
+			if key == 'down' then look_cursor.y = look_cursor.y + 1 end
+			if key == 'left' then look_cursor.x = look_cursor.x - 1 end
+			if key == 'right' then look_cursor.x = look_cursor.x + 1 end
+			--- exit key
+			if key == 'return' or key == 'escape' or key == 'kpenter' then
+				look_open = false
+			end
+			--- check to make sure cursor is within map
+			if look_cursor.x < 1 then look_cursor.x = 1 end
+			if look_cursor.y < 1 then look_cursor.y = 1 end
+			if look_cursor.x > map_width then look_cursor.x = map_width end
+			if look_cursor.y > map_height then look_cursor.y = map_height end
 			
 		elseif danmaku_dir then
 			if key == 'escape' or key == 'return' or key == 'kpenter' then danmaku_dir = false message_add("Never mind.") end
@@ -272,6 +316,14 @@ function game:update(dt)
 			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown(',') and map[player:get_x()][player:get_y()]:get_name() == 'UStairs'  then stair_machine('up') end
 			--- down for the overworld
 			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and level.name == 'Overworld' then overworld_down() end
+			--- open the help file
+			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('/') then help_open = true end
+			--- look key
+			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown(';') then 
+				look_open = true 
+				look_cursor.x = player:get_x()
+				look_cursor.y = player:get_y()
+			end
 		end
 	end
 	
@@ -1579,6 +1631,59 @@ function draw_feats_gain()
 			index = index + 1
 		end
 	end
+
+end
+
+function draw_look()
+	
+	local x = look_cursor.x
+	local y = look_cursor.y
+	local message = ""
+
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.rectangle('line', ascii_draw_point(look_cursor.x) - 2, ascii_draw_point(look_cursor.y) + 2, char_width, char_width)
+	
+	if map[x][y]:get_lit() then
+		--- tile char and name
+		message = message .. " " .. map[x][y]:get_char() .. "  -   "
+		message = message .. map[x][y]:get_name()
+		--- monster char and name
+		if map[x][y]:get_holding() then
+			message = message .. ",  " .. map[x][y]:get_holding():get_char()
+			message = message .. "  -   " .. map[x][y]:get_holding():get_name()
+		end
+		--- item char and name
+		if map[x][y]:get_items() then
+			message = message .. ",  " .. map[x][y]:get_items()[1]:get_char()
+			message = message .. "  -   " .. map[x][y]:get_items()[1]:get_pname()
+		end
+			
+	elseif not map[x][y]:get_lit() and map[x][y]:get_seen() then
+		message = message .. " " .. map[x][y]:get_char() .. "  -   "
+		message = message .. map[x][y]:get_name()
+	end
+	
+	love.graphics.print(message, 0, 0)
+
+end
+
+function draw_help()
+
+	local start_x = 0
+	local start_y = 0
+	local width = 650
+	local height = 471
+	local font = love.graphics.getFont()
+	local tw = 0
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', start_x, start_y, width, height)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
+	
+	love.graphics.print("Help File.  Press any key to close.", start_x + 4, start_y + 4)
+	
+	love.graphics.draw(help_img, start_x + 10, start_y + 30)
 
 end
 
@@ -2957,6 +3062,7 @@ function Creature:get_base_damage() return self.base_damage end
 function Creature:get_shop() return self.shop end
 function Creature:get_sell() return self.sell end
 function Creature:get_unique() return self.unique end
+function Creature:get_char() return self.char end
 	
 Item = Class('Item')
 function Item:initialize(arg)
@@ -3055,6 +3161,7 @@ function Item:get_afunc() return self.afunc end
 function Item:get_bullet() return self.bullet end
 function Item:get_weptype() return self.weptype end
 function Item:get_weight() return self.weight end
+function Item:get_char() return self.char end
 	
 Tile = Class('Tile')
 function Tile:initialize(arg)

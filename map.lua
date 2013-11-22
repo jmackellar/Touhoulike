@@ -1,4 +1,5 @@
 overworld_levels = {	{x = -1, y = -1, func = function (dir) end, name = 'Overworld', persist = true},
+						{x = -1, y = -1, func = function (dir) end, name = 'Eientei', persist = true},
 						{x = 41, y = 15, func = function (dir) map_hakurei_shrine('down') end, name = 'Hakurei Shrine', persist = true},
 						{x = 17, y = 13, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true},
 						{x = 24, y = 16, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true},
@@ -8,7 +9,7 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) end, name = 'Overwor
 						{x = 21, y = 8, func = function (dir) map_sdm(dir) end, name = 'Scarlet Devil Mansion', persist = true, mon_gen = 5},
 						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Forest', persist = false, mon_gen = 4},
 						{x = 21, y = 18, func = function (dir) map_kourindou(dir) end, name = 'Kourindou', persist = false},
-						{x = 24, y = 27, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = true},
+						{x = 24, y = 27, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = false},						
 					}
 
 function next_level(dir)
@@ -99,6 +100,11 @@ function map_eientei(dir)
 			chunk()
 			monster_maker(math.random(35,45))
 			item_maker(math.random(20,30))
+			--- Tewi Inaba
+			local tewi = game_monsters[8]
+			tewi['x'] = 10
+			tewi['y'] = 17
+			map[10][17]:set_holding(Creature:new(tewi))
 		end
 	elseif level.depth == 5 then
 		--- entrance
@@ -122,6 +128,11 @@ function map_eientei(dir)
 					placed = true
 				end
 			until placed
+			--- reisen u. inaba
+			local rei = game_monsters[9]
+			rei['x'] = 23
+			rei['y'] = 18
+			map[23][18]:set_holding(Creature:new(rei))
 		end
 	elseif level.depth == 6 then
 		--- random rogue level
@@ -133,7 +144,7 @@ function map_eientei(dir)
 			item_maker(math.random(20, 30))
 		end
 	elseif level.depth == 7 then
-		--- eirin
+		--- eirin's level
 		level.name = 'Eientei'
 		level_connection = {up = function (dir) map_eientei() end, down = function (dir) map_eientei(dir) end}
 		if not load_map() then
@@ -141,15 +152,25 @@ function map_eientei(dir)
 			chunk()
 			monster_maker(math.random(15, 20))
 			item_maker(math.random(5, 10))
-		end
+			--- eirin
+			local eir = game_monsters[10]
+			eir['x'] = 42
+			eir['y'] = 16
+			map[42][16]:set_holding(Creature:new(eir))
+		end		
 	elseif level.depth == 8 then
-		--- kaguya
+		--- kaguya's level
 		level.name = 'Eientei'
 		level_connection = {up = function (dir) map_eientei() end, down = function (dir) end}
 		if not load_map() then
 			local chunk = love.filesystem.load("map/eientei_kaguya.lua")
 			chunk()
-		end
+			--- kaguya
+			local kag = game_monsters[11]
+			kag['x'] = 23
+			kag['y'] = 15
+			map[23][15]:set_holding(Creature:new(kag))
+		end		
 	end
 	
 	place_player_on_stairs(dir)

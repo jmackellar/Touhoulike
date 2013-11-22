@@ -264,7 +264,7 @@ map[8][24] = Tile:new({block_move=true,x=8,block_sight=false,char=" .",color={r=
 map[8][25] = Tile:new({block_move=true,x=8,block_sight=false,char=" .",color={r=1,b=1,g=255},name="SolidGrass",y=25})
 map[8][26] = Tile:new({block_move=true,x=8,block_sight=false,char="-",color={r=140,b=231,g=245},name="Window",y=26})
 map[8][27] = Tile:new({block_move=false,x=8,block_sight=false,char=" .",color={r=255,b=255,g=255},name="Floor",y=27})
-map[8][28] = Tile:new({block_move=false,x=8,block_sight=false,char=" .",color={r=255,b=255,g=255},name="Floor",y=28})
+map[8][28] = Tile:new({block_move=false,x=8,block_sight=false,char=">",color={r=255,b=255,g=255},name="UStairs",y=28})
 map[8][29] = Tile:new({block_move=false,x=8,block_sight=false,char=" .",color={r=255,b=255,g=255},name="Floor",y=29})
 map[8][30] = Tile:new({block_move=false,x=8,block_sight=false,char=" .",color={r=255,b=255,g=255},name="Floor",y=30})
 map[8][31] = Tile:new({block_move=true,x=8,block_sight=true,char="-",color={r=255,b=255,g=255},name="EienteiWall",y=31})

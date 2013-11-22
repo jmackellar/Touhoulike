@@ -92,14 +92,50 @@ function map_eientei(dir)
 		item_maker(math.random(10,20))
 	elseif level.depth == 4 then
 		--- yard
-		if not load_map() then
-			level.name = 'Eientei'
-			level_connection = {up = function (dir) map_eientei() end, down = function (dir) map_eientei(dir) end}
+		level.name = 'Eientei'
+		level_connection = {up = function (dir) map_eientei() end, down = function (dir) map_eientei(dir) end}
+		if not load_map() then					
 			local chunk = love.filesystem.load('map/eientei_yard.lua')
 			chunk()
 			monster_maker(math.random(35,45))
 			item_maker(math.random(20,30))
 		end
+	elseif level.depth == 5 then
+		--- entrance
+		level.name = 'Eientei'
+		level_connection = {up = function (dir) map_eientei() end, down = function (dir) map_eientei(dir) end}
+		if not load_map() then
+			local chunk = love.filesystem.load('map/eientei_entrance.lua')
+			chunk()
+			monster_maker(math.random(35, 45))
+			item_maker(math.random(20, 30))
+			--- down stairs
+			local dice = math.random(1, 4)
+			local placed = false
+			local x = 0
+			local y = 0
+			repeat
+				x = math.random(1, map_width)
+				y = math.random(1, map_height)
+				if not map[x][y]:get_block_move() then
+					map[x][y] = Tile:new({name = 'DStairs', x = x, y = y})
+					placed = true
+				end
+			until placed
+		end
+	elseif level.depth == 6 then
+		--- random rogue level
+		level.name = 'Eientei'
+		level_connection = {up = function (dir) map_eientei() end, down = function (dir) map_eientei(dir) end}
+		if not load_map() then
+			map_gen_rogue(map_width, map_height, true, true, 'rogue')	
+			monster_maker(math.random(35, 45))
+			item_maker(math.random(20, 30))
+		end
+	elseif level.depth == 7 then
+		--- eirin
+	elseif level.depth == 8 then
+		--- kaguya
 	end
 	
 	place_player_on_stairs(dir)

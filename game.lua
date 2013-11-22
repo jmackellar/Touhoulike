@@ -2623,7 +2623,7 @@ function Creature:move(dx, dy)
 			map[self.x][self.y]:set_holding(nil)
 			self.x = new_x
 			self.y = new_y
-			
+
 			--- Tile messages and modifiers for when the player
 			--- walks over them, and also player FoV
 			if self == player then
@@ -2703,8 +2703,7 @@ function Creature:move(dx, dy)
 	
 	elseif map[new_x][new_y]:get_block_move() and map[new_x][new_y]:get_name() == "BambooShoot" then
 		if player_equipment.hand then
-			if player_equipment.hand:get_weptype() == 'axe' then
-				message_add("You chop down the bamboo shoot with your " .. player_equipment.hand:get_name() .. ".")				
+			if player_equipment.hand:get_weptype() == 'axe' then		
 				map[new_x][new_y] = Tile:new({name = 'Floor', x = new_x, y = new_y})
 				player_fov()
 				map_back_canvas_update(new_x, new_y)

@@ -150,6 +150,7 @@ function game:keypressed(key)
 	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
 		if not inventory_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
 			
+			--- keypad movement
 			if key == 'kp8' then player:move(0, -1) next_turn = true end
 			if key == 'kp2' then player:move(0, 1) next_turn = true end
 			if key == 'kp4' then player:move(-1, 0) next_turn = true end
@@ -159,6 +160,21 @@ function game:keypressed(key)
 			if key == 'kp1' then player:move(-1, 1) next_turn = true end
 			if key == 'kp3' then player:move(1, 1) next_turn = true end
 			if key == 'kp5' then next_turn = true end
+			--- vi keys movement
+			if key == 'k' then player:move(0, -1) next_turn = true end
+			if key == 'j' then player:move(0, 1) next_turn = true end
+			if key == 'h' then player:move(-1, 0) next_turn = true end
+			if key == 'l' then player:move(1, 0) next_turn = true end
+			if key == 'y' then player:move(-1, -1) next_turn = true end
+			if key == 'u' then player:move(1, -1) next_turn = true end
+			if key == 'b' then player:move(-1, 1) next_turn = true end
+			if key == 'n' then player:move(1, 1) next_turn = true end
+			if key == '.' then next_turn = true end
+			--- arrow key movement (for whatever retards actually use these)
+			if key == 'up' then player:move(0, -1) next_turn = true end
+			if key == 'down' then player:move(0, 1) next_turn = true end
+			if key == 'left' then player:move(-1, 0) next_turn = true end
+			if key == 'right' then player:move(1, 0) next_turn = true end
 			
 			if key == '-' or key == 'kp-' then player_stance = player_stance - 1 end
 			if key == '+' or key == 'kp+' then player_stance = player_stance + 1 end
@@ -183,8 +199,8 @@ function game:keypressed(key)
 				if key == 'c' then spells_open = true end
 				if key == 'u' then map_use_tile() end	
 				
-				if key == 'm' then skills_open = true end
-				if key == 'n' then feats_open = true end
+				if key == 'x' then skills_open = true end
+				if key == 'z' then feats_open = true end
 
 				if key == 'f' then danmaku_dir = true message_add("Fire danmaku in which direction? ESC to cancel.") end
 			end

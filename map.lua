@@ -134,8 +134,22 @@ function map_eientei(dir)
 		end
 	elseif level.depth == 7 then
 		--- eirin
+		level.name = 'Eientei'
+		level_connection = {up = function (dir) map_eientei() end, down = function (dir) map_eientei(dir) end}
+		if not load_map() then
+			local chunk = love.filesystem.load("map/eientei_eirin.lua")
+			chunk()
+			monster_maker(math.random(15, 20))
+			item_maker(math.random(5, 10))
+		end
 	elseif level.depth == 8 then
 		--- kaguya
+		level.name = 'Eientei'
+		level_connection = {up = function (dir) map_eientei() end, down = function (dir) end}
+		if not load_map() then
+			local chunk = love.filesystem.load("map/eientei_kaguya.lua")
+			chunk()
+		end
 	end
 	
 	place_player_on_stairs(dir)

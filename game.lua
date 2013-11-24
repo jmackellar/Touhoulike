@@ -1143,13 +1143,65 @@ end
 
 function take_turns()
 
+	local mons_moved = {}
+
 	for x = 1, map_width do
 		for y = 1, map_height do
-			if map[x][y]:get_holding() then
-				map[x][y]:get_holding():ai_take_turn()
+		
+			if map[x][y]:get_holding() and map[x][y]:get_holding() ~= player then
+			
+				local move = true
+				for i = 1, # mons_moved do
+					if mons_moved[i] == map[x][y]:get_holding() then
+						move = false
+					end
+				end
+				
+				if move then 
+				
+					local moves = math.floor( (player:get_speed() - player_stats.dex - player_mod_get('speed')) / map[x][y]:get_holding():get_speed() )
+					local xx = x
+					local yy = y
+					local returned = {}
+					print(map[xx][yy]:get_holding():get_name(), moves)
+					
+					if moves < 1 then moves = 1 end
+					
+					for i = 1, moves do
+					
+						if map[xx][yy]:get_holding():get_turn_cd() < 1 then
+							returned = map[xx][yy]:get_holding():ai_take_turn(true)
+							xx = returned.x
+							yy = returned.y
+							map[xx][yy]:get_holding():set_turn_cd(0)
+							
+							--- slow monsters
+							if map[xx][yy]:get_holding():get_speed() > (player:get_speed() - player_stats.dex - player_mod_get('speed')) then
+								local turn_cd = math.ceil(map[xx][yy]:get_holding():get_speed() / (player:get_speed() - player_stats.dex - player_mod_get('speed')))
+								if turn_cd < 1 then turn_cd = 1 end
+								print(map[xx][yy]:get_holding():get_name() .. "Turn Cd Calculation:", (player:get_speed() - player_stats.dex - player_mod_get('speed')), map[xx][yy]:get_holding():get_speed())
+								print("Turn Cd:" .. turn_cd)
+								map[xx][yy]:get_holding():set_turn_cd(turn_cd)
+							end
+							
+						else
+							map[xx][yy]:get_holding():set_turn_cd(map[xx][yy]:get_holding():get_turn_cd() - 1)
+						end					
+						
+					end
+					
+					table.insert(mons_moved, map[xx][yy]:get_holding())
+				
+				end
+							
+				
 			end
+			
 		end
 	end
+	
+	player:ai_take_turn()
+	player:set_turn_cd(0)
 
 end
 
@@ -2372,13 +2424,14 @@ function Creature:initialize(arg)
 	
 end
 
-function Creature:ai_take_turn()
+function Creature:ai_take_turn(moved)
 
 	self.turn_cd = self.turn_cd - 1
 	self.hp_regen_timer = self.hp_regen_timer - 1
 	self.mana_regen_timer = self.mana_regen_timer - 1
 	self.food_tick = self.food_tick - 1
-	if self.turn_cd < 1 then
+	
+	if self.turn_cd < 1 or moved then
 		self.turn_cd = self.speed
 		if self == player then 
 			--- dex speed changes
@@ -2411,6 +2464,7 @@ function Creature:ai_take_turn()
 			
 		end
 	end
+	
 	if self.hp_regen_timer < 1 and self == player then
 		self.hp_regen_timer = self.hp_regen - player_stats.con
 		self.hp_cur = self.hp_cur + math.ceil(player_stats.con / 3)
@@ -2436,6 +2490,8 @@ function Creature:ai_take_turn()
 			end
 		end
 	end
+	
+	return {x = self.x, y = self.y}
 
 end
 
@@ -3047,6 +3103,7 @@ end
 
 function Creature:set_x(num) self.x = num end
 function Creature:set_y(num) self.y = num end
+function Creature:set_turn_cd(num) self.turn_cd = num end
 
 function Creature:get_team() return self.team end
 function Creature:get_name() return self.name end

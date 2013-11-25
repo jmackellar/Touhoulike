@@ -100,7 +100,13 @@ world_see_distance = 8
 alphabet = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'}
 game_font = love.graphics.newFont("media/coolvetica.ttf", 14)
 
+intro_open = false
+
 function game:enter()
+	
+	if not love.filesystem.exists("player.lua") then
+		intro_open = true
+	end
 	
 	player = Creature:new(game_characters[1].stats)
 	starting_inventory()
@@ -129,6 +135,7 @@ function game:draw()
 	if feats_gain_open then draw_feats_gain() end
 	if help_open then draw_help() end
 	if look_open then draw_look() end
+	if intro_open then draw_intro() end
 
 	--- ascii effects draw
 	if # ascii_effects > 0 then
@@ -156,7 +163,7 @@ end
 function game:keypressed(key)
 
 	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
-		if not inventory_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
+		if not inventory_open and not intro_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
 			
 			--- keypad movement
 			if key == 'kp8' then player:move(0, -1) next_turn = true end
@@ -250,6 +257,8 @@ function game:keypressed(key)
 			feats_gain_key(key)
 		elseif help_open then
 			if key then help_open = false end
+		elseif intro_open then
+			if key then intro_open = false end
 			
 		elseif look_open then
 			--- keypad movement
@@ -309,7 +318,7 @@ function game:update(dt)
 	stair_cd = stair_cd - 1
 	player_move_cd = player_move_cd - 1
 	
-	if not inventory_open and not feats_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
+	if not inventory_open and not intro_open and not feats_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
 		if player:get_turn_cd() <= 1 and player_move_cd < 1 and stair_cd <= 1 and not danmaku and # ascii_effects == 0 then
 			--- up and down stairs in levels
 			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and map[player:get_x()][player:get_y()]:get_name() == 'DStairs' then stair_machine('down') end
@@ -1673,6 +1682,29 @@ function player_mod_get(get)
 	end
 	return amount
 
+end
+
+function draw_intro()
+
+	local start_x = 0
+	local start_y = 0
+	local width = 325
+	local height = 265
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', start_x, start_y, width, height)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
+	
+	local text1 = 'From the northwest, out of an eerie cave, a strange wind blows.  The Jaaku Wind, capable of corrupting the minds of all living creatures, has quickly spread across Gensokyo.'
+	local text2 = '  The Jaaku Wind for the most part only affects Youkai, however, humans who spend a considerable amount of time around Youkai may also be at risk.  '
+	local text3 = '  Being born as a devout exterminator and keeper of the peace, it is your sworn duty to destroy the source of the Jaaku Wind as it flows from the eerie cave.'
+	local text4 = '\n\n Go now exterminator, and save the lands of Gensokyo from certain destruction.'
+	
+	local text = text1 .. text2 .. text3 .. text4 .. '\n\n Press any key to continue...'
+	
+	love.graphics.printf(text, start_x + 4, start_y + 3, width - 4, 'left')
+	
 end
 
 function draw_feats_gain()

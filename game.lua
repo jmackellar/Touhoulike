@@ -45,8 +45,8 @@ player_feats = {	{name = 'Stick Proficiency', desc = 'Increases damage done by a
 					{name = 'Axe Proficiency', desc = 'Increases damage done by all axe weapons by 5%', have = false, axe = 1.05},
 					{name = 'Athletics', desc = 'Increases speed once and strength and dexterity on levelup', have = false, speed = 1, athletics = 5},
 					{name = 'Iron Skin', desc = 'Decreases damage recieved from all sources by 5%', have = false, damred = 0.95},
-					{name = 'First Aid', desc = 'Regenerates hit points at a faster rate', have = false, hpregen = 25},
-					{name = 'Mana Battery', desc = 'Regenerates mana at a faster rate', have = false, manaregen = 25},
+					{name = 'First Aid', desc = 'Regenerates hit points at a faster rate', have = false, hpregen = 30},
+					{name = 'Mana Battery', desc = 'Regenerates mana at a faster rate', have = false, manaregen = 15},
 					}
 	
 player_spells = { }
@@ -1177,38 +1177,8 @@ function take_turns()
 				
 				if move then 
 				
-					local moves = math.floor( (player:get_speed() - player_stats.dex - player_mod_get('speed')) / map[x][y]:get_holding():get_speed() )
-					local xx = x
-					local yy = y
-					local returned = {}
-					print(map[xx][yy]:get_holding():get_name(), moves)
-					
-					if moves < 1 then moves = 1 end
-					
-					for i = 1, moves do
-					
-						if map[xx][yy]:get_holding():get_turn_cd() < 1 then
-							returned = map[xx][yy]:get_holding():ai_take_turn(true)
-							xx = returned.x
-							yy = returned.y
-							map[xx][yy]:get_holding():set_turn_cd(0)
-							
-							--- slow monsters
-							if map[xx][yy]:get_holding():get_speed() > (player:get_speed() - player_stats.dex - player_mod_get('speed')) then
-								local turn_cd = math.ceil(map[xx][yy]:get_holding():get_speed() / (player:get_speed() - player_stats.dex - player_mod_get('speed')))
-								if turn_cd < 1 then turn_cd = 1 end
-								print(map[xx][yy]:get_holding():get_name() .. "Turn Cd Calculation:", (player:get_speed() - player_stats.dex - player_mod_get('speed')), map[xx][yy]:get_holding():get_speed())
-								print("Turn Cd:" .. turn_cd)
-								map[xx][yy]:get_holding():set_turn_cd(turn_cd)
-							end
-							
-						else
-							map[xx][yy]:get_holding():set_turn_cd(map[xx][yy]:get_holding():get_turn_cd() - 1)
-						end					
-						
-					end
-					
-					table.insert(mons_moved, map[xx][yy]:get_holding())
+					table.insert(mons_moved, map[x][y]:get_holding())
+					map[x][y]:get_holding():ai_take_turn()
 				
 				end
 							
@@ -2485,7 +2455,7 @@ function Creature:initialize(arg)
 	self.speed = arg.speed or 10
 	self.shop = arg.shop or false
 	self.sell = arg.sell or false
-	self.turn_cd = arg.turn_cd or 0
+	self.turn_cd = arg.turn_cd or 1
 	self.x = arg.x or 1
 	self.y = arg.y or 1
 	self.team = arg.team or 1
@@ -2508,38 +2478,41 @@ function Creature:ai_take_turn(moved)
 	self.food_tick = self.food_tick - 1
 	
 	if self.turn_cd < 1 or moved then
-		self.turn_cd = self.speed
-		if self == player then 
-			--- dex speed changes
-			self.turn_cd = self.speed - player_stats.dex - player_mod_get('speed') 
-			--- stance speed changes (removed)
-			if player_stance == 1 then self.turn_cd = self.turn_cd + 0 end
-			if player_stance == 2 then self.turn_cd = self.turn_cd + 0 end
-			if player_stance == 4 then self.turn_cd = self.turn_cd - 0 end
-			if player_stance == 5 then self.turn_cd = self.turn_cd - 0 end
-			--- encumbrance speed changes
-			self.turn_cd = self.turn_cd + player_encumbrance * 3
-			--- feat speed changes
-			self.turn_cd = self.turn_cd - player_feat_search('speed')
-			
-			--- feat hp regen
-			self.hp_regen_timer = self.hp_regen_timer - player_feat_search('hpregen')
-			--- feat mana regen
-			self.mana_regen_timer = self.mana_regen_timer - player_feat_search('manaregen')
-		end
-		if self.name ~= "Player" then
-		
-			--- enemy ai
-			if self.ai == 'wander' then
-				Creature.ai_wander(self)
-			elseif self.ai == 'normal' then
-				Creature.ai_normal(self)
-			elseif self.ai == 'ranged' then
-				Creature.ai_ranged(self)
-			elseif self.ai == 'melee' then
-				Creature.ai_melee(self)
+		for i = self.turn_cd, 0 do
+			self.turn_cd = self.speed
+			if self == player then 
+				--- speed changes
+				self.turn_cd = self.speed - player_stats.dex - player_mod_get('speed') - player_feat_search('speed')
+				--- stance speed changes (removed)
+				if player_stance == 1 then self.turn_cd = self.turn_cd + 0 end
+				if player_stance == 2 then self.turn_cd = self.turn_cd + 0 end
+				if player_stance == 4 then self.turn_cd = self.turn_cd - 0 end
+				if player_stance == 5 then self.turn_cd = self.turn_cd - 0 end
+				--- encumbrance speed changes
+				self.turn_cd = self.turn_cd + player_encumbrance * 3
+				
+				--- feat hp regen
+				self.hp_regen_timer = self.hp_regen_timer - player_feat_search('hpregen')
+				--- feat mana regen
+				self.mana_regen_timer = self.mana_regen_timer - player_feat_search('manaregen')
 			end
+			if self.name ~= "Player" then
 			
+				--- enemy speed
+				self.turn_cd = self.speed + ((player:get_speed() - player_stats.dex - player_mod_get('speed') - player_feat_search('speed')) * -1)
+			
+				--- enemy ai
+				if self.ai == 'wander' then
+					Creature.ai_wander(self)
+				elseif self.ai == 'normal' then
+					Creature.ai_normal(self)
+				elseif self.ai == 'ranged' then
+					Creature.ai_ranged(self)
+				elseif self.ai == 'melee' then
+					Creature.ai_melee(self)
+				end
+				
+			end
 		end
 	end
 	

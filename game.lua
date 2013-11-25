@@ -101,6 +101,7 @@ alphabet = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'
 game_font = love.graphics.newFont("media/coolvetica.ttf", 14)
 
 intro_open = false
+player_dead = false
 
 function game:enter()
 	
@@ -136,6 +137,15 @@ function game:draw()
 	if help_open then draw_help() end
 	if look_open then draw_look() end
 	if intro_open then draw_intro() end
+	
+	--- player dead drawing
+	if player_dead then
+		love.graphics.setColor(0, 0, 0, 255)
+		love.graphics.rectangle('fill', ascii_draw_point(player:get_x()), ascii_draw_point(player:get_y()), char_width, char_width)
+		love.graphics.setColor(255, 0, 0, 255)
+		love.graphics.print('@', ascii_draw_point(player:get_x()), ascii_draw_point(player:get_y()))
+		love.graphics.setColor(255, 255, 255, 255)
+	end
 
 	--- ascii effects draw
 	if # ascii_effects > 0 then
@@ -163,7 +173,7 @@ end
 function game:keypressed(key)
 
 	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
-		if not inventory_open and not intro_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
+		if not inventory_open and not player_dead and not intro_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
 			
 			--- keypad movement
 			if key == 'kp8' then player:move(0, -1) next_turn = true end
@@ -259,6 +269,8 @@ function game:keypressed(key)
 			if key then help_open = false end
 		elseif intro_open then
 			if key then intro_open = false end
+		elseif player_dead then
+			if key == 'return' or key == 'escape' or key == 'kpenter' then love.event.push('quit') end
 			
 		elseif look_open then
 			--- keypad movement
@@ -318,7 +330,7 @@ function game:update(dt)
 	stair_cd = stair_cd - 1
 	player_move_cd = player_move_cd - 1
 	
-	if not inventory_open and not intro_open and not feats_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
+	if not inventory_open and not player_dead and not intro_open and not feats_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
 		if player:get_turn_cd() <= 1 and player_move_cd < 1 and stair_cd <= 1 and not danmaku and # ascii_effects == 0 then
 			--- up and down stairs in levels
 			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and map[player:get_x()][player:get_y()]:get_name() == 'DStairs' then stair_machine('down') end
@@ -1141,7 +1153,7 @@ end
 
 function turn_machine()
 
-	if next_turn then
+	if next_turn and not player_dead then
 		take_turns()	
 		world_time_machine()	
 		mon_gen_machine()
@@ -1179,6 +1191,7 @@ function take_turns()
 				
 					table.insert(mons_moved, map[x][y]:get_holding())
 					map[x][y]:get_holding():ai_take_turn()
+					if player_dead then return end
 				
 				end
 							
@@ -2479,6 +2492,10 @@ function Creature:ai_take_turn(moved)
 	
 	if self.turn_cd < 1 or moved then
 		for i = self.turn_cd, 0 do
+			
+			--- check if the player is still alive before moving any more monsters
+			if player_dead then return end
+		
 			self.turn_cd = self.speed
 			if self == player then 
 				--- speed changes
@@ -2881,7 +2898,7 @@ function Creature:move(dx, dy)
 						message_add("A field")
 					end
 					
-					if map[self.x][self.y]:get_char() ~= 'O' then
+					if map[self.x][self.y]:get_char() ~= 'O' and map[self.x][self.y]:get_char() ~= ' .' then
 						if math.random(1000) <= 10 then
 							map_random_overworld_encounter()
 							message_add("You've been ambushed while traveling!")
@@ -3097,6 +3114,14 @@ function Creature:take_dam(dam, dtype, name)
 		if self ~= player then 
 			message_add("You killed the " .. self.name .. ".") 
 			monster_corpse_check(self)
+		else
+			--- player dead, delete all save files
+			player_dead = true
+			message_add("You die...")
+			local files = love.filesystem.enumerate("")
+			for k, file in ipairs(files) do	
+				love.filesystem.remove(file)
+			end
 		end
 		map[self.x][self.y]:set_holding(nil)
 		player_exp = player_exp + self.exp

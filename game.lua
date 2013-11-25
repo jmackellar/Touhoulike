@@ -48,9 +48,7 @@ player_feats = {	{name = 'Stick Proficiency', desc = 'Increases damage done by a
 					{name = 'First Aid', desc = 'Regenerates hit points at a faster rate', have = false, hpregen = 15},
 					}
 	
-player_spells = {	{name = 'Omamori of Health', mp_cost = 75, func = function () player:heal(35) end},
-					{name = 'Ofuda of Protection', mp_cost = 50, func = function () add_modifier({name = 'Protection', turn = 60, armor = 5}) end},
-				}
+player_spells = { }
 player_spells_learn = {}
 spells_open = false
 
@@ -205,7 +203,7 @@ function game:keypressed(key)
 				if key == 'a' then inventory_open = true inventory_action = 'apply' sort_player_inventory() end
 				
 				if key == 'c' then spells_open = true end
-				if key == 'u' then map_use_tile() end	
+				if key == 'v' then map_use_tile() end	
 				
 				if key == 'x' then skills_open = true end
 				if key == 'z' then feats_open = true end
@@ -2809,6 +2807,8 @@ function Creature:move(dx, dy)
 						message_add("There is a pot for cooking here.")
 					elseif map[self.x][self.y]:get_name() == 'Donation Box' then
 						message_add("There is a Donation Box here.")
+					elseif map[self.x][self.y]:get_name() == 'KeyStone' then
+						message_add("There is a stone with a key slot set into it here.")
 					end
 				--- overworld square messages
 				elseif level.name == 'Overworld' then

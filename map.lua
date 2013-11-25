@@ -1,15 +1,16 @@
 overworld_levels = {	{x = -1, y = -1, func = function (dir) end, name = 'Overworld', persist = true},
 						{x = -1, y = -1, func = function (dir) end, name = 'Eientei', persist = true},
 						{x = 41, y = 15, func = function (dir) map_hakurei_shrine('down') end, name = 'Hakurei Shrine', persist = true},
-						{x = 17, y = 13, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true},
-						{x = 24, y = 16, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true},
+						{x = 17, y = 11, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true},
+						{x = 25, y = 15, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true},
 						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Dungeon', persist = true, mon_gen = 1},
 						{x = 22, y = 20, func = function (dir) map_human_village(dir) end, name = 'Human Village', persist = false},
 						{x = 43, y = 15, func = function (dir) map_easy_cavern(dir) end, name = 'Easy Cavern', persist = true, mon_gen = 1},
 						{x = 21, y = 8, func = function (dir) map_sdm(dir) end, name = 'Scarlet Devil Mansion', persist = true, mon_gen = 5},
 						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Forest', persist = false, mon_gen = 4},
 						{x = 21, y = 18, func = function (dir) map_kourindou(dir) end, name = 'Kourindou', persist = false},
-						{x = 24, y = 27, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = false},						
+						{x = 24, y = 27, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = false},	
+						{x = 35, y = 9, func = function (dir) map_makai_entrance(dir) end, name = 'Eerie Cave', persist = true},
 					}
 
 function next_level(dir)
@@ -39,9 +40,9 @@ function map_overworld(dir)
 	if prev_level == 'Hakurei Shrine' then
 		map_new_place_player(41, 15)
 	elseif prev_level == 'Marisa Kirisame\'s house' then
-		map_new_place_player(17, 13)
+		map_new_place_player(17, 11)
 	elseif prev_level == 'Alice Margatroid\'s house' then
-		map_new_place_player(24, 16)
+		map_new_place_player(25, 15)
 	elseif prev_level == 'Easy Dungeon' then
 		map_new_place_player(39, 13)
 	elseif prev_level == 'Human Village' then
@@ -54,12 +55,42 @@ function map_overworld(dir)
 		map_new_place_player(39, 24)
 	elseif prev_level == 'Kourindou' then
 		map_new_place_player(21, 18)
-	elseif prev_level == 'Bamboo Forest' then
+	elseif prev_level == 'Bamboo Forest' or prev_level == 'Eientei' then
 		map_new_place_player(24, 27)
+	elseif prev_level == 'Eerie Cave' then
+		map_new_place_player(35, 9)
 	else
 		map_new_place_player(23, 23)
 	end
 		
+end
+
+function map_makai_entrance(dir)
+
+	if level.name == 'Eerie Cave' or level.name == 'Makai Entrance' then
+		if dir == 'down' then
+			level.depth = level.depth + 1
+		elseif dir == 'up' then
+			level.depth = level.depth - 1
+		end
+	else
+		level.depth = 1
+	end
+	
+	level.name = 'Eerie Cave'
+	level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) map_makai_entrance(dir) end}
+	
+	if level.depth == 1 then
+		level.name = 'Eerie Cave'
+		level.connection = {up = function (dir) map_overworld(dir) end, down = function (dir) end}
+		if not load_map() then
+			local chunk = love.filesystem.load('map/makai_entrance.lua')
+			chunk()
+		end
+	end
+	
+	place_player_on_stairs(dir)
+
 end
 
 function map_eientei(dir)
@@ -1309,7 +1340,7 @@ function monster_maker(num)
 		local x = math.random(2, map_width-1)
 		local y = math.random(2, map_height-1)
 		
-		if not map[x][y]:get_block_move() then
+		if not map[x][y]:get_block_move() and map[x][y]:get_char() ~= '>' and map[x][y]:get_char() ~= '<' then
 			local monster = map_random_monster(player_level)
 			monster['x'] = x
 			monster['y'] = y
@@ -1453,6 +1484,9 @@ function map_use_tile()
 		elseif player_gold < 50 then
 			message_add("You don't have enough money to put in the donation box.")
 		end
+		
+	elseif map[player:get_x()][player:get_y()]:get_name() == 'KeyStone' then
+		message_add("You don't have the key that fits into this stone.")
 		
 	end
 

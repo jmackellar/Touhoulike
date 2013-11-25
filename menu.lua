@@ -23,6 +23,11 @@ function menu:enter()
 	state = 'enter'
 	choice = ''
 	feats_chosen = 0
+	
+	if love.filesystem.exists("player.lua") then
+		option = 2
+	end
+	
 end
 
 function menu:draw()

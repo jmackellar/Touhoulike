@@ -45,7 +45,8 @@ player_feats = {	{name = 'Stick Proficiency', desc = 'Increases damage done by a
 					{name = 'Axe Proficiency', desc = 'Increases damage done by all axe weapons by 5%', have = false, axe = 1.05},
 					{name = 'Athletics', desc = 'Increases speed once and strength and dexterity on levelup', have = false, speed = 1, athletics = 5},
 					{name = 'Iron Skin', desc = 'Decreases damage recieved from all sources by 5%', have = false, damred = 0.95},
-					{name = 'First Aid', desc = 'Regenerates hit points at a faster rate', have = false, hpregen = 15},
+					{name = 'First Aid', desc = 'Regenerates hit points at a faster rate', have = false, hpregen = 25},
+					{name = 'Mana Battery', desc = 'Regenerates mana at a faster rate', have = false, manaregen = 25},
 					}
 	
 player_spells = { }
@@ -100,10 +101,11 @@ alphabet = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n'
 game_font = love.graphics.newFont("media/coolvetica.ttf", 14)
 
 function game:enter()
-		
+	
+	player = Creature:new(game_characters[1].stats)
 	starting_inventory()
-	setup_character()
 	map_hakurei_shrine('up')
+	setup_character()
 	map_back_canvas_draw()
 	path_to_player = dijkstra_map(player:get_x(), player:get_y())
 	player_fov()
@@ -316,6 +318,13 @@ function game:update(dt)
 			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and level.name == 'Overworld' then overworld_down() end
 			--- open the help file
 			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('/') then help_open = true end
+			--- save the game
+			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('s') then
+				love.graphics.setCaption('SAVING....')
+				save_map_check()
+				save_player()
+				love.graphics.setCaption('TouhouLike')
+			end
 			--- look key
 			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown(';') then 
 				look_open = true 
@@ -703,7 +712,9 @@ function eat_key(key)
 			if player_food.level < 300 then text = text .. "  You still need more food."
 			elseif player_food.level < 500 then text = text .. "  You could eat much more." 
 			elseif player_food.level < 750 then text = text .. "  That really hit the spot."
-			elseif player_food.level < 1000 then text = text .. "  You feel bloated." end
+			elseif player_food.level < 850 then text = text .. "  You feel bloated." 
+			elseif player_food.level < 1000 then text = text .. "  You have a hard time swallowing." end
+			if player_inventory[i].item:get_corpse() then text = text .. "  That " .. player_inventory[i].item:get_corpse() .. " was disgusting." end
 			message_add(text)
 			
 			inventory_open = false
@@ -1329,6 +1340,17 @@ function save_player()
 	text = text .. "player_exp = " .. player_exp .. "\n"
 	--- gold
 	text = text .. "player_gold = " .. player_gold .. "\n"
+	--- hp and mana levels
+	text = text .. "player_hp_mana = { hp_max = " .. player:get_hp_max() .. ", "
+	text = text .. "hp_cur = " .. player:get_hp_cur() .. ", "
+	text = text .. "mana_max = " .. player:get_mana_max() .. ", "
+	text = text .. "mana_cur = " .. player:get_mana_cur() .. ", }\n"
+	--- dungeon level
+	text = text .. "level = { name = \'" .. level.name .. "\', "
+	text = text .. "depth = " .. level.depth .. ", }\n"
+	--- x and y coords
+	text = text .. "player_coords = { x = " .. player:get_x() .. ", "
+	text = text .. "y = " .. player:get_y() .. ", }\n"
 	
 	love.filesystem.write("player.lua", text)
 	
@@ -2298,6 +2320,29 @@ function draw_inventory()
 
 end
 
+function monster_corpse_check(mon)
+
+	if mon:get_corpse() then
+		for i = 1, # game_items do
+			if game_items[i].corpse == mon:get_corpse() then
+				if math.random(1, 100) <= 35 then
+				
+					--- drop corpse
+					local items = {}
+					if map[mon:get_x()][mon:get_y()]:get_items() then
+						items = map[mon:get_x()][mon:get_y()]:get_items()
+					end
+					table.insert(items, Item:new(game_items[i]))
+					map[mon:get_x()][mon:get_y()]:set_items(items)
+					break
+					
+				end
+			end
+		end
+	end
+
+end
+
 function player_held_weight()
 
 	local weight = 0
@@ -2418,6 +2463,7 @@ function Creature:initialize(arg)
 	self.seen_player_cd = 10
 	self.exp = arg.exp or 10
 	self.unique = arg.unique or false
+	self.corpse = arg.corpse or false
 	self.color = arg.color or function () love.graphics.setColor(255, 255, 255, 255) end
 	
 end
@@ -2446,6 +2492,8 @@ function Creature:ai_take_turn(moved)
 			
 			--- feat hp regen
 			self.hp_regen_timer = self.hp_regen_timer - player_feat_search('hpregen')
+			--- feat mana regen
+			self.mana_regen_timer = self.mana_regen_timer - player_feat_search('manaregen')
 		end
 		if self.name ~= "Player" then
 		
@@ -3029,7 +3077,10 @@ function Creature:take_dam(dam, dtype, name)
 	end
 	
 	if self.hp_cur < 1 then
-		if self ~= player then message_add("You killed the " .. self.name .. ".") end
+		if self ~= player then 
+			message_add("You killed the " .. self.name .. ".") 
+			monster_corpse_check(self)
+		end
 		map[self.x][self.y]:set_holding(nil)
 		player_exp = player_exp + self.exp
 	end
@@ -3104,6 +3155,10 @@ end
 function Creature:set_x(num) self.x = num end
 function Creature:set_y(num) self.y = num end
 function Creature:set_turn_cd(num) self.turn_cd = num end
+function Creature:set_hp_max(amnt) self.hp_max = amnt end
+function Creature:set_hp_cur(amnt) self.hp_cur = amnt end
+function Creature:set_mana_max(amnt) self.mana_max = amnt end
+function Creature:set_mana_cur(amnt) self.mana_cur = amnt end
 
 function Creature:get_team() return self.team end
 function Creature:get_name() return self.name end
@@ -3120,6 +3175,7 @@ function Creature:get_shop() return self.shop end
 function Creature:get_sell() return self.sell end
 function Creature:get_unique() return self.unique end
 function Creature:get_char() return self.char end
+function Creature:get_corpse() return self.corpse end
 	
 Item = Class('Item')
 function Item:initialize(arg)
@@ -3150,6 +3206,7 @@ function Item:initialize(arg)
 	self.message = arg.message or "DNE"
 	self.char = arg.char or ' ;'
 	self.gold = arg.gold or false
+	self.corpse = self.corpse or false
 	self.color = arg.color or function () love.graphics.setColor(186, 140, 93, 255) end
 	if arg.self then self = arg.self end
 	
@@ -3219,6 +3276,7 @@ function Item:get_bullet() return self.bullet end
 function Item:get_weptype() return self.weptype end
 function Item:get_weight() return self.weight end
 function Item:get_char() return self.char end
+function Item:get_corpse() return self.corpse end
 	
 Tile = Class('Tile')
 function Tile:initialize(arg)
@@ -3326,6 +3384,36 @@ function map_setup(width, height)
 	
 end
 
+function load_coords_map()
+
+	map_setup(map_width, map_height)
+
+	for i = 1, # overworld_levels do
+		print(overworld_levels[i].name)
+		if level.name == overworld_levels[i].name then
+			level.depth = level.depth - 1
+			overworld_levels[i].func('down')
+			map[player:get_x()][player:get_y()]:set_holding(nil)
+			map_new_place_player(player_coords.x, player_coords.y)
+			return
+		end
+	end
+	
+	--- default, in case we couldn't find the real load location
+	map_hakurei_shrine('up')
+	map_back_canvas_draw()
+
+end
+
+function load_hp_mana()
+
+	player:set_hp_max(player_hp_mana.hp_max)
+	player:set_hp_cur(player_hp_mana.hp_cur)
+	player:set_mana_max(player_hp_mana.mana_max)
+	player:set_mana_cur(player_hp_mana.mana_cur)
+
+end
+
 function load_feats()
 
 	for i = 1, # player_feats_load do
@@ -3348,9 +3436,13 @@ function setup_character()
 			player_spells = game_characters[i].starting_spells
 			player_spells_learn = game_characters[i].player_spells_learn
 			player_feats_load = {}
+			player_hp_mana = {hp_max = game_characters[i].stats.hp_max, hp_cur = game_characters[i].stats.hp_max, mana_max = game_characters[i].stats.mana_max, mana_cur = game_characters[i].stats.mana_max}
+			player_coords = { x = player:get_x(), y = player:get_y() }
 			--- if a player file exists then load it!
 			load_player()
 			load_feats()
+			load_hp_mana()
+			load_coords_map()
 		end
 	end
 

@@ -13,6 +13,11 @@ game_items = {	--- items never randomly generated
 				{name = 'Game Boy', apply = true, afunc = function () end, weight = 0, message = "You activate the doomsday device...", char = '(', prob = 0},
 				{name = 'Purification Rod', slot = 'hand', weptype = 'shinto', weight = 4, damage = 15, char = ')', prob = 0, bullet = 1},
 				{name = 'Hatchet', slot = 'hand', weptype = 'axe', weight = 8, damage = 5, char = ')', prob = 0},
+				--- corpses
+				{name = 'Fairy Corpse', edible = true, nutrition = 10, corpse = 'fairy', weight = 25, char = '%', prob = 0},
+				{name = 'Bug Corpse', edible = true, nutrition = 5, corpse = 'bug', weight = 2, char = '%', prob = 0},
+				{name = 'Oni Corpse', edible = true, nutrition = 25, corpse = 'oni', weight = 30, char = '%', prob = 0},
+				{name = 'Rabbit Corpse', edible = true, nutrition = 25, corpse = 'rabbit', weight = 15, char = '%', prob = 0},
 				--- items randomly generated
 				{name = 'Miko Outfit', slot = 'torso', armor = 2, weight = 5, char = ']', prob = 20},
 				{name = 'Scroll of Enlightenment', reads = true, scroll = true, pname = 'Unknown Golden Scroll', char = '?', prob = 28, affect = function() enlightenment() end, message = "You feel more knowledgeable about the unknown."},

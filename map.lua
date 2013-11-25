@@ -1,5 +1,5 @@
-overworld_levels = {	{x = -1, y = -1, func = function (dir) end, name = 'Overworld', persist = true},
-						{x = -1, y = -1, func = function (dir) end, name = 'Eientei', persist = true},
+overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) end, name = 'Overworld', persist = true},
+						{x = -1, y = -1, func = function (dir) map_eientei(dir) end, name = 'Eientei', persist = true},
 						{x = 41, y = 15, func = function (dir) map_hakurei_shrine('down') end, name = 'Hakurei Shrine', persist = true},
 						{x = 17, y = 11, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true},
 						{x = 25, y = 15, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true},

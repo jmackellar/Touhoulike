@@ -2863,7 +2863,9 @@ function Creature:move(dx, dy)
 					elseif map[self.x][self.y]:get_name() == 'KeyStone' then
 						message_add("There is a stone with a key slot set into it here.")
 					end
-				--- overworld square messages
+					
+					
+				--- overworld square messages and ambush check
 				elseif level.name == 'Overworld' then
 					if map[self.x][self.y]:get_char() == 'O' or map[self.x][self.y]:get_char() == '*' then
 						for i = 1, # overworld_levels do
@@ -2878,7 +2880,17 @@ function Creature:move(dx, dy)
 					elseif map[self.x][self.y]:get_char() == '"' then
 						message_add("A field")
 					end
+					
+					if map[self.x][self.y]:get_char() ~= 'O' then
+						if math.random(1000) <= 10 then
+							map_random_overworld_encounter()
+							message_add("You've been ambushed while traveling!")
+						end
+					end
+					
 				end
+				
+				
 				--- tile item seen messages
 				if map[self.x][self.y]:get_items() then
 					local items = map[self.x][self.y]:get_items()

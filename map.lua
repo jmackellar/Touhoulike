@@ -12,6 +12,8 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = 24, y = 27, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = false},	
 						{x = 35, y = 9, func = function (dir) map_makai_entrance(dir) end, name = 'Eerie Cave', persist = true},
 					}
+					
+overworld_coords = { x = 25, y = 25 }
 
 function next_level(dir)
 
@@ -59,10 +61,81 @@ function map_overworld(dir)
 		map_new_place_player(24, 27)
 	elseif prev_level == 'Eerie Cave' then
 		map_new_place_player(35, 9)
+	elseif prev_level == 'Wilderness' then
+		map_new_place_player(overworld_coords.x, overworld_coords.y)
 	else
 		map_new_place_player(23, 23)
 	end
 		
+end
+
+function map_random_overworld_encounter()
+
+	local x = 0
+	local y = 0
+	local placed = 0
+	local dog = false
+	
+	save_map_check()
+	save_player()
+	map_special_rooms = {}	
+	
+	overworld_coords = { x = player:get_x(), y = player:get_y() }
+
+	for x = 1, map_width do
+		for y = 1, map_height do
+			if x == 1 or x == map_width then
+				map[x][y] = Tile:new({name = 'Tree', char = 'T', block_sight = true, block_move = true, color = {r=0,g=255,b=0}, x = x, y = y})
+			elseif y == 1 or y == map_height then
+				map[x][y] = Tile:new({name = 'Tree', char = 'T', block_sight = true, block_move = true, color = {r=0,g=255,b=0}, x = x, y = y})
+			else
+				map[x][y] = Tile:new({name = 'Grass', char = ' .', block_sight = false, block_move = false, color = {r=0,g=255,b=0}, x = x, y = y})
+			end
+		end
+	end
+	
+	x = math.random(2, map_width-1)
+	y = math.random(2, map_height)
+	map[x][y] = Tile:new({name = 'UStairs', x = x, y = y})
+	
+	x = math.random(2, map_width-1)
+	y = math.random(2, map_height)
+	map_new_place_player(x, y)
+	
+	for i = 1, # game_monsters do
+		if game_monsters[i].name == 'Wild Dog' then
+			dog = game_monsters[i]
+		end
+	end
+	if not dog then dog = game_monsters[# game_monsters] end
+	
+	placed = 0
+	repeat
+	
+		x = math.random(player:get_x() - 8, player:get_x() + 8)
+		y = math.random(player:get_y() - 8, player:get_y() + 8)
+		
+		if x < 1 then x = 1 end
+		if x > map_width then x = map_width end
+		if y < 1 then y = 1 end
+		if y > map_height then y = map_height end
+		
+		if not map[x][y]:get_holding() and not map[x][y]:get_block_move() then
+			dog['x'] = x
+			dog['y'] = y
+			map[x][y]:set_holding(Creature:new(dog))
+			placed = placed + 1
+		end
+	
+	until placed > math.random(9, 13)
+	
+	level.name = 'Wilderness'
+	level.depth = 1
+	level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) end }
+	
+	map_back_canvas_draw()
+	player_fov()
+
 end
 
 function map_makai_entrance(dir)

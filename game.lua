@@ -534,7 +534,7 @@ function danmaku_fire(dx, dy)
 	end
 		
 	danmaku = {x = player:get_x(), y = player:get_y(), dx = dx, dy = dy, ex = x, ey = y, cd = 3, char = '*', color = function () love.graphics.setColor(0, 100, 255, 255) end}
-	for i = 1, bullets + player_mod_get('bullet') - 1 do
+	for i = 1, bullets - 1 do
 		table.insert(danmaku_add, {x = player:get_x(), y = player:get_y(), dx = dx, dy = dy, ex = x, ey = y, cd = 3, char = '*', color = function () love.graphics.setColor(0, 100, 255, 255) end})
 	end
 

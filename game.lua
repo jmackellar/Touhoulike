@@ -2509,11 +2509,11 @@ function Creature:initialize(arg)
 	self.name = arg.name or 'Monster'
 	self.hp_max = arg.hp_max or 125
 	self.hp_cur = arg.hp_cur or self.hp_max
-	self.hp_regen = arg.hp_regen or 100
+	self.hp_regen = arg.hp_regen or 125
 	self.hp_regen_timer = arg.hp_regen_timer or self.hp_regen
 	self.mana_max = arg.mana_max or 100
 	self.mana_cur = arg.mana_cur or self.mana_max
-	self.mana_regen = arg.mana_regen or 25
+	self.mana_regen = arg.mana_regen or 45
 	self.mana_regen_timer = arg.mana_regen_timer or self.mana_regen
 	self.food_tick = 25
 	self.base_damage = arg.base_damage or {15, 25}

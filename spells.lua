@@ -1,15 +1,16 @@
-game_spells = {	{name = 'Omamori of Health', mp_cost = 75, func = function () player:heal(35) end},
-				{name = 'Ofuda of Protection', mp_cost = 50, func = function () add_modifier({name = 'Protection', turn = 60, armor = 5}) end},
-				{name = 'Power of Hachiman', mp_cost = 55, func = function () add_modifier({name = 'Power', turn = 60, damage = 50}) end, level = 3},
-				{name = 'Speed of Fujin', mp_cost = 75, func = function () add_modifier({name = 'Speed', turn = 70, speed = 5}) end, level = 5},
-				{name = 'Persuasion Needles', mp_cost = 25, func = function () add_modifier({name = 'Needles', turn = 60, bullet = 2}) end},
+game_spells = {	{name = 'Omamori of Health', mp_cost = 100, func = function () player:heal(30) end},
+				{name = 'Ofuda of Protection', mp_cost = 25, func = function () add_modifier({name = 'Protection', turn = 60, armor = 2}) end},
+				{name = 'Power of Hachiman', mp_cost = 75, func = function () add_modifier({name = 'Power', turn = 60, damage = 15}) end, level = 3},
+				{name = 'Speed of Fujin', mp_cost = 150, func = function () add_modifier({name = 'Speed', turn = 70, speed = 1}) end, level = 5},
+				{name = 'Persuasion Needles', mp_cost = 55, func = function () add_modifier({name = 'Needles', turn = 60, bullet = 1}) end},
 				{name = 'Border of Distance', mp_cost = 55, func = function () add_modifier({name = 'Distancer', turn = 70, speed = 5, armor = -5, damage = -25}) end},
-				{name = 'Circular Danmaku', mp_cost = 40, func = function () circle_danmaku(player:get_x(), player:get_y(), 8) end},
-				{name = 'High Frequency Danmaku', mp_cost = 55, func = function () add_modifier({name = 'Hi Freq', turn = 60, danmaku_explosive = 2}) end},
-				{name = 'Fantasy Seal Spread', mp_cost = 200, func = function () fantasy_seal(player:get_x(), player:get_y(), 5, 'int') end},
-				{name = 'Merciless Purification Rod', mp_cost = 250, func = function () fantasy_seal(player:get_x(), player:get_y(), 1, 'str') end},
+				{name = 'Circular Danmaku', mp_cost = 35, func = function () circle_danmaku(player:get_x(), player:get_y(), 8) end},
+				{name = 'High Frequency Danmaku', mp_cost = 75, func = function () add_modifier({name = 'Hi Freq', turn = 60, danmaku_explosive = 2}) end},
+				{name = 'Fantasy Seal Spread', mp_cost = 250, func = function () fantasy_seal(player:get_x(), player:get_y(), 5, 'int') end},
+				{name = 'Merciless Purification Rod', mp_cost = 150, func = function () fantasy_seal(player:get_x(), player:get_y(), 1, 'str') end},
 				{name = 'Border of Danmaku', mp_cost = 75, func = function () border_shoot(player:get_x(), player:get_y()) end},
 				{name = 'Border Jumper', mp_cost = 15, func = function () border_jumper(player:get_x(), player:get_y(), 8) end},
+				{name = 'Border Bomb', mp_cost = 125, func = function () fantasy_seal(player:get_x()+player_last_move.x*-3, player:get_y()+player_last_move.y*-3, 2, 'int') end},
 				}
 				
 function border_jumper(sx, sy, range)
@@ -189,7 +190,7 @@ function circle_danmaku(sx, sy, range)
 			if d >= range then air = false end
 			if map[x][y]:get_holding() then 
 				air = false 
-				local dam = math.random(player_stats.int * 4, player_stats.int * 5)
+				local dam = math.random(player_stats.int * 9, player_stats.int * 11)
 				map[x][y]:get_holding():take_dam(dam, 'danmaku', 'whut')
 			end
 			

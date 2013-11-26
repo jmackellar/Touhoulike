@@ -55,9 +55,8 @@ game_items = {	--- items never randomly generated
 				{name = 'Cloth Pants', slot = 'legs', armor = 1, char = ']', prob = 89},
 				{name = 'Leather Vest', slot = 'torso', armor = 2, char = ']', prob = 90},
 				{name = 'Dagger', slot = 'hand', weptype = 'shortblade', damage = 18, weight = 4, char = ')', prob = 91},
-				{name = 'Gold', char = '$', weight = 0, gold = math.random(1, 100), prob = 275},
-				{name = 'Piece of Junk', char = ';', prob = 300},
-				{name = 'Loaf of Bread', edible = true, cook = true, nutrition = 135, char = '%', prob = 325},				
+				{name = 'Loaf of Bread', edible = true, cook = true, nutrition = 135, char = '%', prob = 100},	
+				{name = 'Gold', char = '$', weight = 0, gold = math.random(1, 45), prob = 300},			
 		}
 		
 known_potions = {}

@@ -17,7 +17,7 @@ char_width = 14
 player = {}
 player_level = 1
 player_exp = 0
-player_gold = 1110
+player_gold = 0
 player_food = {level = 500, cap = 1000, hungry = 300, starving = 100, weak = 25}
 player_name = 'Reimu Hakurei'
 player_stances = { 'Graze', 'Defensive', 'Normal', 'Offensive', 'Trance' }
@@ -43,10 +43,12 @@ player_feats = {	{name = 'Stick Proficiency', desc = 'Increases damage done by a
 					{name = 'Short Blade Proficiency', desc = 'Increases damage done by all short blade weapons by 5%', have = false, shortblade = 1.05},
 					{name = 'Shinto Proficiency', desc =  'Increases damage done by all shinto weapons by 5%', have = false, shinto = 1.05},
 					{name = 'Axe Proficiency', desc = 'Increases damage done by all axe weapons by 5%', have = false, axe = 1.05},
-					{name = 'Athletics', desc = 'Increases speed once and strength and dexterity on levelup', have = false, speed = 1, athletics = 5},
+					{name = 'Athletics', desc = 'Increases strength and dexterity on levelup', have = false, athletics = 5},
 					{name = 'Iron Skin', desc = 'Decreases damage recieved from all sources by 5%', have = false, damred = 0.95},
-					{name = 'First Aid', desc = 'Regenerates hit points at a faster rate', have = false, hpregen = 30},
-					{name = 'Mana Battery', desc = 'Regenerates mana at a faster rate', have = false, manaregen = 15},
+					{name = 'First Aid', desc = 'Regenerates hit points at a faster rate', have = false, hpregen = 15},
+					{name = 'Mana Battery', desc = 'Regenerates mana at a faster rate', have = false, manaregen = 10},
+					{name = 'Nimble', desc = 'Increases evasion from physical attacks', have = false, evasion = 5},
+					{name = 'Accurate', desc = 'Increases accuracy when hitting with physical attacks', have = false, accuracy = 5},
 					}
 	
 player_spells = { }
@@ -55,10 +57,13 @@ spells_open = false
 
 player_mods = {}
 
+player_accuracy = 5
+
 player_inventory = { }
 inventory_open = false
 inventory_action = false
 inventory_to_drop = {}
+inventory_num_drop = '0'
 
 danmaku_dir = false
 danmaku = false
@@ -166,7 +171,9 @@ function game:draw()
 	end
 	
 	--- debug coordinate view
-	love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS())
+	---love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS())
+	--- normal caption text
+	love.graphics.setCaption("Touhoulike")
 	
 end
 
@@ -953,16 +960,34 @@ end
 function pickup_many_items_key(key)
 
 	local toomany = false
+	
+	if tonumber(key) then
+		if inventory_num_drop == '0' then
+			inventory_num_drop = key
+		else
+			inventory_num_drop = inventory_num_drop .. key
+		end
+	end
 
 	if key  == 'return' or key == 'kpenter' then	
 		--- add items to player inventory
 		for i = 1, # alphabet do
 			if pickup_many_items_choice[alphabet[i]] and items_sorted[i] then
 				if # player_inventory < # alphabet then
-					for k = 1, items_sorted[i].quantity do
-						add_item_to_inventory(items_sorted[i].item)
-						items_sorted[i].quantity = items_sorted[i].quantity - 1
+				
+					local amnt = items_sorted[i].quantity
+					
+					if inventory_num_drop ~= '0' then
+						amnt = tonumber(inventory_num_drop)
 					end
+				
+					for k = 1, amnt do
+						if items_sorted[i].quantity > 0 then
+							add_item_to_inventory(items_sorted[i].item)
+							items_sorted[i].quantity = items_sorted[i].quantity - 1
+						end
+					end
+					
 				else
 					toomany = true
 				end
@@ -998,6 +1023,8 @@ function pickup_many_items_key(key)
 			message_add("You weren't able to fit everything into your knapsack.")
 		end
 		
+		inventory_num_drop = '0'
+		
 	else
 		--- select which items will be picked up or not
 		for i = 1, # alphabet do
@@ -1015,10 +1042,19 @@ end
 
 function drop_item_key(key)
 
+	if tonumber(key) then
+		if inventory_num_drop == '0' then
+			inventory_num_drop = key
+		else
+			inventory_num_drop = inventory_num_drop .. key
+		end
+	end
+
 	if key == 'return' or key == 'kpenter' then
 		drop_items()
 		inventory_open = false
 		inventory_to_drop = {}
+		inventory_num_drop = '0'
 	else
 		for i = 1, # alphabet do
 			if key == alphabet[i] then
@@ -1039,12 +1075,21 @@ function drop_items()
 	local items = {}
 	for i = 1, # player_inventory do
 		if inventory_to_drop[alphabet[i]] and player_inventory[i] then
+				
 			local go_to = player_inventory[i].quantity
+			
+			if inventory_num_drop ~= '0' then
+				go_to = tonumber(inventory_num_drop)
+			end
+			
 			for k = 1, go_to do
-				table.insert(items, player_inventory[i].item)
-				player_inventory[i].quantity = player_inventory[i].quantity - 1			
+				if player_inventory[i].quantity > 0 then
+					table.insert(items, player_inventory[i].item)
+					player_inventory[i].quantity = player_inventory[i].quantity - 1		
+				end
 			end
 			inventory_to_drop[alphabet[i]] = false
+						
 		end
 	end
 	
@@ -1902,7 +1947,11 @@ function draw_many_item_pickup()
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
 	
-	love.graphics.print("Pick up what?", start_x + 24, start_y + 4)
+	if inventory_num_drop == '0' then
+		love.graphics.print("Pick up what?", start_x + 24, start_y + 4)
+	else
+		love.graphics.print("Pick up what?  Picking up: " .. inventory_num_drop, start_x + 24, start_y + 4)
+	end
 	love.graphics.print("Press ENTER to pickup marked items...", start_x + 24, start_y + ((# items_sorted) + 1) * 15 + 4)
 	
 	for i = 1, # items_sorted do
@@ -1998,7 +2047,7 @@ function player_hud()
 	love.graphics.setColor(204, 155, 63, 255)
 	love.graphics.print("Evasion : ", start_x + 10, start_y + 125)
 	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.print(player:get_evasion(), start_x + 10 + font:getWidth("Evasion : "), start_y + 125)
+	love.graphics.print(player:get_evasion() + player_feat_search('evasion'), start_x + 10 + font:getWidth("Evasion : "), start_y + 125)
 	
 	--- HP
 	love.graphics.setColor(204, 155, 63, 255)
@@ -2131,7 +2180,11 @@ function draw_inventory()
 		love.graphics.print("Inventory", start_x + 24, start_y + 4)
 		love.graphics.print("Press any key to continue...", start_x + 24, height - 19)
 	elseif inventory_action == 'drop' then
-		love.graphics.print("Drop what?", start_x + 24, start_y + 4)
+		if tonumber(inventory_num_drop) > 0 then
+			love.graphics.print("Drop what?  Dropping: " .. inventory_num_drop, start_x + 24, start_y + 4)
+		else
+			love.graphics.print("Drop what?", start_x + 24, start_y + 4)
+		end
 		love.graphics.print("Press ENTER to drop marked items...", start_x + 24, height - 19)
 	elseif inventory_action == 'wield' then
 		love.graphics.print("Wield what?", start_x + 24, start_y + 4)
@@ -2466,7 +2519,7 @@ function Creature:initialize(arg)
 	self.base_damage = arg.base_damage or {15, 25}
 	self.bullet = arg.bullet or 1
 	self.armor = arg.armor or 1
-	self.evasion = arg.evasion or 0
+	self.evasion = arg.evasion or 10
 	self.speed = arg.speed or 10
 	self.shop = arg.shop or false
 	self.sell = arg.sell or false
@@ -2965,8 +3018,18 @@ function Creature:fight(x, y)
 
 	local damage = math.random(self.base_damage[1], self.base_damage[2])
 	local mon_name = map[x][y]:get_holding():get_name()
+	local d20 = math.random(1, 20)
 	
 	if self == player then
+		--- do we miss or not?
+		if d20 <= player_accuracy + player_stats.dex + player_feat_search('accuracy') or d20 == 20 then
+			--- hooray, we hit!
+		else
+			--- nope, we missed, we suck
+			message_add("You swung wildly and missed the " .. mon_name .. ".")
+			return
+		end
+	
 		--- damage from weapons
 		if player_equipment.hand then
 			damage = damage + player_equipment.hand:get_damage()
@@ -3053,7 +3116,7 @@ function Creature:take_dam(dam, dtype, name)
 		end
 		
 		--- evasion
-		local evasion = player_skills.evasion + self.evasion
+		local evasion = player_skills.evasion + self.evasion + player_feat_search('evasion')
 		if math.random(1, 100) <= player_skills.evasion + 1 * 2 and dtype == 'phys' then
 			dam = 0
 			player_skills.evasion = player_skills.evasion + 0.01
@@ -3062,13 +3125,15 @@ function Creature:take_dam(dam, dtype, name)
 		--- graze
 		if dtype == 'danmaku' then
 			if player_stance == 1 then
-				dam = 0
-			elseif player_stance == 2 then
 				if math.random(1, 100) <= 50 then
 					dam = 0
 				end
+			elseif player_stance == 2 then
+				if math.random(1, 100) <= 35 then
+					dam = 0
+				end
 			elseif player_stance == 3 then
-				if math.random(1, 100) <= 25 then
+				if math.random(1, 100) <= 20 then
 					dam = 0
 				end
 			elseif player_stance == 4 then
@@ -3494,7 +3559,7 @@ end
 
 function starting_inventory()
 
-	player_inventory = { {item = Item:new(game_items[# game_items]), quantity = 1} }
+	player_inventory = { {item = Item:new(game_items[# game_items - 1]), quantity = 1} }
 	player_equipment.torso = shop_find_game_item('Sarashi')
 	player_equipment.hand = shop_find_game_item('Big Stick')
 	

@@ -1418,6 +1418,19 @@ function monster_maker(num)
 			monster['x'] = x
 			monster['y'] = y
 			map[x][y]:set_holding(Creature:new(monster))
+			
+			if monster.name == 'Wild Dog' or name == 'Rabbit' then 
+				for xx = x - 2, x + 2 do
+					for yy = y - 2, y + 2 do
+						if xx > 1 and xx < map_width and yy > 1 and yy < map_height and not map[xx][yy]:get_block_move() and not map[xx][yy]:get_holding() and math.random(1, 100) <= 25 then
+							monster['x'] = xx
+							monster['y'] = yy
+							map[xx][yy]:set_holding(Creature:new(monster))
+						end
+					end
+				end
+			end
+			
 			placed = placed + 1
 		end
 	
@@ -1447,7 +1460,7 @@ end
 
 function map_random_monster(lvl)
 
-	local monlevel = math.min(level.depth, lvl)
+	local monlevel = math.floor( (player_level + level.depth) / 2)
 	local mons = {}
 	local chance = 0
 	local dice_max = 0

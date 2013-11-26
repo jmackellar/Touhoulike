@@ -1419,7 +1419,7 @@ function monster_maker(num)
 			monster['y'] = y
 			map[x][y]:set_holding(Creature:new(monster))
 			
-			if monster.name == 'Wild Dog' or name == 'Rabbit' then 
+			if monster.name == 'Wild Dog' or monster.name == 'Rabbit' then 
 				for xx = x - 2, x + 2 do
 					for yy = y - 2, y + 2 do
 						if xx > 1 and xx < map_width and yy > 1 and yy < map_height and not map[xx][yy]:get_block_move() and not map[xx][yy]:get_holding() and math.random(1, 100) <= 25 then

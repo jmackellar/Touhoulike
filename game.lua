@@ -428,9 +428,11 @@ function aoe_danmaku_dam(x, y, range, delay)
 		for yy = y-range, y+range do
 			
 			table.insert(ascii_effects, {char = '#', time = 5, delay = delay, x = xx, y = yy, color = function () love.graphics.setColor(0, 100, 255, 255) end})
-			if map[xx][yy]:get_holding() then
-				local dam = math.random(player_stats.int * 2, player_stats.int * 3)
-				map[xx][yy]:get_holding():take_dam(dam, 'danmaku', 'whut')
+			if xx > 1 and xx < map_width and yy > 1 and yy < map_height then
+				if map[xx][yy]:get_holding() then
+					local dam = math.random(player_stats.int * 2, player_stats.int * 3)
+					map[xx][yy]:get_holding():take_dam(dam, 'danmaku', 'whut')
+				end
 			end
 			
 		end

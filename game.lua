@@ -259,6 +259,8 @@ function game:keypressed(key)
 			read_key(key)
 		elseif inventory_open and inventory_action == 'apply' then	
 			apply_key(key)
+		elseif inventory_open and inventory_action == 'identify_s' then
+			identify_s_key(key)
 		
 		elseif pickup_many_items then
 			pickup_many_items_key(key)
@@ -583,6 +585,30 @@ function enemy_danmaku_fire(sx, sy, dx, dy, bullets, dam, name)
 	danmaku = {x = sx, y = sy, dx = dx, dy = dy, ex = ex, ey = ey, cd = 3, char = '*', color = function () love.graphics.setColor(0, 255, 100, 255) end}
 	for i = 1, bullets - 1 do
 		table.insert(danmaku_add, {x = sx, y = sy, dx = dx, dy = dy, ex = ex, ey = ey, cd = 3, char = '*', color = function () love.graphics.setColor(0, 255, 100, 255) end})
+	end
+
+end
+
+function identify_s_key(key)
+
+	if key == 'return' or key == 'escape' or key == 'kpenter' then
+		inventory_open = false
+		message_add("Never mind.")
+	end
+
+	for i = 1, # player_inventory do
+		if key == alphabet[i] and player_inventory[i] and player_gold >= 100 then
+			player_gold = player_gold - 100
+			message_add(player_inventory[i].item:get_name())
+			
+			if player_inventory[i].item:get_quaff() then
+				table.insert(known_potions, player_inventory[i].item:get_name())
+			elseif player_inventory[i].item:get_read() then
+				table.insert(known_scrolls, player_inventory[i].item:get_name())
+			end
+			
+			inventory_open = false
+		end
 	end
 
 end
@@ -2213,6 +2239,9 @@ function draw_inventory()
 	elseif inventory_action == 'apply' then
 		love.graphics.print("Apply what?", start_x + 24, start_y + 4)
 		love.graphics.print("Choose what to apply, ESC to cancel", start_x + 24, height - 19)
+	elseif inventory_action == 'identify_s' then
+		love.graphics.print("Identify what?  100 gold each.", start_x + 24, start_y + 4)
+		love.graphics.print("Choose what to identify, ESC to cancel", start_x + 24, height - 19)
 	end
 	love.graphics.setColor(255, 255, 255, 255)
 	
@@ -2534,6 +2563,7 @@ function Creature:initialize(arg)
 	self.exp = arg.exp or 10
 	self.unique = arg.unique or false
 	self.corpse = arg.corpse or false
+	self.identify = arg.identify or false
 	self.color = arg.color or function () love.graphics.setColor(255, 255, 255, 255) end
 	
 end
@@ -2997,7 +3027,11 @@ function Creature:move(dx, dy)
 			
 		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_sell() then
 			inventory_open = true
-			inventory_action = 'sell'			
+			inventory_action = 'sell'	
+
+		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_identify() then
+			inventory_open = true
+			inventory_action = 'identify_s'
 		end
 	
 	elseif map[new_x][new_y]:get_block_move() and map[new_x][new_y]:get_name() == "BambooShoot" then
@@ -3285,6 +3319,7 @@ function Creature:get_sell() return self.sell end
 function Creature:get_unique() return self.unique end
 function Creature:get_char() return self.char end
 function Creature:get_corpse() return self.corpse end
+function Creature:get_identify() return self.identify end
 	
 Item = Class('Item')
 function Item:initialize(arg)

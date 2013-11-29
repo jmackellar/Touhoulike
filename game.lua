@@ -3451,6 +3451,15 @@ function Creature:take_dam(dam, dtype, name)
 		
 	end
 	
+	if self ~= player then
+		--- molds
+		if self.ai == 'sessile' then
+			if dtype == 'phys' then
+				player:take_dam(math.random(self.base_damage[1], self.base_damage[2]), 'mold', self.name)
+			end
+		end
+	end
+	
 	--- enemy evasion
 	if math.random(1, 100) <= self.evasion then
 		dam = 0

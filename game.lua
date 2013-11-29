@@ -171,9 +171,9 @@ function game:draw()
 	end
 	
 	--- debug coordinate view
-	---love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS())
+	love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS())
 	--- normal caption text
-	love.graphics.setCaption("Touhoulike")
+	---love.graphics.setCaption("Touhoulike")
 	
 end
 
@@ -2454,7 +2454,7 @@ function shop_load_items(shop)
 	elseif shop == 'Armor' then
 		shop_items = {	{ name = 'Leather Vest', cost = 50, item = shop_find_game_item('Leather Vest') },
 						{ name = 'Cloth Skirt', cost = 75, item = shop_find_game_item('Cloth Skirt') },
-						{ name = 'Leahter Shoes', cost = 75, item = shop_find_game_item('Leather Shoes') },
+						{ name = 'Leather Shoes', cost = 75, item = shop_find_game_item('Leather Shoes') },
 						{ name = 'Silk Bonnet', cost = 85, item = shop_find_game_item('Silk Bonnet') },
 						}
 	elseif shop == 'Potion' then
@@ -3038,12 +3038,12 @@ function Creature:fight(x, y)
 		
 		--- changes from player skill
 		--- fighting skill
-		damage = math.floor(damage * (1 + (player_skills.fighting * 0.01)))
+		damage = math.floor(damage * (1 + (player_skills.fighting * 0.001)))
 		player_skills.fighting = player_skills.fighting + 0.01
 		--- weapon skill
 		if player_equipment.hand then
 			if player_skills[player_equipment.hand:get_weptype()] then
-				damage = math.floor(damage * (1.05 * (player_skills[player_equipment.hand:get_weptype()] + 1)))
+				damage = math.floor(damage * (1.005 * (player_skills[player_equipment.hand:get_weptype()] + 1)))
 				player_skills[player_equipment.hand:get_weptype()] = player_skills[player_equipment.hand:get_weptype()] + 0.01
 			end
 		end
@@ -3072,7 +3072,7 @@ function Creature:fight(x, y)
 		if math.random(1, 100) <= crit then damage = damage + math.ceil(damage * .15) end
 		
 		--- fighting costs hunger!
-		self.food_tick = self.food_tick - 5
+		self.food_tick = self.food_tick - 25
 	end
 	
 	map[x][y]:get_holding():take_dam(damage, 'phys', self.name)

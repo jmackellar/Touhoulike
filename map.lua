@@ -11,6 +11,7 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = 21, y = 18, func = function (dir) map_kourindou(dir) end, name = 'Kourindou', persist = false},
 						{x = 24, y = 27, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = false},	
 						{x = 35, y = 9, func = function (dir) map_makai_entrance(dir) end, name = 'Eerie Cave', persist = true},
+						{x = 40, y = 27, func = function (dir) map_moriya_shrine(dir) end, name = 'Moriya Shrine', persist = true},
 					}
 					
 overworld_coords = { x = 25, y = 25 }
@@ -61,12 +62,28 @@ function map_overworld(dir)
 		map_new_place_player(24, 27)
 	elseif prev_level == 'Eerie Cave' then
 		map_new_place_player(35, 9)
+	elseif prev_level == 'Moriya Shrine' then
+		map_new_place_player(40, 27)
 	elseif prev_level == 'Wilderness' then
 		map_new_place_player(overworld_coords.x, overworld_coords.y)
 	else
 		map_new_place_player(23, 23)
 	end
 		
+end
+
+function map_moriya_shrine(dir)
+
+	level.name = 'Moriya Shrine'
+	level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) end}
+	
+	if not load_map() then
+		local chunk = love.filesystem.load("map/moriya_shrine.lua")
+		chunk()
+	end
+	
+	place_player_on_stairs(dir)
+
 end
 
 function map_random_overworld_encounter()

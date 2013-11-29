@@ -4,6 +4,7 @@ require("items")
 require("monsters")
 require("spells")
 require("characters")
+require("youkai")
 
 map = {}
 map_width = 46
@@ -50,6 +51,10 @@ player_feats = {	{name = 'Stick Proficiency', desc = 'Increases damage done by a
 					{name = 'Nimble', desc = 'Increases evasion from physical attacks', have = false, evasion = 5},
 					{name = 'Accurate', desc = 'Increases accuracy when hitting with physical attacks', have = false, accuracy = 5},
 					}
+					
+player_muts = { }
+player_mut_level = 0
+muts_open = false					
 	
 player_spells = { }
 player_spells_learn = {}
@@ -142,6 +147,7 @@ function game:draw()
 	if help_open then draw_help() end
 	if look_open then draw_look() end
 	if intro_open then draw_intro() end
+	if muts_open then draw_muts() end
 	
 	--- player dead drawing
 	if player_dead then
@@ -171,7 +177,7 @@ function game:draw()
 	end
 	
 	--- debug coordinate view
-	love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS())
+	love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS() .. "   Mut:" .. player_mut_level)
 	--- normal caption text
 	---love.graphics.setCaption("Touhoulike")
 	
@@ -180,7 +186,7 @@ end
 function game:keypressed(key)
 
 	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
-		if not inventory_open and not player_dead and not intro_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
+		if not inventory_open and not muts_open and not player_dead and not intro_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
 			
 			--- keypad movement
 			if key == 'kp8' then player:move(0, -1) next_turn = true end
@@ -230,6 +236,7 @@ function game:keypressed(key)
 				
 				if key == 'c' then spells_open = true end
 				if key == 'v' then map_use_tile() end	
+				if key == '/' then muts_open = true end
 				
 				if key == 'x' then skills_open = true end
 				if key == 'z' then feats_open = true end
@@ -278,6 +285,8 @@ function game:keypressed(key)
 			if key then help_open = false end
 		elseif intro_open then
 			if key then intro_open = false end
+		elseif muts_open then
+			if key then muts_open = false end
 		elseif player_dead then
 			if key == 'return' or key == 'escape' or key == 'kpenter' then love.event.push('quit') end
 			
@@ -339,7 +348,7 @@ function game:update(dt)
 	stair_cd = stair_cd - 1
 	player_move_cd = player_move_cd - 1
 	
-	if not inventory_open and not player_dead and not intro_open and not feats_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
+	if not inventory_open and not muts_open and not player_dead and not intro_open and not feats_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
 		if player:get_turn_cd() <= 1 and player_move_cd < 1 and stair_cd <= 1 and not danmaku and # ascii_effects == 0 then
 			--- up and down stairs in levels
 			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and map[player:get_x()][player:get_y()]:get_name() == 'DStairs' then stair_machine('down') end
@@ -662,6 +671,10 @@ function read_key(key)
 			player_inventory[i].item:get_affect()()
 			message_add(player_inventory[i].item:get_message())
 			
+			if player_inventory[i].item:get_mut() then
+				player_mut_level = player_mut_level + player_inventory[i].item:get_mut()
+			end
+			
 			local known = false
 			for k = 1, # known_scrolls do
 				if known_scrolls[k] == player_inventory[i].item:get_name() then
@@ -823,6 +836,10 @@ function quaff_key(key)
 			player_inventory[i].item:get_affect()()
 			message_add(player_inventory[i].item:get_message())
 			
+			if player_inventory[i].item:get_mut() then
+				player_mut_level = player_mut_level + player_inventory[i].item:get_mut()
+			end
+			
 			local known = false
 			for k = 1, # known_potions do
 				if known_potions[k] == player_inventory[i].item:get_name() then
@@ -916,12 +933,16 @@ function wear_key(key)
 							message_add("You are already wearing something around your legs.")
 						end
 					elseif slot == 'feet' then
-						if not player_equipment.feet then
-							player_equipment.feet = player_inventory[i].item
-							player_inventory[i].quantity = player_inventory[i].quantity - 1
-							message_add("You put on your " .. player_equipment.feet:get_name() .. ".")
+						if player_feat_search('no_feet') < 1 then
+							if not player_equipment.feet then
+								player_equipment.feet = player_inventory[i].item
+								player_inventory[i].quantity = player_inventory[i].quantity - 1
+								message_add("You put on your " .. player_equipment.feet:get_name() .. ".")
+							else
+								message_add("You are already wearing something on your feet.")
+							end
 						else
-							message_add("You are already wearing something on your feet.")
+							message_add("You don't have any feet to put things on.")
 						end
 					end
 					
@@ -1276,6 +1297,7 @@ function take_turns()
 	
 	player:ai_take_turn()
 	player:set_turn_cd(0)
+	get_mut_check()
 
 end
 
@@ -1637,6 +1659,63 @@ function stair_machine(dir)
 	
 end
 
+function get_mut_check()
+
+	if player_mut_level >= math.random(90, 100) then
+		give_random_mut()
+		player_mut_level = 0
+	end
+
+end
+
+function give_random_mut()
+
+	local picked = false
+	local dice = 0
+	local have = false
+	
+	--- no more mutations to give
+	if # player_muts == # game_mutations then 
+		return
+	end
+	
+	repeat
+	
+		dice = math.random(1, # game_mutations)
+		have = false
+		for i = 1, # player_muts do
+			if player_muts[i] == game_mutations[dice] then
+				have = true
+			end
+		end
+		
+		if not have then
+			table.insert(player_muts, game_mutations[dice])
+			message_add(game_mutations[dice].message)
+			picked = true
+		end
+	
+	until picked	
+	
+	--- check for mut changes and make adjustments if needed
+	for i = 1, # player_muts do
+		
+		--- do we still have feet?
+		if player_muts[i].no_feet then
+			if player_equipment.feet then
+				local items = map[player:get_x()][player:get_y()]:get_items()
+				if not items then items = {} end
+				table.insert(items, player_equipment.feet)
+				map[player:get_x()][player:get_y()]:set_items(items)
+				player_equipment.feet = nil
+				message_add("Your shoes slip off and fall onto the ground!")
+			end
+		end
+		
+	end
+
+end
+
 function many_items_sorted(items)
 
 	items_sorted = {}
@@ -1844,6 +1923,33 @@ function draw_help()
 	love.graphics.print("Help File.  Press any key to close.", start_x + 4, start_y + 4)
 	
 	love.graphics.draw(help_img, start_x + 10, start_y + 30)
+
+end
+
+function draw_muts()
+
+	local start_x = 0
+	local start_y = 0
+	local width = 650
+	local height = 470
+	local font = love.graphics.getFont()
+	local tw = 0
+	local index = 1
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', start_x, start_y, width, height)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
+	
+	love.graphics.print("Mutations:  Press any key to return", start_x + 4, start_y + 4)
+	
+	for i = 1, # player_muts do
+		love.graphics.setColor(204, 155, 63, 255)
+		love.graphics.print(player_muts[i].name, start_x + 10, start_y + (index * 30))
+		love.graphics.setColor(255, 255, 255, 255)
+		love.graphics.print(player_muts[i].message, start_x + 20, start_y + (index * 30) + 15)
+		index = index + 1
+	end
 
 end
 
@@ -2452,6 +2558,18 @@ function player_held_weight()
 
 end
 
+function player_youkai_search(skill)
+
+	local amnt = 0
+	for i = 1, # player_muts do
+		if player_muts[i][skill] then
+			amnt = amnt + player_muts[i][skill]
+		end
+	end
+	return amnt
+
+end
+
 function player_feat_search(skill)
 
 	local amnt = 0
@@ -2460,6 +2578,7 @@ function player_feat_search(skill)
 			amnt = amnt + player_feats[i][skill]
 		end
 	end
+	amnt = amnt + player_youkai_search(skill)
 	return amnt
 
 end
@@ -3351,6 +3470,7 @@ function Item:initialize(arg)
 	self.char = arg.char or ' ;'
 	self.gold = arg.gold or false
 	self.corpse = self.corpse or false
+	self.mut = arg.mut or 0
 	self.color = arg.color or function () love.graphics.setColor(186, 140, 93, 255) end
 	if arg.self then self = arg.self end
 	
@@ -3421,6 +3541,7 @@ function Item:get_weptype() return self.weptype end
 function Item:get_weight() return self.weight end
 function Item:get_char() return self.char end
 function Item:get_corpse() return self.corpse end
+function Item:get_mut() return self.mut end
 	
 Tile = Class('Tile')
 function Tile:initialize(arg)
@@ -3597,6 +3718,7 @@ function starting_inventory()
 	player_inventory = { {item = Item:new(game_items[# game_items - 1]), quantity = 1} }
 	player_equipment.torso = shop_find_game_item('Sarashi')
 	player_equipment.hand = shop_find_game_item('Big Stick')
+	player_equipment.feet = shop_find_game_item('Leather Shoes')
 	
 end
 

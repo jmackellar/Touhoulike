@@ -1511,6 +1511,20 @@ function save_player()
 		end
 	end
 	text = text .. " }\n"
+	--- mods
+	text = text .. "player_mods = { "
+	for i = 1, # player_mods do
+		text = text .. " { "
+		for k, v in pairs(player_mods[i]) do
+			if k ~= 'name' then
+				text = text .. k  .. " = " .. v .. ", "
+			else
+				text = text .. k .. " = " .. "\'" .. v .. "\', "
+			end
+		end
+		text = text .. " }, "
+	end
+	text = text .. " }\n"
 	--- dungeon level
 	text = text .. "level = { name = \'" .. level.name .. "\', "
 	text = text .. "depth = " .. level.depth .. ", }\n"
@@ -2742,7 +2756,9 @@ function shop_load_items(shop)
 						{ name = 'Potion of Healing', cost = 50, item = shop_find_game_item('Potion of Healing') },
 						}
 	elseif shop == 'Aki' then
-		shop_items = {	{ name = 'Sweet Potato', cost = 55, item = shop_find_game_item('Sweet Potato') }, }
+		shop_items = {	{ name = 'Sweet Potato', cost = 55, item = shop_find_game_item('Sweet Potato') },
+						{ name = 'Torch', cost = 15, item = shop_find_game_item('Torch') },
+						}
 	elseif shop == 'Rino' then
 		shop_items = {	{ name = 'Police Baton', cost = 350, item = shop_find_game_item('Police Baton') },
 						{ name = 'Bullet-Proof Vest', cost = 500, item = shop_find_game_item('Bullet-Proof Vest') },
@@ -2887,14 +2903,15 @@ function Creature:ai_take_turn(moved)
 	if self == player then
 		for i = 1, # player_mods do
 		
+			if i > # player_mods then break end
+		
 			--- torch
 			if player_mods[i]['torch'] then
 				if player_mods[i].turn < 100 and math.random(1,100) <= 15 then
 					message_add("Your torch flickers.")
 				end
 			end
-		
-			if i > # player_mods then break end
+					
 			player_mods[i].turn = player_mods[i].turn - 1
 			if player_mods[i].turn < 1 then
 				

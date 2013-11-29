@@ -104,7 +104,9 @@ messages = {}
 next_turn = false
 stair_cd = 0
 
-world_time = 4000
+world_time = 12
+world_time_turn = 0
+world_total_turn = 0
 world_see_distance = 8
 
 alphabet = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'}
@@ -326,7 +328,7 @@ function game:keypressed(key)
 			
 		elseif danmaku_dir then
 			if key == 'escape' or key == 'return' or key == 'kpenter' then danmaku_dir = false message_add("Never mind.") end
-			
+			--- keypad 
 			if key == 'kp8' then danmaku_fire(0, -1) danmaku_dir = false next_turn = true end
 			if key == 'kp2' then danmaku_fire(0, 1) danmaku_dir = false next_turn = true end
 			if key == 'kp4' then danmaku_fire(-1, 0) danmaku_dir = false next_turn = true end
@@ -335,8 +337,20 @@ function game:keypressed(key)
 			if key == 'kp9' then danmaku_fire(1, -1) danmaku_dir = false next_turn = true end
 			if key == 'kp1' then danmaku_fire(-1, 1) danmaku_dir = false next_turn = true end
 			if key == 'kp3' then danmaku_fire(1, 1) danmaku_dir = false next_turn = true end
-			if key == 'kp3' then danmaku_fire(1, 1) danmaku_dir = false next_turn = true end
-			
+			--- vi
+			if key == 'k' then danmaku_fire(0, -1) danmaku_dir = false next_turn = true end
+			if key == 'j' then danmaku_fire(0, 1) danmaku_dir = false next_turn = true end
+			if key == 'h' then danmaku_fire(-1, 0) danmaku_dir = false next_turn = true end
+			if key == 'l' then danmaku_fire(1, 0) danmaku_dir = false next_turn = true end
+			if key == 'y' then danmaku_fire(-1, -1) danmaku_dir = false next_turn = true end
+			if key == 'u' then danmaku_fire(1, -1) danmaku_dir = false next_turn = true end
+			if key == 'b' then danmaku_fire(-1, 1) danmaku_dir = false next_turn = true end
+			if key == 'n' then danmaku_fire(1, 1) danmaku_dir = false next_turn = true end
+			--- arrow
+			if key == 'up' then danmaku_fire(0, -1) danmaku_dir = false next_turn = true end
+			if key == 'down' then danmaku_fire(0, 1) danmaku_dir = false next_turn = true end
+			if key == 'left' then danmaku_fire(-1, 0) danmaku_dir = false next_turn = true end
+			if key == 'right' then danmaku_fire(1, 0) danmaku_dir = false next_turn = true end
 		end		
 	end
 	
@@ -1252,10 +1266,10 @@ end
 function turn_machine()
 
 	if next_turn and not player_dead then
-		take_turns()	
-		world_time_machine()	
+		take_turns()		
+		world_time_machine()
 		mon_gen_machine()
-		if player:get_turn_cd() <= 1 then		
+		if player:get_turn_cd() <= 1 then			
 			player:levelup()
 			next_turn = false
 		end
@@ -1265,7 +1279,40 @@ end
 
 function world_time_machine()
 
+	world_time_turn = world_time_turn + 1
+	world_total_turn = world_total_turn + 1
+	if world_time_turn > 350 then
+		world_time_turn = 0
+		world_time = world_time + 1
+		if world_time > 24 then
+			world_time = 1
+		end
+	end
 	
+	--- light levels for see distance
+	if world_time > 0 and world_time < 3 then
+		world_see_distance = 3
+	elseif world_time > 3 and world_time < 5 then
+		world_see_distance = 4
+	elseif world_time > 6 and world_time < 8 then
+		world_see_distance = 5
+	elseif world_time == 8 then
+		world_see_distance = 6
+	elseif world_time == 9 then
+		world_see_distance = 7
+	elseif world_time > 9 and world_time < 17 then
+		world_see_distance = 8
+	elseif world_time == 17 then
+		world_see_distance = 7
+	elseif world_time == 18 then
+		world_see_distance = 6
+	elseif world_time == 19 then
+		world_see_distance = 5
+	elseif world_time == 20 then
+		world_see_distance = 4
+	elseif world_time > 21 then
+		world_see_distance = 3
+	end
 	
 end
 
@@ -1462,6 +1509,10 @@ function save_player()
 	--- x and y coords
 	text = text .. "player_coords = { x = " .. player:get_x() .. ", "
 	text = text .. "y = " .. player:get_y() .. ", }\n"
+	--- time
+	text = text .. "world_time = " .. world_time .. "\n"
+	text = text .. "world_time_turn = " .. world_time_turn .. "\n"
+	text = text .. "world_total_turn = " .. world_total_turn .. "\n"
 	
 	love.filesystem.write("player.lua", text)
 	
@@ -2142,7 +2193,7 @@ function player_message()
 
 	local start_x = 0
 	local start_y = 470
-	local width = 800
+	local width = 650
 	local height = 130
 	
 	love.graphics.setColor(0, 0, 0, 255)
@@ -2164,10 +2215,11 @@ function player_hud()
 	local start_x = 650
 	local start_y = 0
 	local width = 150
-	local height = 470
+	local height = 600
 	local font = love.graphics.getFont()
 	local tw = 0
 	local per = 0
+	local sun = 1
 	
 	love.graphics.setColor(0, 0, 0, 255)
 	love.graphics.rectangle('fill', start_x, start_y, width, height)
@@ -2267,19 +2319,40 @@ function player_hud()
 		love.graphics.print(player_mods[i].name, start_x + 10, start_y + 230 + ((i - 1) * 15))
 	end
 	
-	love.graphics.print(player_stances[player_stance], start_x + 10, start_y + 370)
+	--- stance
+	love.graphics.print(player_stances[player_stance], start_x + 10, start_y + height - 125)
 	
 	--- gold
 	love.graphics.setColor(204, 155, 63, 255)
-	love.graphics.print("Gold : ", start_x + 10, start_y + 400)
+	love.graphics.print("Gold : ", start_x + 10, start_y + height - 95)
 	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.print(player_gold, start_x + 10 + font:getWidth("Gold : "), start_y + 400)
+	love.graphics.print(player_gold, start_x + 10 + font:getWidth("Gold : "), start_y + height - 95)
+	
+	--- time
+	if world_time > 3 and world_time < 22 then
+		sun = math.floor( world_time ) - 4
+	end
+	love.graphics.setColor(204, 155, 63, 255)
+	love.graphics.print("Time : ", start_x + 10, start_y + height - 65)
+	love.graphics.print("|-------|--------|", start_x + 10 + font:getWidth("Time : "), start_y + height - 65)
+	if world_time > 3 and world_time < 22 then
+		love.graphics.setColor(218, 222, 95, 255)
+		love.graphics.print("*", start_x + 10 + font:getWidth("Time : ") + sun * 4, start_y + height - 65)
+		love.graphics.setColor(255, 255, 255, 255)
+	end
+	
+	--- total turns
+	love.graphics.setColor(204, 155, 63, 255)
+	love.graphics.print("Turns : ", start_x + 10, start_y + height - 50)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.print(world_total_turn, start_x + 10 + font:getWidth("Turns : "), start_y + height - 50)
+			
 	--- level name and depth
 	love.graphics.setColor(204, 155, 63, 255)
-	love.graphics.print(level.name, start_x + 10, start_y + 430)
-	love.graphics.print("Depth : ", start_x + 10, start_y + 445)
+	love.graphics.print(level.name, start_x + 10, start_y + height - 35)
+	love.graphics.print("Depth : ", start_x + 10, start_y + height - 20)
 	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.print(level.depth, start_x + 10 + font:getWidth("Depth : "), start_y + 445)
+	love.graphics.print(level.depth, start_x + 10 + font:getWidth("Depth : "), start_y + height - 20)
 	
 end
 

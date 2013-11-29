@@ -657,6 +657,14 @@ function apply_key(key)
 			inventory_open = false
 			next_turn = true
 			
+			if player_inventory[i].item:get_applyonce() then
+				player_inventory[i].quantity = player_inventory[i].quantity - 1
+				if player_inventory[i].quantity < 1 then
+					table.remove(player_inventory, i)
+					return
+				end
+			end
+			
 		elseif key == alphabet[i] and player_inventory[i] and not player_inventory[i].item:get_apply() then
 			message_add("How could you possibly apply that?")
 			
@@ -2690,8 +2698,27 @@ end
 
 function player_fov()
 
-	if level.name ~= 'Overworld' then map_calc_fov(player:get_x(), player:get_y(), world_see_distance + player_feat_search('sight'))		
-	elseif level.name == 'Overworld' then map_overworld_fov(player:get_x(), player:get_y(), 2) end
+	local dark = false
+
+	if level.name ~= 'Overworld' then 
+		--- check if the level is dark or not
+		for i = 1, # overworld_levels do
+			if overworld_levels[i].name == level.name then
+				if overworld_levels[i].dark then 
+					dark = true
+				end
+			end
+		end
+		
+		if not dark then
+			map_calc_fov(player:get_x(), player:get_y(), world_see_distance + player_feat_search('sight'))		
+		else
+			map_calc_fov(player:get_x(), player:get_y(), 2 + player_mod_get('torch'))
+		end
+	
+	elseif 
+		level.name == 'Overworld' then map_overworld_fov(player:get_x(), player:get_y(), 2) 
+	end
 	
 end
 
@@ -2859,12 +2886,27 @@ function Creature:ai_take_turn(moved)
 	
 	if self == player then
 		for i = 1, # player_mods do
+		
+			--- torch
+			if player_mods[i]['torch'] then
+				if player_mods[i].turn < 100 and math.random(1,100) <= 15 then
+					message_add("Your torch flickers.")
+				end
+			end
+		
 			if i > # player_mods then break end
 			player_mods[i].turn = player_mods[i].turn - 1
 			if player_mods[i].turn < 1 then
+				
+				if player_mods[i]['torch'] then
+					map_unlit_all()
+				end
+				
 				table.remove(player_mods, i)
 				i = i - 1
+				
 			end
+						
 		end
 	end
 	
@@ -3582,6 +3624,7 @@ function Item:initialize(arg)
 	self.gold = arg.gold or false
 	self.corpse = self.corpse or false
 	self.mut = arg.mut or 0
+	self.applyonce = arg.applyonce or false
 	self.color = arg.color or function () love.graphics.setColor(186, 140, 93, 255) end
 	if arg.self then self = arg.self end
 	
@@ -3653,6 +3696,7 @@ function Item:get_weight() return self.weight end
 function Item:get_char() return self.char end
 function Item:get_corpse() return self.corpse end
 function Item:get_mut() return self.mut end
+function Item:get_applyonce() return self.applyonce end
 	
 Tile = Class('Tile')
 function Tile:initialize(arg)
@@ -3826,7 +3870,9 @@ end
 
 function starting_inventory()
 
-	player_inventory = { {item = Item:new(game_items[# game_items - 1]), quantity = 1} }
+	player_inventory = {	{item = Item:new(game_items[# game_items - 2]), quantity = 1}, 
+							{item = Item:new(game_items[# game_items - 1]), quantity = 3},
+						}
 	player_equipment.torso = shop_find_game_item('Sarashi')
 	player_equipment.hand = shop_find_game_item('Big Stick')
 	player_equipment.feet = shop_find_game_item('Leather Shoes')

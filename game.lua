@@ -909,12 +909,16 @@ function wear_key(key)
 					local slot = player_inventory[i].item:get_slot()
 					
 					if slot == 'torso' then
-						if not player_equipment.torso then
-							player_equipment.torso = player_inventory[i].item
-							player_inventory[i].quantity = player_inventory[i].quantity - 1
-							message_add("You put on your " .. player_equipment.torso:get_name() .. ".")
+						if player_feat_search('no_torso') < 1 then
+							if not player_equipment.torso then
+								player_equipment.torso = player_inventory[i].item
+								player_inventory[i].quantity = player_inventory[i].quantity - 1
+								message_add("You put on your " .. player_equipment.torso:get_name() .. ".")
+							else
+								message_add("You are already wearing something over your body.")
+							end
 						else
-							message_add("You are already wearing something over your body.")
+							message_add("You can't fit anything over your body anymore.")
 						end
 					elseif slot == 'head' then
 						if not player_equipment.head then
@@ -1298,6 +1302,16 @@ function take_turns()
 	player:ai_take_turn()
 	player:set_turn_cd(0)
 	get_mut_check()
+	
+	--- mutation death check
+	if # player_muts == # game_mutations or # player_muts >= 18 then
+		player_dead = true
+		message_add("You feel a transformation coming over you...")
+		message_add("You shed your ties to humanity and are welcomed into the youkai world...")
+		message_add("The Jaaku wind runs over your mind and body corrupting you...")
+		message_add("You die...")
+		map[player:get_x()][player:get_y()]:set_holding(nil)
+	end
 
 end
 
@@ -1432,6 +1446,16 @@ function save_player()
 	text = text .. "hp_cur = " .. player:get_hp_cur() .. ", "
 	text = text .. "mana_max = " .. player:get_mana_max() .. ", "
 	text = text .. "mana_cur = " .. player:get_mana_cur() .. ", }\n"
+	--- mutations
+	text = text .. "player_muts = { "
+	for i = 1, # player_muts do
+		for k = 1, # game_mutations do
+			if player_muts[i] == game_mutations[k] then
+				text = text .. "game_mutations[" .. k .. "], "
+			end
+		end
+	end
+	text = text .. " }\n"
 	--- dungeon level
 	text = text .. "level = { name = \'" .. level.name .. "\', "
 	text = text .. "depth = " .. level.depth .. ", }\n"
@@ -1608,10 +1632,10 @@ function dijkstra_map(dx, dy)
 	local changed = true
 	local num = 1000
 	
-	local start_x = dx - 10
-	local start_y = dy - 10
-	local end_x = dx + 10
-	local end_y = dy + 10
+	local start_x = dx - world_see_distance + player_feat_search('sight')
+	local start_y = dy - world_see_distance + player_feat_search('sight')
+	local end_x = dx + world_see_distance + player_feat_search('sight')
+	local end_y = dy + world_see_distance + player_feat_search('sight')
 	
 	if start_x < 2 then start_x = 2 end
 	if start_y < 2 then start_y = 2 end
@@ -1709,6 +1733,14 @@ function give_random_mut()
 				map[player:get_x()][player:get_y()]:set_items(items)
 				player_equipment.feet = nil
 				message_add("Your shoes slip off and fall onto the ground!")
+			end
+		end
+		
+		--- can we not wear body armor any more?
+		if player_muts[i].no_torso then
+			if player_equipment.torso then				
+				message_add("Your large spikes shred your " .. player_equipment.torso:get_name() .. " to pieces.")
+				player_equipment.torso = nil
 			end
 		end
 		
@@ -2585,7 +2617,7 @@ end
 
 function player_fov()
 
-	if level.name ~= 'Overworld' then map_calc_fov(player:get_x(), player:get_y(), world_see_distance)		
+	if level.name ~= 'Overworld' then map_calc_fov(player:get_x(), player:get_y(), world_see_distance + player_feat_search('sight'))		
 	elseif level.name == 'Overworld' then map_overworld_fov(player:get_x(), player:get_y(), 2) end
 	
 end
@@ -3071,8 +3103,12 @@ function Creature:move(dx, dy)
 				--- tile modifiers and message
 				if level.name ~= 'Overworld' then
 					if map[self.x][self.y]:get_name() == 'Water' then
-						message_add("You step into the cool water.  You get wet.")
-						add_modifier({name = 'Wet', turn = 50, armor = -2})
+						if player_feat_search('fly') < 1 then
+							message_add("You step into the cool water.  You get wet.")
+							add_modifier({name = 'Wet', turn = 50, armor = -2})
+						else
+							message_add("You fly over the cool water.")
+						end
 					elseif map[self.x][self.y]:get_name() == 'Futon' then
 						message_add("You step onto the comfy futon.")
 					elseif map[self.x][self.y]:get_name() == 'Bed' then
@@ -3225,7 +3261,9 @@ function Creature:fight(x, y)
 		if math.random(1, 100) <= crit then damage = damage + math.ceil(damage * .15) end
 		
 		--- fighting costs hunger!
-		self.food_tick = self.food_tick - 25
+		local food_cost = 25 + player_feat_search('hunger')
+		if food_cost < 1 then food_cost = 1 end
+		self.food_tick = self.food_tick - food_cost
 	end
 	
 	map[x][y]:get_holding():take_dam(damage, 'phys', self.name)

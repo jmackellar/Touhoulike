@@ -82,6 +82,7 @@ function map_moriya_shrine(dir)
 		chunk()
 	end
 	
+	map[40][16]:set_holding(Creature:new({name = 'Shopkeeper', team = 0, identify = true, char = '@', x = 7, y = 7, ai = 'shop'}))
 	place_player_on_stairs(dir)
 
 end

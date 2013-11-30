@@ -1511,6 +1511,8 @@ function save_player()
 		end
 	end
 	text = text .. " }\n"
+	--- mut level
+	text = text .. "player_mut_level = " .. player_mut_level .. "\n"
 	--- mods
 	text = text .. "player_mods = { "
 	for i = 1, # player_mods do
@@ -2713,6 +2715,7 @@ end
 function player_fov()
 
 	local dark = false
+	local dist = world_see_distance
 
 	if level.name ~= 'Overworld' then 
 		--- check if the level is dark or not
@@ -2724,11 +2727,16 @@ function player_fov()
 			end
 		end
 		
-		if not dark then
-			map_calc_fov(player:get_x(), player:get_y(), world_see_distance + player_feat_search('sight'))		
-		else
-			map_calc_fov(player:get_x(), player:get_y(), 2 + player_mod_get('torch'))
+		if dark then
+			dist = 2
 		end
+		
+		dist = dist + player_mod_get('torch')
+		if dist > 5 then dist = 5 end
+		
+		dist = dist + player_feat_search('sight')
+		
+		map_calc_fov(player:get_x(), player:get_y(), dist)		
 	
 	elseif 
 		level.name == 'Overworld' then map_overworld_fov(player:get_x(), player:get_y(), 2) 

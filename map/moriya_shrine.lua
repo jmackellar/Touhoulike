@@ -1525,4 +1525,5 @@ map[46][31] = Tile:new({block_move=true,x=46,block_sight=true,char="#",color={r=
 map[46][32] = Tile:new({block_move=true,x=46,block_sight=true,char="#",color={r=255,b=255,g=255},name="Wall",y=32})
 map[46][33] = Tile:new({block_move=true,x=46,block_sight=true,char="#",color={r=255,b=255,g=255},name="Wall",y=33})
 
+map[37][17]:set_holding(Creature:new({name = 'Kanako Yasaka', team = 0, char = '@', color = function () love.graphics.setColor(255, 0, 0, 255) end, x = 37, y = 17, ai = 'wander'}))
 map[40][16]:set_holding(Creature:new({name = 'Shopkeeper', team = 0, identify = true, char = '@', x = 7, y = 7, ai = 'shop'}))

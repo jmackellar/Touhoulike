@@ -11,7 +11,7 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = 21, y = 18, func = function (dir) map_kourindou(dir) end, name = 'Kourindou', persist = false, dark = false},
 						{x = 24, y = 27, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = false, dark = false},	
 						{x = 35, y = 9, func = function (dir) map_makai_entrance(dir) end, name = 'Eerie Cave', persist = true, dark = true},
-						{x = 40, y = 27, func = function (dir) map_moriya_shrine(dir) end, name = 'Moriya Shrine', persist = true, dark = false},
+						{x = 40, y = 27, func = function (dir) map_moriya_shrine(dir) end, name = 'Moriya Shrine', persist = false, dark = false},
 					}
 					
 overworld_coords = { x = 25, y = 25 }
@@ -325,7 +325,7 @@ function map_youkai_dungeon(dir)
 	if level.depth == 10 then dstairs = false end
 		
 	map_gen_forest(map_width, map_height, true, dstairs)
-	monster_maker(math.random(20,30))
+	monster_maker(math.random(15,25))
 	item_maker(math.random(10,20))
 	place_player_on_stairs(dir)
 	
@@ -345,8 +345,6 @@ function map_youkai_dungeon(dir)
 			aki['y'] = math.floor(map_height/2)
 			map[math.floor(map_width/2)][math.floor(map_height/2)]:set_holding(Creature:new(aki)) 
 		end
-		--- Purification Rod
-		map[math.floor(map_width/2)][math.floor(map_height/2)]:set_items({Item:new(game_items[13])})
 	end
 	
 end

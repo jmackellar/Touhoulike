@@ -3399,6 +3399,7 @@ function Creature:move(dx, dy)
 					break
 				--- check if quest is completed or not
 				elseif game_quests[i].npc == map[new_x][new_y]:get_holding():get_name() and game_quests[i].have then
+				
 					--- fetch quest, check if player has the item or not
 					if game_quests[i].type == 'fetch' then
 						for k = 1, # player_inventory do
@@ -3408,7 +3409,17 @@ function Creature:move(dx, dy)
 								game_quests[i].completed = true
 								add_item_to_inventory(shop_find_game_item(game_quests[i].reward))
 								message_add("\"" .. game_quests[i].completed_text .. "\"")
+								break
 							end
+						end
+						
+					--- kill quest, check if the target is dead or not
+					elseif game_quests[i].type == 'kill' then
+						if not check_unique({name = game_quests[i].target}) then
+							game_quests[i].completed = true
+							add_item_to_inventory(shop_find_game_item(game_quests[i].reward))
+							message_add("\"" .. game_quests[i].completed_text .. "\"")
+							break
 						end
 					end
 					
@@ -3654,6 +3665,12 @@ function Creature:take_dam(dam, dtype, name)
 		if self ~= player then 
 			message_add("You killed the " .. self.name .. ".") 
 			monster_corpse_check(self)
+			
+			--- if its a unique monster then add it to the list of dead uniques
+			if self.unique then
+				table.insert(unique_dead, self.name)
+			end
+			
 		else
 			--- player dead, delete all save files
 			player_dead = true

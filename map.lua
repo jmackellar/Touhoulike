@@ -632,7 +632,7 @@ function map_easy_cave(dir)
 		if level.depth > 0 then
 		
 			local dstairs = true
-			if level.depth == 5 then dstairs = false end
+			if level.depth == 4 then dstairs = false end
 			stairs = map_gen_rogue(map_width, map_height, true, dstairs, 'dungeon')	
 			
 			if dir == 'down' then
@@ -655,8 +655,8 @@ function map_easy_cave(dir)
 		place_player_on_stairs(dir)
 	end
 	
-	--- if last cave level then place a magic mirror
-	if level.depth == 5 then
+	--- if last cave level then the human elder's glasses
+	if level.depth == 4 then
 		local placed = false
 		repeat
 		
@@ -664,7 +664,7 @@ function map_easy_cave(dir)
 			local y = math.random(1, map_height)
 			print(x, y)
 			if not map[x][y]:get_block_move() then
-				map[x][y]:set_items({Item:new(game_items[7])})
+				map[x][y]:set_items({shop_find_game_item('Glasses')})
 				placed = true
 			end
 		

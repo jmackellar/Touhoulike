@@ -1,0 +1,12 @@
+game_quests = {	{	name = 'Find My Glasses', 
+					desc = 'I\'ve lost my glasses while in a dungeon north of your shrine.  Will you please find and return them to me?',
+					completed_text = 'Thank you for finding my glasses.  Here, take this magical mirror as a reward.',
+					npc = 'Human Elder',
+					npc_location = 'Human Village',
+					type = 'fetch', 
+					item = 'Glasses', 
+					reward = 'Magic Mirror',
+					have = false,
+					completed = false,
+					},
+				}

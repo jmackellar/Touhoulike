@@ -13,6 +13,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Game Boy', apply = true, color = function () love.graphics.setColor(129, 224, 235) end, afunc = function () end, weight = 0, message = "You activate the doomsday device...", char = '(', prob = 0},
 				{name = 'Purification Rod', slot = 'hand', weptype = 'shinto', color = function () love.graphics.setColor(212, 235, 87, 255) end, weight = 4, damage = 15, char = ')', prob = 0, bullet = 1},
 				{name = 'Hatchet', slot = 'hand', weptype = 'axe', weight = 8, damage = 5, char = ')', prob = 0},
+				{name = 'Glasses', slot = 'head', armor = 1, char = '[', color = function () love.graphics.setColor(255, 255, 255, 255) end, prob = 0},
 				--- corpses
 				{name = 'Fairy Corpse', edible = true, nutrition = 10, corpse = 'fairy', color = function () love.graphics.setColor(87, 185, 235, 255) end, weight = 25, char = '%', prob = 0},
 				{name = 'Bug Corpse', edible = true, nutrition = 5, corpse = 'bug', weight = 2, char = '%', prob = 0},

@@ -5,6 +5,7 @@ require("monsters")
 require("spells")
 require("characters")
 require("youkai")
+require("quests")
 
 map = {}
 map_width = 46
@@ -115,6 +116,8 @@ game_font = love.graphics.newFont("media/coolvetica.ttf", 14)
 intro_open = false
 player_dead = false
 
+quests_open = false
+
 function game:enter()
 	
 	if not love.filesystem.exists("player.lua") then
@@ -150,6 +153,7 @@ function game:draw()
 	if look_open then draw_look() end
 	if intro_open then draw_intro() end
 	if muts_open then draw_muts() end
+	if quests_open then draw_quests() end
 	
 	--- player dead drawing
 	if player_dead then
@@ -188,7 +192,7 @@ end
 function game:keypressed(key)
 
 	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
-		if not inventory_open and not muts_open and not player_dead and not intro_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
+		if not inventory_open and not quests_open and not muts_open and not player_dead and not intro_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
 			
 			--- keypad movement
 			if key == 'kp8' then player:move(0, -1) next_turn = true end
@@ -242,6 +246,8 @@ function game:keypressed(key)
 				
 				if key == 'x' then skills_open = true end
 				if key == 'z' then feats_open = true end
+				
+				if key == '[' then quests_open = true end
 
 				if key == 'f' then danmaku_dir = true message_add("Fire danmaku in which direction? ESC to cancel.") end
 			end
@@ -289,6 +295,8 @@ function game:keypressed(key)
 			if key then intro_open = false end
 		elseif muts_open then
 			if key then muts_open = false end
+		elseif quests_open then
+			if key then quests_open = false end
 		elseif player_dead then
 			if key == 'return' or key == 'escape' or key == 'kpenter' then love.event.push('quit') end
 			
@@ -362,7 +370,7 @@ function game:update(dt)
 	stair_cd = stair_cd - 1
 	player_move_cd = player_move_cd - 1
 	
-	if not inventory_open and not muts_open and not player_dead and not intro_open and not feats_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
+	if not inventory_open and not quests_open and not muts_open and not player_dead and not intro_open and not feats_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
 		if player:get_turn_cd() <= 1 and player_move_cd < 1 and stair_cd <= 1 and not danmaku and # ascii_effects == 0 then
 			--- up and down stairs in levels
 			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and map[player:get_x()][player:get_y()]:get_name() == 'DStairs' then stair_machine('down') end
@@ -1537,6 +1545,15 @@ function save_player()
 	text = text .. "world_time = " .. world_time .. "\n"
 	text = text .. "world_time_turn = " .. world_time_turn .. "\n"
 	text = text .. "world_total_turn = " .. world_total_turn .. "\n"
+	--- quests
+	for i = 1, # game_quests do
+		if game_quests[i].have then
+			text = text .. "game_quests[" .. i .. "].have = true\n"
+		end
+		if game_quests[i].completed then
+			text = text .. "game_quests[" .. i .. "].completed = true\n"
+		end
+	end
 	
 	love.filesystem.write("player.lua", text)
 	
@@ -2058,6 +2075,51 @@ function draw_muts()
 		index = index + 1
 	end
 
+end
+
+function draw_quests()
+
+	local start_x = 0
+	local start_y = 0
+	local width = 650
+	local height = 470
+	local font = love.graphics.getFont()
+	local index = 2
+	
+	love.graphics.setColor(0, 0, 0, 255)
+	love.graphics.rectangle('fill', start_x, start_y, width, height)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
+	
+	love.graphics.print("Quests:  Press any key to return", start_x + 4, start_y + 4)
+	
+	for i = 1, # game_quests do
+		if game_quests[i].have and not game_quests[i].completed then
+			love.graphics.setColor(204, 155, 63, 255)
+			love.graphics.print(game_quests[i].name .. " : ", start_x + 10, start_y + (index * 15))
+			love.graphics.setColor(255, 255, 255, 255)
+			love.graphics.print("Active", start_x + 10 + font:getWidth(game_quests[i].name .. " : "), start_y + (index * 15))
+			index = index + 1
+			love.graphics.print(game_quests[i].desc, start_x + 20, start_y + (index * 15))
+			index = index + 1
+			love.graphics.setColor(204, 155, 63, 255)
+			love.graphics.print("Given By : ", start_x + 20, start_y + (index * 15))
+			love.graphics.setColor(255, 255, 255, 255)
+			love.graphics.print(game_quests[i].npc, start_x + 20 + font:getWidth("Given By : "), start_y + (index * 15))
+			love.graphics.setColor(204, 155, 63, 255)
+			love.graphics.print("    Location : ", start_x + 20 + font:getWidth("Given By : " .. game_quests[i].npc), start_y + (index * 15))
+			love.graphics.setColor(255, 255, 255, 255)
+			love.graphics.print(game_quests[i].npc_location, start_x + 20 + font:getWidth("Given By : " .. game_quests[i].npc .. "    Location : "), start_y + (index * 15))
+			index = index + 1
+		elseif game_quests[i].have and game_quests[i].completed then
+			love.graphics.setColor(204, 155, 63, 255)
+			love.graphics.print(game_quests[i].name .. " : ", start_x + 10, start_y + (index * 15))
+			love.graphics.setColor(255, 255, 255, 255)
+			love.graphics.print("Completed", start_x + 10 + font:getWidth(game_quests[i].name .. " : "), start_y + (index * 15))
+			index = index + 1
+		end
+	end
+	
 end
 
 function draw_feats()
@@ -2807,6 +2869,12 @@ function map_special_rooms_check()
 
 end
 
+function check_for_quest()
+
+
+
+end
+
 Creature = Class('Creature')
 function Creature:initialize(arg)
 
@@ -2824,7 +2892,7 @@ function Creature:initialize(arg)
 	self.bullet = arg.bullet or 1
 	self.armor = arg.armor or 1
 	self.evasion = arg.evasion or 10
-	self.speed = arg.speed or 10
+	self.speed = arg.speed or 1
 	self.shop = arg.shop or false
 	self.sell = arg.sell or false
 	self.turn_cd = arg.turn_cd or 1
@@ -3279,10 +3347,10 @@ function Creature:move(dx, dy)
 						message_add("A field")
 					end
 					
-					if map[self.x][self.y]:get_char() ~= 'O' and map[self.x][self.y]:get_char() ~= ' .' then
+					if map[self.x][self.y]:get_char() ~= 'O' and map[self.x][self.y]:get_char() ~= ' .' and map[self.x][self.y]:get_char() ~= '.' then
 						if math.random(1000) <= 10 then
 							map_random_overworld_encounter()
-							message_add("You've been ambushed while traveling!")
+							message_add("You've been ambushed while travelling!")
 						end
 					end
 					
@@ -3319,6 +3387,32 @@ function Creature:move(dx, dy)
 				message_add("Minoriko Aki offers you some sweet potatos.")
 			elseif map[new_x][new_y]:get_holding():get_shop() == 'Rino' then
 				message_add("Rinnosuke welcomes you into Kourindou")
+			end
+			
+		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team then
+		
+			for i = 1, # game_quests do
+				--- don't have the quest yet, give it to player
+				if game_quests[i].npc == map[new_x][new_y]:get_holding():get_name() and not game_quests[i].have then
+					game_quests[i].have = true
+					message_add("\"" .. game_quests[i].desc .. "\"")
+					break
+				--- check if quest is completed or not
+				elseif game_quests[i].npc == map[new_x][new_y]:get_holding():get_name() and game_quests[i].have then
+					--- fetch quest, check if player has the item or not
+					if game_quests[i].type == 'fetch' then
+						for k = 1, # player_inventory do
+							if player_inventory[k].item:get_name() == game_quests[i].item then
+								player_inventory[k].quantity = player_inventory[k].quantity - 1
+								if player_inventory[k].quantity < 1 then table.remove(player_inventory, k) end
+								game_quests[i].completed = true
+								add_item_to_inventory(shop_find_game_item(game_quests[i].reward))
+								message_add("\"" .. game_quests[i].completed_text .. "\"")
+							end
+						end
+					end
+					
+				end
 			end
 			
 		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_sell() then

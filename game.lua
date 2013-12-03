@@ -34,12 +34,12 @@ player_stats = { str = 6,
 				 int = 5,
 				 con = 7,}
 	
-player_skills = { fighting = 0, evasion = 0, danmaku = 0, cooking = 0, shinto = 0, stick = 0, longsword = 0, shortblade = 0, axe = 0 }
+player_skills = { fighting = 0, evasion = 0, danmaku = 0, cooking = 0, shinto = 0, polearm = 0, longsword = 0, shortblade = 0, axe = 0 }
 skills_open = false
 
 feats_open = false
 feats_gain_open = false
-player_feats = {	{name = 'Stick Proficiency', desc = 'Increases damage done by all stick weapons by 5%', have = false, stick = 1.05},
+player_feats = {	{name = 'Polearm Proficiency', desc = 'Increases damage done by all polearm weapons by 5%', have = false, polearm = 1.05},
 					{name = 'Long Sword Proficiency', desc = 'Increases damage done by all long sword weapons by 5%', have = false, longsword = 1.05},
 					{name = 'Short Blade Proficiency', desc = 'Increases damage done by all short blade weapons by 5%', have = false, shortblade = 1.05},
 					{name = 'Shinto Proficiency', desc =  'Increases damage done by all shinto weapons by 5%', have = false, shinto = 1.05},
@@ -2839,6 +2839,7 @@ function Creature:initialize(arg)
 	self.unique = arg.unique or false
 	self.corpse = arg.corpse or false
 	self.identify = arg.identify or false
+	self.undead = arg.undead or false
 	self.color = arg.color or function () love.graphics.setColor(255, 255, 255, 255) end
 	
 end
@@ -3488,14 +3489,50 @@ function Creature:take_dam(dam, dtype, name)
 	--- enemy evasion
 	if math.random(1, 100) <= self.evasion then
 		dam = 0
-	end
+	end	
 	
-	local dam_red = ((0.06 * armor) / (1 + 0.06 * armor)) * 100
-	if dam_red ~= 0 then 
-		dam_red = dam_red / 100
-		dam = math.floor(dam - (dam * dam_red))
+	if dtype == 'phys' then
+		local dam_red = ((0.06 * armor) / (1 + 0.06 * armor)) * 100
+		if dam_red ~= 0 then 
+			dam_red = dam_red / 100
+			dam = math.floor(dam - (dam * dam_red))
+		end	
 	end
-	self.hp_cur = self.hp_cur - dam
+		
+	--- wep sub type effects
+	if dam > 0 and self ~= player and dtype == 'phys' then
+		if player_equipment.hand then
+			--- short blade crit modifier
+			if player_equipment.hand:get_weptype() == 'shortblade' then
+				if math.random(1, 100) <= 10 then
+					message_add("You notice an opening in the "  .. self.name .. "\'s stance.")
+					dam = math.floor( dam * 1.25 )
+				end
+			--- hammer type stun
+			elseif player_equipment.hand:get_subwep() == 'hammer' then
+				if math.random(1, 100) <= 10 then
+					message_add("You swing your " .. player_equipment.hand:get_name() .. " high above your head.")
+					self.turn_cd = math.max(2, self.turn_cd + 1)
+				end
+			--- shinto deals more damage to undead
+			elseif player_equipment.hand:get_weptype() == 'shinto' then
+				if self.undead then
+					message_add("The " .. self.name .. " shies away from your " .. player_equipment.hand:get_name() .. ".")
+					dam = math.floor(dam * 1.25 )
+				end
+			--- naginatas have a cleave affect
+			elseif player_equipment.hand:get_subwep() == 'naginata' then
+				for x = self.x - 1, self.x + 1 do
+					for y = self.y - 1, self.y + 1 do
+						if map[x][y]:get_holding() and map[x][y]:get_holding() ~= player and map[x][y]:get_holding ~= self then 
+							map[x][y]:get_holding():take_dam( math.floo(dam * .45), 'cleave', 'player') 
+						end
+					end
+				end
+			end
+			
+		end
+	end
 	
 	if dam > 0 then
 		if self == player then
@@ -3516,6 +3553,8 @@ function Creature:take_dam(dam, dtype, name)
 			message_add("The " .. self.name .. " grazed your danmaku.")
 		end
 	end
+	
+	self.hp_cur = self.hp_cur - dam
 	
 	if self.hp_cur < 1 then
 		if self ~= player then 
@@ -3659,6 +3698,7 @@ function Item:initialize(arg)
 	self.corpse = self.corpse or false
 	self.mut = arg.mut or 0
 	self.applyonce = arg.applyonce or false
+	self.subwep = arg.subwep or false
 	self.color = arg.color or function () love.graphics.setColor(186, 140, 93, 255) end
 	if arg.self then self = arg.self end
 	
@@ -3731,6 +3771,7 @@ function Item:get_char() return self.char end
 function Item:get_corpse() return self.corpse end
 function Item:get_mut() return self.mut end
 function Item:get_applyonce() return self.applyonce end
+function Item:get_subwep() return self.subwep end
 	
 Tile = Class('Tile')
 function Tile:initialize(arg)

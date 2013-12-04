@@ -3630,7 +3630,7 @@ function Creature:take_dam(dam, dtype, name)
 				for x = self.x - 1, self.x + 1 do
 					for y = self.y - 1, self.y + 1 do
 						if map[x][y]:get_holding() and map[x][y]:get_holding() ~= player and map[x][y]:get_holding() ~= self then 
-							map[x][y]:get_holding():take_dam( math.floo(dam * .45), 'cleave', 'player') 
+							map[x][y]:get_holding():take_dam( math.floor(dam * .45), 'cleave', 'player') 
 						end
 					end
 				end

@@ -6,8 +6,8 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = 39, y = 13, func = function (dir) map_easy_cave(dir) end, name = 'Easy Dungeon', persist = true, mon_gen = 1, dark = true},
 						{x = 22, y = 20, func = function (dir) map_human_village(dir) end, name = 'Human Village', persist = false, dark = false},
 						{x = 43, y = 15, func = function (dir) map_easy_cavern(dir) end, name = 'Easy Cavern', persist = true, mon_gen = 1, dark = true},
-						{x = 21, y = 8, func = function (dir) map_sdm(dir) end, name = 'Scarlet Devil Mansion', persist = true, mon_gen = 5, dark = true},
-						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Forest', persist = false, mon_gen = 4, dark = false},
+						{x = 21, y = 8, func = function (dir) map_sdm(dir) end, name = 'Scarlet Devil Mansion', persist = true, mon_gen = 3, dark = true},
+						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Forest', persist = false, mon_gen = 2, dark = false},
 						{x = 21, y = 18, func = function (dir) map_kourindou(dir) end, name = 'Kourindou', persist = false, dark = false},
 						{x = 24, y = 27, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = false, dark = false},	
 						{x = 35, y = 9, func = function (dir) map_makai_entrance(dir) end, name = 'Eerie Cave', persist = true, dark = true},
@@ -708,6 +708,426 @@ function map_set_all_seen()
 
 end
 
+function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
+
+	local x = 0
+	local y = 0
+	local width = 0
+	local height = 0
+	local rw = 0
+	local rh = 0
+	local placed = false
+	local dice = 0
+	local rooms = {}
+	
+	--- flood the map with walls
+	for x = 1, mapwidth do
+		for y = 1, mapheight do
+			map[x][y] = Tile:new({name = 'Wall', x = x, y = y})
+		end
+	end
+	
+	--- divide the map up into grids
+	width = math.floor( mapwidth / 3 )
+	height = math.floor ( mapheight / 3 )
+	for x = 1, 3 do
+		for y = 1, 3 do
+			table.insert(rooms, {sx = (x - 1) * width + 1, sy = (y - 1) * height + 1, w = width, h = height})
+		end
+	end
+	
+	--- place varying rooms in each square
+	for i = 1, # rooms do
+	
+		print('---placing room ' .. i .. '---')
+		
+		placed = false
+		repeat
+			--- find the center of our room
+			rw = math.random(5, 8)
+			rh = math.random(5, 8)
+			x = math.floor ( (rooms[i].sx + rooms[i].sx + rooms[i].w) / 2) + math.random( -1, 1)
+			y = math.floor ( (rooms[i].sy + rooms[i].sy + rooms[i].h) / 2) + math.random( -1, 1)
+			
+			--- room type
+			--- ROLL THE DIE ---
+			--- ROLLLLLLLLAN ---
+			dice = math.random(1, 8)
+			
+			--- square
+			if dice == 1 then
+				print('placing square room')
+			
+				for xx = x - math.floor(rw / 2), x + math.floor(rw / 2) do
+					for yy = y - math.floor(rh / 2), y + math.floor(rh / 2) do
+						map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy})
+					end
+				end
+				rooms[i]['cx'] = x
+				rooms[i]['cy'] = y
+				placed = true
+				
+			--- ray casting room
+			elseif dice == 2 then
+				print('placing ray casted room')
+				
+				map[x][y] = Tile:new({name = 'Floor', x = x, y = y})
+				for angle = 1, 360, 1 do
+					local dist = 0
+					local dx = x + 0.5
+					local dy = y + 0.5
+					local xm = math.cos(angle)
+					local ym = math.sin(angle)
+					
+					repeat
+						dx = dx + xm
+						dy = dy + ym
+						dist = dist + 1
+						if math.floor(dx) > mapwidth then break end
+						if math.floor(dy) > mapheight then break end
+						if math.floor(dx) < 1 then break end
+						if math.floor(dy) < 1 then break end
+						if math.floor(dx) < rooms[i].sx or math.floor(dx) > rooms[i].sx + rooms[i].w then break end
+						if math.floor(dy) < rooms[i].sy or math.floor(dy) > rooms[i].sy + rooms[i].h then break end
+						map[math.floor(dx)][math.floor(dy)] = Tile:new({name = 'Floor', x = math.floor(dx), y = math.floor(dy)})
+					until dist > math.random(1, 5)
+				
+				end
+				rooms[i]['cx'] = x
+				rooms[i]['cy'] = y
+				placed = true
+				
+			--- crossroads
+			elseif dice == 3 then
+				print('placing crossroads')
+				
+				map[x][y] = Tile:new({name = 'Floor', x = x, y = y})
+				rooms[i]['cx'] = x
+				rooms[i]['cy'] = y
+				placed = true
+				
+			--- checkerboard
+			elseif dice == 4 then
+				print('placing checkerboard')
+				
+				local on = true
+				for xx = x - math.floor(rw / 2), x + math.floor(rw / 2) do
+					for yy = y - math.floor(rh / 2), y + math.floor(rh / 2) do
+					
+						if on then 
+							map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy}) 
+							on = false
+						else
+							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy, tunnel = true})
+							on = true
+						end
+						
+						
+					end
+				end
+				rooms[i]['cx'] = x
+				rooms[i]['cy'] = y
+				placed = true
+				
+			--- maze
+			elseif dice == 5 or dice == 8 then
+				print('placing maze')
+				
+				--- fill the area with floors and random walls
+				for xx = x - math.floor(rw / 2), x + math.floor(rw / 2) do
+					for yy = y - math.floor(rh / 2), y + math.floor(rh / 2) do
+						if math.random(1, 100) <= 55 then
+							map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy})
+						else
+							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy, tunnel = true})
+						end
+					end
+				end
+				
+				for i = 1, 4 do
+					for xx = x - math.floor(rw / 2), x + math.floor(rw / 2) do
+						for yy = y - math.floor(rh / 2), y + math.floor(rh / 2) do
+							
+							if xx > 1 and xx < mapwidth and yy > 1 and yy < mapheight then
+								if map[xx][yy]:get_block_move() then
+									if map_get_surrounding_blocked(xx, yy) >= 1 and
+									   map_get_surrounding_blocked(xx, yy) <= 4 then
+										map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy, tunnel = true})
+									else
+										map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy})
+									end
+								else
+									if map_get_surrounding_blocked(xx, yy) == 3 then
+										map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy, tunnel = true})
+									else
+										map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy})
+									end
+								end
+							end
+							
+						end
+					end
+				end
+				
+				rooms[i]['cx'] = x
+				rooms[i]['cy'] = y
+				placed = true
+				
+			--- loop
+			elseif dice == 6 then
+				print('placing loop')
+			
+				for xx = x - math.floor(rw / 2), x + math.floor(rw / 2) do
+					for yy = y - math.floor(rh / 2), y + math.floor(rh / 2) do
+					
+						map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy, tunnel = true})
+						if xx == x - math.floor(rw / 2) or xx == x + math.floor(rw / 2) then
+							map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy})
+						end
+						if yy == y - math.floor(rh / 2) or yy == y + math.floor(rh / 2) then
+							map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy})
+						end
+
+					end
+				end
+				rooms[i]['cx'] = x
+				rooms[i]['cy'] = y
+				placed = true
+				
+			--- chambers
+			elseif dice == 7 then
+				print('placing chambers')
+				
+				--- initial open room
+				for xx = rooms[i].sx, rooms[i].sx + rooms[i].w do
+					for yy = rooms[i].sy, rooms[i].sy + rooms[i].h do
+						map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy})
+						if xx == rooms[i].sx or xx == rooms[i].sx + rooms[i].w then
+							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy})
+						end
+						if yy == rooms[i].sy or yy == rooms[i].sy + rooms[i].h then
+							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy})
+						end
+					end
+				end
+				
+				--- chamber fortress in center
+				for xx = rooms[i].sx + 3, rooms[i].sx + rooms[i].w - 3 do
+					for yy = rooms[i].sy + 3, rooms[i].sy + rooms[i].h - 3 do
+					
+						if xx == rooms[i].sx + 3 or xx == rooms[i].sx + rooms[i].w - 3 then
+							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy, tunnel = true})
+						end
+						if yy == rooms[i].sy + 3 or yy == rooms[i].sy + rooms[i].h - 3 then
+							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy, tunnel = true})
+						end
+						
+					end
+				end
+				
+				--- main chamber door
+				if math.random(1, 2) == 1 then
+					dx = math.random(rooms[i].sx + 4, rooms[i].sx + rooms[i].w - 4)
+					if math.random(1, 2) == 1 then
+						map[dx][rooms[i].sy + 3] = Tile:new({name = 'Floor', x = dx, y = rooms[i].sy + 3})
+					else
+						map[dx][rooms[i].sy + rooms[i].h - 3] = Tile:new({name = 'Floor', x = dx, y = rooms[i].sy + rooms[i].h - 3})
+					end
+				else
+					dy = math.random(rooms[i].sy + 4, rooms[i].sy + rooms[i].h - 4)
+					if math.random(1, 2) == 1 then
+						map[rooms[i].sx + 3][dy] = Tile:new({name = 'Floor', x = rooms[i].sx + 3, y = dy})
+					else
+						map[rooms[i].sx + rooms[i].w - 3][dy] = Tile:new({name = 'Floor', x = rooms[i].sx + rooms[i].w - 3, y = dy})
+					end
+				end
+				
+				--- divide the chamber up
+				local walls = 0
+				local door = false
+				local prob = 0
+				
+				repeat
+					dx = math.random(rooms[i].sx + 6, rooms[i].sx + rooms[i].w - 6)
+					if map[dx][rooms[i].sy + 3]:get_block_move() and not map[dx-1][rooms[i].sy + 4]:get_block_move() 
+					   and not map[dx+1][rooms[i].sy + 4]:get_block_move() and not map[dx-2][rooms[i].sy + 4]:get_block_move()
+					   and not map[dx+2][rooms[i].sy + 4]:get_block_move() then
+						for yy = rooms[i].sy + 4, rooms[i].sy + rooms[i].h - 4 do
+							map[dx][yy] = Tile:new({name = 'Wall', x = dx, y = yy, tunnel = true})
+							prob = prob + 15
+							if yy > rooms[i].sy + 4 and yy < rooms[i].sy + rooms[i].h - 4 and not door and math.random(1, 100) <= 45 + prob then
+								map[dx][yy] = Tile:new({name = 'Floor', x = dx, y = yy})
+								door = true
+							end
+						end
+						walls = walls + 1
+						door = false
+					end
+				until walls >= 3
+				
+				rooms[i]['cx'] = x
+				rooms[i]['cy'] = y
+				placed = true
+			
+			end
+			
+		until placed
+		
+	end
+	
+	--- place some small square rooms that aren't restricted by the grid
+	local rmp = 0
+	local can_place = false
+	repeat
+	
+		x = math.random(2, mapwidth - 7)
+		y = math.random(2, mapheight - 7)
+		w = math.random(3, 6)
+		h = math.random(3, 6)
+		
+		can_place = true
+		for xx = x, x + w do
+			for yy = y, y + h do
+				if not map[xx][yy]:get_block_move() then can_place = false end
+			end
+		end
+		
+		if can_place then
+			for xx = x, x + w do
+				for yy = y, y + h do
+					map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy})
+				end
+			end
+			rmp = rmp + 1
+			table.insert(rooms, {sx = x, sy = y, w = w, h = h, cx = math.floor(x + w / 2), cy = math.floor(y + h / 2)})
+		end
+	
+	until rmp >= 4
+	
+	--- place tunnels between rooms
+	for num = 1, 3 do
+		for i = 1, # rooms do
+			
+			local k = # rooms + 1
+			local dice = math.random(1, 4)
+			
+			if dice == 1 then 
+				k = i - 1
+			elseif dice == 2 then
+				k = i + 3
+			elseif dice == 3 then
+				k = i + 1
+			elseif dice == 4 then 
+				k = i - 3
+			end
+			
+			if k < 1 then k = 1 end
+			if k > # rooms then k = # rooms end
+			
+			local xdif = 0
+			local ydif = 0
+		
+			if math.random(1, 1) == 1 then
+			
+				xdif = 0
+				ydif = 0
+			
+				for xx = math.min(rooms[i].cx, rooms[k].cx), math.max(rooms[i].cx, rooms[k].cx) do
+					if not map[xx + xdif][rooms[i].cy + ydif]:get_tunnel() then
+						map[xx + xdif][rooms[i].cy + ydif] = Tile:new({name = 'Floor', x = xx + xdif, y = rooms[i].cy + ydif})
+					end
+					
+					if math.random(1, 100) <= 15 then
+						ydif = ydif + math.random(-1, 1)
+					end
+					
+				end
+				
+				for yy = math.min(rooms[i].cy, rooms[k].cy), math.max(rooms[i].cy, rooms[k].cy) do
+					if not map[rooms[k].cx + xdif][yy + ydif]:get_tunnel() then
+						map[rooms[k].cx + xdif][yy + ydif] = Tile:new({name = 'Floor', x = rooms[k].cx + xdif, y = yy + ydif})
+					end
+					
+					if math.random(1, 100) <= 15 then
+						xdif = xdif + math.random(-1, 1)
+					end
+					
+				end
+				
+			else
+			
+				xdif = 0
+				ydif = 0
+			
+				for yy = math.min(rooms[i].cy, rooms[k].cy), math.max(rooms[i].cy, rooms[k].cy) do
+					if not map[rooms[i].cx + xdif][yy + ydif]:get_tunnel() then
+						map[rooms[i].cx + xdif][yy + ydif] = Tile:new({name = 'Floor', x = rooms[i].cx + xdif, y = yy + ydif})
+					end
+					
+					if math.random(1, 100) <= 15 then
+						ydif = ydif + math.random(-1, 1)
+					end
+					
+				end
+				
+				xdif = 0
+				ydif = 0
+				
+				for xx = math.min(rooms[i].cx, rooms[k].cx), math.max(rooms[i].cx, rooms[k].cx) do
+					if not map[xx + xdif][rooms[k].cy + ydif]:get_tunnle() then
+						map[xx + xdif][rooms[k].cy + ydif] = Tile:new({name = 'Floor', x = xx + xdif, y = rooms[k].cy + ydif})
+					end
+					
+					if math.random(1, 100) <= 15 then
+						xdif = xdif + math.random(-1, 1)
+					end
+					
+				end
+				
+			end
+			
+		end
+	end	
+	
+	--- surround map with walls
+	for x = 1, mapwidth do
+		map[x][1] = Tile:new({name = 'Wall', x = x, y = 1})
+		map[x][mapheight] = Tile:new({name = 'Wall', x = x, y = mapheight})
+	end
+	for y = 1, mapheight do
+		map[1][y] = Tile:new({name = 'Wall', x = 1, y = y})
+		map[mapwidth][y] = Tile:new({name = 'Wall', x = mapwidth, y = y})
+	end
+	
+	--- place stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, mapwidth-7)
+		local y1 = math.random(1, mapheight-7)
+		local x2 = math.random(1, mapwidth-7)
+		local y2 = math.random(1, mapheight-7)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs
+	map_set_all_seen()
+	return stairs
+
+end
+
+--- don't use this, it's shit.  Maybe one day I'll fix it
 function map_gen_abstract(width, height, dstairsd, ustairsd)
 
 	local gridx = 6
@@ -1481,6 +1901,13 @@ function map_random_monster(lvl)
 	local chance = 0
 	local dice_max = 0
 	local dice = 0
+	
+	for i = 1, # overworld_levels do
+		if overworld_levels[i].name == level.name and overworld_levels[i].mon_gen then
+			monlevel = overworld_levels[i].mon_gen
+			break
+		end
+	end
 
 	for i = 1, # game_monsters do
 		if game_monsters[i].level <= monlevel and game_monsters[i].rand_gen then

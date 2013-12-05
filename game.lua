@@ -47,8 +47,8 @@ player_feats = {	{name = 'Polearm Proficiency', desc = 'Increases damage done by
 					{name = 'Axe Proficiency', desc = 'Increases damage done by all axe weapons by 5%', have = false, axe = 1.05},
 					{name = 'Athletics', desc = 'Increases strength and dexterity on levelup', have = false, athletics = 5},
 					{name = 'Iron Skin', desc = 'Decreases damage recieved from all sources by 5%', have = false, damred = 0.95},
-					{name = 'First Aid', desc = 'Regenerates hit points at a faster rate', have = false, hpregen = 15},
-					{name = 'Mana Battery', desc = 'Regenerates mana at a faster rate', have = false, manaregen = 10},
+					{name = 'First Aid', desc = 'Regenerates hit points at a faster rate', have = false, hpregen = 2},
+					{name = 'Mana Battery', desc = 'Regenerates mana at a faster rate', have = false, manaregen = 2},
 					{name = 'Nimble', desc = 'Increases evasion from physical attacks', have = false, evasion = 5},
 					{name = 'Accurate', desc = 'Increases accuracy when hitting with physical attacks', have = false, accuracy = 5},
 					}
@@ -2881,11 +2881,11 @@ function Creature:initialize(arg)
 	self.name = arg.name or 'Monster'
 	self.hp_max = arg.hp_max or 125
 	self.hp_cur = arg.hp_cur or self.hp_max
-	self.hp_regen = arg.hp_regen or 125
+	self.hp_regen = arg.hp_regen or 20
 	self.hp_regen_timer = arg.hp_regen_timer or self.hp_regen
 	self.mana_max = arg.mana_max or 100
 	self.mana_cur = arg.mana_cur or self.mana_max
-	self.mana_regen = arg.mana_regen or 45
+	self.mana_regen = arg.mana_regen or 20
 	self.mana_regen_timer = arg.mana_regen_timer or self.mana_regen
 	self.food_tick = 25
 	self.base_damage = arg.base_damage or {15, 25}
@@ -3630,7 +3630,7 @@ function Creature:take_dam(dam, dtype, name)
 				for x = self.x - 1, self.x + 1 do
 					for y = self.y - 1, self.y + 1 do
 						if map[x][y]:get_holding() and map[x][y]:get_holding() ~= player and map[x][y]:get_holding() ~= self then 
-							map[x][y]:get_holding():take_dam( math.floor(dam * .45), 'cleave', 'player') 
+							map[x][y]:get_holding():take_dam( math.floor(dam * .45), 'cleave', 'player' ) 
 						end
 					end
 				end
@@ -3897,6 +3897,7 @@ function Tile:initialize(arg)
 	self.x = arg.x or 1
 	self.y = arg.y or 1
 	self.items = arg.items or nil
+	self.tunnel = arg.tunnel or false
 	self.color = arg.color or {r=255, g=255, b=255}
 	
 	if self.name == 'Floor' then
@@ -3963,6 +3964,7 @@ function Tile:get_items() return self.items end
 function Tile:get_char() return self.char end
 function Tile:get_color() return self.color end
 function Tile:get_self() return self end
+function Tile:get_tunnel() return self.tunnel end
 
 function ascii_draw_point(num)
 

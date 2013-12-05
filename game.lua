@@ -3392,11 +3392,29 @@ function Creature:move(dx, dy)
 		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team then
 		
 			for i = 1, # game_quests do
-				--- don't have the quest yet, give it to player
+				--- don't have the quest yet, give it to player if we can
 				if game_quests[i].npc == map[new_x][new_y]:get_holding():get_name() and not game_quests[i].have then
-					game_quests[i].have = true
-					message_add("\"" .. game_quests[i].desc .. "\"")
-					break
+				
+					--- does the quest have another quest as a requirement?
+					local can_get = true
+					if game_quests[i].req_quest then
+						for kk = 1, # game_quests do
+							if game_quests[i].req_quest == game_quests[kk].name then
+								if game_quests[kk].completed then
+									can_get = true
+								else
+									can_get = false
+								end
+							end
+						end
+					end
+					
+					if can_get then
+						game_quests[i].have = true
+						message_add("\"" .. game_quests[i].desc .. "\"")
+						break
+					end
+					
 				--- check if quest is completed or not
 				elseif game_quests[i].npc == map[new_x][new_y]:get_holding():get_name() and game_quests[i].have then
 				

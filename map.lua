@@ -12,6 +12,7 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = 24, y = 27, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = false, dark = false},	
 						{x = 35, y = 9, func = function (dir) map_makai_entrance(dir) end, name = 'Eerie Cave', persist = true, dark = true},
 						{x = 40, y = 27, func = function (dir) map_moriya_shrine(dir) end, name = 'Moriya Shrine', persist = false, dark = false},
+						{x = 29, y = 3, func = function (dir) map_underground_ruins(dir) end, name = 'Underground Ruins', persist = true, mong_gen = 3, dark = true},
 					}
 					
 overworld_coords = { x = 25, y = 25 }
@@ -64,12 +65,43 @@ function map_overworld(dir)
 		map_new_place_player(35, 9)
 	elseif prev_level == 'Moriya Shrine' then
 		map_new_place_player(40, 27)
+	elseif prev_level == 'Underground Ruins' then
+		map_new_place_player(29, 3)
 	elseif prev_level == 'Wilderness' then
 		map_new_place_player(overworld_coords.x, overworld_coords.y)
 	else
 		map_new_place_player(23, 23)
 	end
 		
+end
+
+function map_underground_ruins(dir)
+
+	if level.name == 'Overworld' then
+		level.depth = 1
+	else
+		level.depth = level.depth + 1
+	end
+	
+	level.name = 'Underground Ruins'
+	
+	if not load_map() then
+		if level.depth > 1 and level.depth < 6 then
+			level_connection = {up = function (dir) map_underground_ruins(dir) end, down = function (dir) map_underground_ruins(dir) end}
+			map_gen_variety(map_width, map_height, true, true)
+		elseif level.depth == 1 then
+			level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) map_underground_ruins(dir) end}
+			map_gen_variety(map_width, map_height, true, true)
+		elseif level.depth == 7 then
+			level_connection = {up = function (dir) map_underground_ruins(dir) end, down = function (dir) end}
+			map_gen_variety(map_width, map_height, false, true)
+		end
+		monster_maker(math.random(10,15))
+		item_maker(math.random(10,15))
+	end
+	
+	place_player_on_stairs(dir)
+
 end
 
 function map_moriya_shrine(dir)
@@ -1122,7 +1154,7 @@ function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
 		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
 	
 	until ustairs and dstairs
-	map_set_all_seen()
+	
 	return stairs
 
 end

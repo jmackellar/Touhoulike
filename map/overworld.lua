@@ -932,7 +932,7 @@ map[28][32] = Tile:new({char="^",x=28,name="OWmountain",y=32,block_sight=true,co
 map[28][33] = Tile:new({char="O",x=28,name="Wall",block_sight=true,color={b=255,g=255,r=255},y=33,block_move=true})
 map[29][1] = Tile:new({char="O",x=29,name="Wall",block_sight=true,color={b=255,g=255,r=255},y=1,block_move=true})
 map[29][2] = Tile:new({char="^",x=29,name="OWmountain",y=2,block_sight=true,color={b=2,g=70,r=140},block_move=true})
-map[29][3] = Tile:new({char="&",x=29,name="OWtree",y=3,block_sight=false,color={b=35,g=133,r=1},block_move=false})
+map[29][3] = Tile:new({char="*",x=29,name="OWmountain",y=3,block_sight=false,color={b=28,g=75,r=145},block_move=false})
 map[29][4] = Tile:new({char="&",x=29,name="OWtree",y=4,block_sight=false,color={b=35,g=133,r=1},block_move=false})
 map[29][5] = Tile:new({char="\"",x=29,name="OWgrass",y=5,block_sight=false,color={b=2,g=150,r=1},block_move=false})
 map[29][6] = Tile:new({char="\"",x=29,name="OWgrass",y=6,block_sight=false,color={b=2,g=150,r=1},block_move=false})

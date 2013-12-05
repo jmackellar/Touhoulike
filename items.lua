@@ -61,7 +61,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Leather Vest', slot = 'torso', armor = 2, char = ']', prob = 90},
 				{name = 'Dagger', slot = 'hand', weptype = 'shortblade', color = function () love.graphics.setColor(200, 200, 200, 255) end, damage = 18, weight = 4, char = ')', prob = 91},
 				{name = 'Loaf of Bread', edible = true, cook = true, nutrition = 135, char = '%', prob = 100},	
-				{name = 'Torch', apply = true, applyonce = true, afunc = function () add_modifier({name = 'Lit Torch', turn = 750, torch = 3}) end, message = "You lit the torch up.", char = ':', prob = 125},
+				{name = 'Torch', apply = true, applyonce = true, afunc = function () add_modifier({name = 'Lit Torch', turn = 750, torch = 3}) player_fov() next_turn = true end, message = "You light the torch.", char = ':', prob = 125},
 				{name = 'Gold', char = '$', weight = 0, gold = math.random(1, 45), color = function () love.graphics.setColor(255, 225, 0, 255) end, prob = 300},			
 		}
 		

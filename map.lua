@@ -16,6 +16,7 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = 38, y = 29, func = function (dir) map_youkai_mountain(dir) end, name = 'Youkai Mountain', persist = true, mon_gen = 3, dark = false},
 						{x = 10, y = 22, func = function (dir) map_sanzu_river_east(dir) end, name = 'Sanzu River East', persist = false, dark = false},
 						{x = 7, y = 22, func = function (dir) map_sanzu_river_west(dir) end, name = 'Sanzu River West', persist = false, dark = false},
+						{x = 4, y = 18, func = function (dir) map_hakugyokurou(dir) end, name = 'Hakugyokurou', persist = true, dark = false},
 					}
 					
 overworld_coords = { x = 25, y = 25 }
@@ -76,12 +77,38 @@ function map_overworld(dir)
 		map_new_place_player(10, 22)
 	elseif prev_level == 'Sanzu River West' then
 		map_new_place_player(7, 22)
+	elseif prev_level == 'Hakugyokurou' then
+		map_new_place_player(4, 18)
 	elseif prev_level == 'Wilderness' then
 		map_new_place_player(overworld_coords.x, overworld_coords.y)
 	else
 		map_new_place_player(23, 23)
 	end
 		
+end
+
+function map_hakugyokurou(dir)
+
+	if level.name == 'Overworld' then
+		level.depth = 1 
+	else
+		if dir == 'down' then
+			level.depth = level.depth + 1
+		elseif dir == 'up' then
+			level.depth = level.depth - 1
+		end
+	end
+	
+	level.name = 'Hakugyokurou'
+	level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) map_hakugyokurou(dir) end}
+	
+	if not load_map() then
+		local chunk = love.filesystem.load("map/hakugyokurou_entrance.lua")
+		chunk()
+	end
+	
+	place_player_on_stairs(dir)
+
 end
 
 function map_sanzu_river_east(dir)

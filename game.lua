@@ -449,6 +449,7 @@ end
 
 function overworld_down()
 
+	--- labelled levels
 	for i = 1, # overworld_levels do
 		if player:get_x() == overworld_levels[i].x and player:get_y() == overworld_levels[i].y then
 			save_map_check()
@@ -457,9 +458,26 @@ function overworld_down()
 			stair_cd = 3
 			map_back_canvas_draw()
 			player_fov()
+			return
 		end
 	end
-
+	
+	--- unlabelled levels
+	for i = 1, # overworld_unlabelled_levels do
+		for k = 1, # overworld_unlabelled_levels[i].coords do
+			if overworld_unlabelled_levels[i].coords[k].x == player:get_x() and overworld_unlabelled_levels[i].coords[k].y == player:get_y() then
+				overworld_coords = { x = player:get_x(), y = player:get_y() }
+				save_map_check()
+				save_player()
+				overworld_unlabelled_levels[i].func('down')
+				stair_cd = 3
+				map_back_canvas_draw()
+				player_fov()
+				return
+			end
+		end
+	end
+	
 end
 
 function aoe_danmaku_dam(x, y, range, delay)
@@ -1541,6 +1559,9 @@ function save_player()
 	--- x and y coords
 	text = text .. "player_coords = { x = " .. player:get_x() .. ", "
 	text = text .. "y = " .. player:get_y() .. ", }\n"
+	--- overworld x and y coords
+	text = text .. "overworld_coords = { x = " .. overworld_coords.x .. ", "
+	text = text .. "y = " .. overworld_coords.y .. ", }\n"
 	--- time
 	text = text .. "world_time = " .. world_time .. "\n"
 	text = text .. "world_time_turn = " .. world_time_turn .. "\n"
@@ -2988,6 +3009,10 @@ function Creature:ai_take_turn(moved)
 					message_add("Your torch flickers.")
 				end
 			end
+			--- poison
+			if player_mods[i]['puredam'] then
+				player:take_dam(player_mods[i].puredam, 'pure', 'Poison')
+			end
 					
 			player_mods[i].turn = player_mods[i].turn - 1
 			if player_mods[i].turn < 1 then
@@ -3317,6 +3342,13 @@ function Creature:move(dx, dy)
 							add_modifier({name = 'Wet', turn = 50, armor = -2})
 						else
 							message_add("You fly over the cool water.")
+						end
+					elseif map[self.x][self.y]:get_name() == 'Poisonous Higan Flower' then
+						if math.random(1, 100) <= 50 then
+							message_add("You step on the deep red higanbana.  You've been poisoned!")
+							add_modifier({name = 'Poison', turn = math.random(15, 25), puredam = math.random(3, 6)})
+						else
+							message_add("You step on the deep red higanbana.  You avoided being poisoned.")
 						end
 					elseif map[self.x][self.y]:get_name() == 'Futon' then
 						message_add("You step onto the comfy futon.")

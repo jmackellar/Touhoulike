@@ -1,5 +1,6 @@
 overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) end, name = 'Overworld', persist = true, dark = false},
 						{x = -1, y = -1, func = function (dir) map_eientei(dir) end, name = 'Eientei', persist = true, dark = false},
+						{x = -1, y = -1, func = function (dir) map_muenzuka(dir) end, name = 'Muenzuka', persist = true, dark = false},
 						{x = 41, y = 15, func = function (dir) map_hakurei_shrine('down') end, name = 'Hakurei Shrine', persist = true, dark = false,},
 						{x = 17, y = 11, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true, dark = false,},
 						{x = 25, y = 15, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true, dark = false},
@@ -18,6 +19,9 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = 7, y = 22, func = function (dir) map_sanzu_river_west(dir) end, name = 'Sanzu River West', persist = false, dark = false},
 						{x = 4, y = 18, func = function (dir) map_hakugyokurou(dir) end, name = 'Hakugyokurou', persist = true, dark = false},
 					}
+					
+overworld_unlabelled_levels = {	{coords = {{x=9, y=13,d=1},{x=9,y=12,d=2},{x=8,y=13,d=3},{x=8,y=12,d=4},{x=7,y=12,d=5}}, func = function (dir) map_muenzuka(dir) end},
+							}
 					
 overworld_coords = { x = 25, y = 25 }
 
@@ -79,12 +83,37 @@ function map_overworld(dir)
 		map_new_place_player(7, 22)
 	elseif prev_level == 'Hakugyokurou' then
 		map_new_place_player(4, 18)
+	elseif prev_level == 'Muenzuka' then
+		map_new_place_player(overworld_coords.x, overworld_coords.y)
 	elseif prev_level == 'Wilderness' then
 		map_new_place_player(overworld_coords.x, overworld_coords.y)
 	else
 		map_new_place_player(23, 23)
 	end
 		
+end
+
+function map_muenzuka(dir)
+
+	level.depth = 1
+	level.name = 'Muenzuka'
+	level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) end}
+	
+	for i = 1, # overworld_unlabelled_levels do
+		for k = 1, # overworld_unlabelled_levels[i].coords do
+			if overworld_unlabelled_levels[i].coords[k].x == overworld_coords.x and overworld_unlabelled_levels[i].coords[k].y == overworld_coords.y then
+				level.depth = overworld_unlabelled_levels[i].coords[k].d
+				break
+			end
+		end
+	end
+	
+	if not load_map() then
+		map_gen_muenzuka(map_width, map_height, false, true)
+	end
+	
+	place_player_on_stairs(dir)
+
 end
 
 function map_hakugyokurou(dir)
@@ -858,6 +887,115 @@ function map_set_all_seen()
 
 end
 
+function map_gen_muenzuka(mapwidth, mapheight, dstairsd, ustairsd)
+
+	local i = 0
+	local j = 0
+	local n = 0
+	local s = 0
+	local e = 0
+	local w = 0
+	local placed = 0
+
+	--- flood the map with the floor
+	for x = 1, mapwidth do
+		for y = 1, mapheight do
+			map[x][y] = Tile:new({name = 'Grass', char = ' .', color = {r=0,g=255,b=0}, x = x, y = y})
+		end
+	end
+	
+	--- place the purple tree things
+	repeat
+	
+	i = math.random(1, map_width)
+	j = math.random(1, map_height)
+	
+	for k = 1, 20 do
+		n = math.random(1, 6)
+		s = math.random(1, 6)
+		e = math.random(1, 6)
+		w = math.random(1, 6)
+		
+		local color={b=255,g=71,r=197}
+		
+		if n == 1 then
+			i = i - 1
+			if i < 1 then i = 1 end
+			map[i][j] = Tile:new({name = 'Purple Cherry Blossom', char = 'T', block_move = false, block_sight = true, color = color, x = i, y = j})
+		end
+		if s == 1 then
+			i = i + 1
+			if i > map_width then i = map_width end
+			map[i][j] = Tile:new({name = 'Purple Cherry Blossom', char = 'T', block_move = false, block_sight = true, color = color, x = i, y = j})
+		end
+		if e == 1 then
+			j = j + 1
+			if j > map_height then j = map_height end
+			map[i][j] = Tile:new({name = 'Purple Cherry Blossom', char = 'T', block_move = false, block_sight = true, color = color, x = i, y = j})
+		end
+		if w == 1 then
+			j = j - 1
+			if j < 1 then j = 1 end
+			map[i][j] = Tile:new({name = 'Purple Cherry Blossom', char = 'T', block_move = false, block_sight = true, color = color, x = i, y = j})
+		end
+	end
+	
+	placed = placed + 1
+	
+	until placed > 55
+	
+	--- poisonous higan 
+	placed = 0
+	repeat
+	
+		x = math.random(2, mapwidth - 1)
+		y = math.random(2, mapheight - 1)
+		
+		if not map[x][y]:get_block_move() and not map[x][y]:get_block_sight() then
+			map[x][y] = Tile:new({name = 'Poisonous Higan Flower', x = x, y = y, char = '*', color = {r=160,g=0,b=0}, block_move = false, block_sight = false})
+			placed = placed + 1
+		end
+	
+	until placed >= math.random(35, 45)
+	
+	--- Surround the map with unpassable trees
+	for x = 1, mapwidth do
+		map[x][1] = Tile:new({name = 'Purple Cherry Blossom', char = 'T', block_move = true, block_sight = true, color = {b=255,g=71,r=197}, x = x, y = 1})
+		map[x][mapheight] = Tile:new({name = 'Purple Cherry Blossom', char = 'T', block_move = true, block_sight = true, color = {b=255,g=71,r=197}, x = x, y = mapheight})
+	end
+	for y = 1, mapheight do
+		map[1][y] = Tile:new({name = 'Purple Cherry Blossom', char = 'T', block_move = true, block_sight = true, color = {b=255,g=71,r=197}, x = 1, y = y})
+		map[mapwidth][y] = Tile:new({name = 'Purple Cherry Blossom', char = 'T', block_move = true, block_sight = true, color = {b=255,g=71,r=197}, x = mapwidth, y = y})
+	end
+	
+	--- place stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, mapwidth-7)
+		local y1 = math.random(1, mapheight-7)
+		local x2 = math.random(1, mapwidth-7)
+		local y2 = math.random(1, mapheight-7)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs
+	
+	return stairs
+		
+end
+
 function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
 
 	local x = 0
@@ -1275,148 +1413,6 @@ function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
 	
 	return stairs
 
-end
-
---- don't use this, it's shit.  Maybe one day I'll fix it
-function map_gen_abstract(width, height, dstairsd, ustairsd)
-
-	local gridx = 6
-	local gridy = 6
-
-	--- flood map with floor
-	for x = 1, width do
-		for y = 1, height do
-			map[x][y] = Tile:new({name = 'Floor', x = x, y = y, color = {b=255,g=255,r=255},})
-		end
-	end
-	
-	--- place grid walls randomly
-	for x = 1, width do
-		for y = 1, height do
-			if x % gridx == 0 then map[x][y] = Tile:new({name = 'Wall', x = x, y = y}) end
-			if y % gridy == 0 then map[x][y] = Tile:new({name = 'Wall', x = x, y = y}) end
-		end
-	end
-	
-	--- Fill in the corner
-	for x = 42, width do
-		for y = 30, height do
-			map[x][y] = Tile:new({name = 'Wall', x = x, y = y})
-		end
-	end
-
-	--- fill in rooms
-	for x = 1, math.floor(width / gridx) do
-		for y = 1, math.floor(height / gridy) do
-			local x1 = (x - 1) * gridx + 1
-			local y1 = (y - 1) * gridy + 1
-			local x2 = x1 + gridx
-			local y2 = y1 + gridy
-			
-			local dice = math.random(1, 100)
-			
-			if dice <= 85 then
-				--- rooms
-			
-				--- room walls
-				if math.random(100) <= 25 then
-					for dx = x1, x2 do
-						map[dx][y1] = Tile:new({name = 'Wall', x = dx, y = y1})
-						map[dx][y2] = Tile:new({name = 'Wall', x = dx, y = y2})
-					end
-					for dy = y1, y2 do
-						map[x1][dy] = Tile:new({name = 'Wall', x = x1, y = dy})
-						map[x2][dy] = Tile:new({name = 'Wall', x = x2, y = dy})
-					end
-				end
-				
-				--- corridors
-				for i = 1, 2 do
-				
-					local dx = math.random(x1 + 1, x2 - 1)
-					local dy = math.random(y1 + 1, y2 - 1)
-					
-					if i == 1 then
-						map[dx][y2-1] = Tile:new({name = 'Floor', x = dx, y = y2-1})
-						map[dx][y2+1] = Tile:new({name = 'Floor', x = dx, y = y2+1})
-						map[dx][y2] = Tile:new({name = 'Floor', x = dx, y = y2})
-					elseif i == 2 then
-						map[x2-1][dy] = Tile:new({name = 'Floor', x = x2-1, y = dy})
-						map[x2+1][dy] = Tile:new({name = 'Floor', x = x2+1, y = dy})
-						map[x2][dy] = Tile:new({name = 'Floor', x = x2, y = dy})
-					end
-					
-				end
-				
-			else
-				--- flood
-				
-				--- fill with walls
-				for dx = x1, x2 do
-					for dy = y1, y2 do
-						map[dx][dy] = Tile:new({name = 'Wall', x = dx, y = dy})
-					end
-				end
-				
-				--- corridors
-				for i = 1, 2 do
-				
-					local dx = math.random(x1 + 1, x2 - 1)
-					local dy = math.random(y1 + 1, y2 - 1)
-					
-					if i == 1 then
-						for my = y1, y2+1 do
-							map[dx][my] = Tile:new({name = 'Floor', x = dx, y = my})
-						end
-					elseif i == 2 then
-						for mx = x1, x2+1 do
-							map[mx][dy] = Tile:new({name = 'Floor', x = mx, y = dy})
-						end
-					end
-					
-				end
-				
-			end
-			
-		end
-	end
-	
-	--- surround map with walls
-	for x = 1, width do
-		map[x][1] = Tile:new({name = 'Wall', x = x, y = 1})
-		map[x][height] = Tile:new({name = 'Wall', x = x, y = height})
-	end
-	for y = 1, height do
-		map[1][y] = Tile:new({name = 'Wall', x = 1, y = y})
-		map[width][y] = Tile:new({name = 'Wall', x = width, y = y})
-	end
-	
-	--- place stairs
-	local ustairs = false
-	local dstairs = false
-	local stairs = {}
-	repeat
-	
-		local x1 = math.random(1, width-7)
-		local y1 = math.random(1, height-7)
-		local x2 = math.random(1, width-7)
-		local y2 = math.random(1, height-7)
-		
-		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
-			if x1 ~= x2 and y1 ~= y2 then
-				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
-				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
-				ustairs = true
-				dstairs = true
-			end
-		end
-		
-		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
-	
-	until ustairs and dstairs
-	
-	return stairs
-	
 end
 
 function map_gen_cave(width, height, dstairsd, ustairsd)

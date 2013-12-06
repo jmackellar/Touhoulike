@@ -3389,7 +3389,7 @@ function Creature:move(dx, dy)
 				message_add("Rinnosuke welcomes you into Kourindou")
 			end
 			
-		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and not map[new_x][new_y]:get_holding():get_sell() and not map[new_x][new_y]:get_holding():get_identify() then
+		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_name() ~= 'Komachi' and not map[new_x][new_y]:get_holding():get_sell() and not map[new_x][new_y]:get_holding():get_identify() then
 		
 			for i = 1, # game_quests do
 				--- don't have the quest yet, give it to player if we can
@@ -3451,6 +3451,20 @@ function Creature:move(dx, dy)
 		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_identify() then
 			inventory_open = true
 			inventory_action = 'identify_s'
+			
+		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and map[new_x][new_y]:get_holding():get_name() == 'Komachi' then
+			message_add("Komachi ferries you to the other side of the river.")
+			save_map_check()
+			save_player()
+			map_special_rooms = {}
+			if level.name == 'Sanzu River East' then
+				map_sanzu_river_west('up')
+			else
+				map_sanzu_river_east('up')
+			end
+			map_back_canvas_draw()
+			player_fov()
+			
 		end
 	
 	elseif map[new_x][new_y]:get_block_move() and map[new_x][new_y]:get_name() == "BambooShoot" then
@@ -3794,6 +3808,7 @@ function Creature:get_unique() return self.unique end
 function Creature:get_char() return self.char end
 function Creature:get_corpse() return self.corpse end
 function Creature:get_identify() return self.identify end
+function Creature:get_ai() return self.ai end
 	
 Item = Class('Item')
 function Item:initialize(arg)
@@ -3953,6 +3968,8 @@ function Tile:initialize(arg)
 		self.block_move = true
 		self.block_sight = true
 		self.color = {r = 140, g = 70, b = 2}
+	elseif self.name == 'OWwater' then
+		self.block_move = true
 	end
 end
 

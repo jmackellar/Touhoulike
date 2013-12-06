@@ -14,6 +14,8 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = 40, y = 27, func = function (dir) map_moriya_shrine(dir) end, name = 'Moriya Shrine', persist = false, dark = false},
 						{x = 29, y = 3, func = function (dir) map_underground_ruins(dir) end, name = 'Underground Ruins', persist = true, mon_gen = 3, dark = true},
 						{x = 38, y = 29, func = function (dir) map_youkai_mountain(dir) end, name = 'Youkai Mountain', persist = true, mon_gen = 3, dark = false},
+						{x = 10, y = 22, func = function (dir) map_sanzu_river_east(dir) end, name = 'Sanzu River East', persist = false, dark = false},
+						{x = 7, y = 22, func = function (dir) map_sanzu_river_west(dir) end, name = 'Sanzu River West', persist = false, dark = false},
 					}
 					
 overworld_coords = { x = 25, y = 25 }
@@ -70,12 +72,68 @@ function map_overworld(dir)
 		map_new_place_player(29, 3)
 	elseif prev_level == 'Youkai Mountain' then
 		map_new_place_player(38, 29)
+	elseif prev_level == 'Sanzu River East' then
+		map_new_place_player(10, 22)
+	elseif prev_level == 'Sanzu River West' then
+		map_new_place_player(7, 22)
 	elseif prev_level == 'Wilderness' then
 		map_new_place_player(overworld_coords.x, overworld_coords.y)
 	else
 		map_new_place_player(23, 23)
 	end
 		
+end
+
+function map_sanzu_river_east(dir)
+
+	if level.name == 'Overworld' then
+		level.depth = 1
+	else
+		if dir == 'down' then
+			level.depth = level.depth + 1
+		elseif dir == 'up' then
+			level.depth = level.depth - 1
+		end
+	end
+	
+	level.name = 'Sanzu River East'
+	level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) end}
+	
+	local chunk = love.filesystem.load("map/sanzu_river_east.lua")
+	chunk()
+	
+	if dir == 'down' then
+		place_player_on_stairs(dir)
+	else
+		map_new_place_player(18, 15)
+	end
+
+end
+
+function map_sanzu_river_west(dir)
+
+	if level.name == 'Overworld' then
+		level.depth = 1
+	else
+		if dir == 'down' then
+			level.depth = level.depth + 1
+		elseif dir == 'up' then
+			level.depth = level.depth - 1
+		end
+	end
+	
+	level.name = 'Sanzu River West'
+	level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) end}
+	
+	local chunk = love.filesystem.load("map/sanzu_river_west.lua")
+	chunk()
+	
+	if dir == 'down' then
+		place_player_on_stairs(dir)
+	else
+		map_new_place_player(28, 16)
+	end
+
 end
 
 function map_youkai_mountain(dir)

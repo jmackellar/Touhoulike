@@ -1526,7 +1526,7 @@ map[46][32] = Tile:new({char="#",x=46,name="Wall",block_sight=true,color={b=255,
 map[46][33] = Tile:new({char="#",x=46,name="Wall",block_sight=true,color={b=255,g=255,r=255},y=33,block_move=true})
 
 
-map[23][26]:set_holding(Creature:new({name = 'Human Elder', team = 0, color = function () love.graphics.setColor(255, 255, 0, 255) end, char = '@', x = 23, y = 26, ai = 'wander'}))
+map[30][29]:set_holding(Creature:new({name = 'Human Elder', team = 0, color = function () love.graphics.setColor(255, 255, 0, 255) end, char = '@', x = 23, y = 26, ai = 'wander'}))
 map[7][7]:set_holding(Creature:new({name = 'Shopkeeper', team = 0, shop = 'Weapon', char = '@', x = 7, y = 7, ai = 'shop'}))
 map[17][9]:set_holding(Creature:new({name = 'Shopkeeper', team = 0, shop = 'Armor', char = '@', x = 7, y = 7, ai = 'shop'}))
 map[7][18]:set_holding(Creature:new({name = 'Shopkeeper', team = 0, shop = 'Potion', char = '@', x = 7, y = 7, ai = 'shop'}))

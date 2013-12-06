@@ -9,10 +9,11 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = 21, y = 8, func = function (dir) map_sdm(dir) end, name = 'Scarlet Devil Mansion', persist = true, mon_gen = 3, dark = true},
 						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Forest', persist = false, mon_gen = 2, dark = false},
 						{x = 21, y = 18, func = function (dir) map_kourindou(dir) end, name = 'Kourindou', persist = false, dark = false},
-						{x = 24, y = 27, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = false, dark = false},	
+						{x = 24, y = 28, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = false, dark = false},	
 						{x = 35, y = 9, func = function (dir) map_makai_entrance(dir) end, name = 'Eerie Cave', persist = true, dark = true},
 						{x = 40, y = 27, func = function (dir) map_moriya_shrine(dir) end, name = 'Moriya Shrine', persist = false, dark = false},
-						{x = 29, y = 3, func = function (dir) map_underground_ruins(dir) end, name = 'Underground Ruins', persist = true, mong_gen = 3, dark = true},
+						{x = 29, y = 3, func = function (dir) map_underground_ruins(dir) end, name = 'Underground Ruins', persist = true, mon_gen = 3, dark = true},
+						{x = 38, y = 29, func = function (dir) map_youkai_mountain(dir) end, name = 'Youkai Mountain', persist = true, mon_gen = 3, dark = false},
 					}
 					
 overworld_coords = { x = 25, y = 25 }
@@ -60,13 +61,15 @@ function map_overworld(dir)
 	elseif prev_level == 'Kourindou' then
 		map_new_place_player(21, 18)
 	elseif prev_level == 'Bamboo Forest' or prev_level == 'Eientei' then
-		map_new_place_player(24, 27)
+		map_new_place_player(24, 28)
 	elseif prev_level == 'Eerie Cave' then
 		map_new_place_player(35, 9)
 	elseif prev_level == 'Moriya Shrine' then
 		map_new_place_player(40, 27)
 	elseif prev_level == 'Underground Ruins' then
 		map_new_place_player(29, 3)
+	elseif prev_level == 'Youkai Mountain' then
+		map_new_place_player(38, 29)
 	elseif prev_level == 'Wilderness' then
 		map_new_place_player(overworld_coords.x, overworld_coords.y)
 	else
@@ -75,12 +78,42 @@ function map_overworld(dir)
 		
 end
 
+function map_youkai_mountain(dir)
+
+	if level.name == 'Overworld' then
+		level.depth = 1
+	else
+		if dir == 'down' then
+			level.depth = level.depth + 1
+		elseif dir == 'up' then
+			level.depth = level.depth - 1
+		end
+	end
+	
+	level.name = 'Youkai Mountain'
+	level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) end}
+	
+	if not load_map() then
+	
+		local chunk = love.filesystem.load("map/youkai_mountain.lua")
+		chunk()
+	
+	end
+	
+	place_player_on_stairs(dir)
+
+end
+
 function map_underground_ruins(dir)
 
 	if level.name == 'Overworld' then
 		level.depth = 1
 	else
-		level.depth = level.depth + 1
+		if dir == 'down' then
+			level.depth = level.depth + 1
+		elseif dir == 'up' then
+			level.depth = level.depth - 1
+		end
 	end
 	
 	level.name = 'Underground Ruins'

@@ -3389,7 +3389,7 @@ function Creature:move(dx, dy)
 				message_add("Rinnosuke welcomes you into Kourindou")
 			end
 			
-		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team then
+		elseif self == player and map[new_x][new_y]:get_holding() and map[new_x][new_y]:get_holding():get_team() == self.team and not map[new_x][new_y]:get_holding():get_sell() and not map[new_x][new_y]:get_holding():get_identify() then
 		
 			for i = 1, # game_quests do
 				--- don't have the quest yet, give it to player if we can
@@ -3948,6 +3948,11 @@ function Tile:initialize(arg)
 		self.char = ' .'
 		self.block_move = false
 		self.block_sight = false
+	elseif self.name == 'OWall' then
+		self.char = '^'
+		self.block_move = true
+		self.block_sight = true
+		self.color = {r = 140, g = 70, b = 2}
 	end
 end
 

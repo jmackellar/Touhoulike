@@ -1,6 +1,7 @@
 overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) end, name = 'Overworld', persist = true, dark = false},
 						{x = -1, y = -1, func = function (dir) map_eientei(dir) end, name = 'Eientei', persist = true, dark = false},
 						{x = -1, y = -1, func = function (dir) map_muenzuka(dir) end, name = 'Muenzuka', persist = true, dark = false},
+						{x = -1, y = -1, func = function (dir) map_garden_of_the_sun(dir) end, name = 'Garden of the Sun', persist = true, dark = false},
 						{x = 41, y = 15, func = function (dir) map_hakurei_shrine('down') end, name = 'Hakurei Shrine', persist = true, dark = false,},
 						{x = 17, y = 11, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true, dark = false,},
 						{x = 25, y = 15, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true, dark = false},
@@ -20,7 +21,8 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = 4, y = 18, func = function (dir) map_hakugyokurou(dir) end, name = 'Hakugyokurou', persist = true, dark = false},
 					}
 					
-overworld_unlabelled_levels = {	{coords = {{x=9, y=13,d=1},{x=9,y=12,d=2},{x=8,y=13,d=3},{x=8,y=12,d=4},{x=7,y=12,d=5}}, func = function (dir) map_muenzuka(dir) end},
+overworld_unlabelled_levels = {	{coords = {{x=9,y=13,d=1},{x=9,y=12,d=2},{x=8,y=13,d=3},{x=8,y=12,d=4},{x=7,y=12,d=5}}, func = function (dir) map_muenzuka(dir) end},
+								{coords = {{x=17,y=22,d=1}}, func = function (dir) map_garden_of_the_sun(dir) end},
 							}
 					
 overworld_coords = { x = 25, y = 25 }
@@ -85,12 +87,28 @@ function map_overworld(dir)
 		map_new_place_player(4, 18)
 	elseif prev_level == 'Muenzuka' then
 		map_new_place_player(overworld_coords.x, overworld_coords.y)
+	elseif prev_level == 'Garden of the Sun' then
+		map_new_place_player(overworld_coords.x, overworld_coords.y)
 	elseif prev_level == 'Wilderness' then
 		map_new_place_player(overworld_coords.x, overworld_coords.y)
 	else
 		map_new_place_player(23, 23)
 	end
 		
+end
+
+function map_garden_of_the_sun(dir)
+
+	level.depth = 1
+	level.name = 'Garden of the Sun'
+	level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) end}
+	
+	if not load_map() then
+		map_gen_garden_of_the_sun(map_width, map_height, false, true)
+	end
+	
+	place_player_on_stairs(dir)
+
 end
 
 function map_muenzuka(dir)
@@ -884,6 +902,57 @@ function map_set_all_seen()
 			map[x][y]:set_seen()		
 		end
 	end
+
+end
+
+function map_gen_garden_of_the_sun(mapwidth, mapheight, dstairsd, ustairsd)
+
+	--- fill the map with grass and sunflowers
+	for x = 1, mapwidth do
+		for y = 1, mapheight do
+			if math.random(1, 100) <= 45 then
+				map[x][y] = Tile:new({name = 'Grass', x = x, y = y, char = ' .', color = {r=0,g=255,b=0}})
+			else
+				map[x][y] = Tile:new({name = 'Sunflower', x = x, y = y, color = {r=255,g=252,b=77}, char = '*'})
+			end
+		end
+	end
+	
+	--- Surround the map with unpassable trees
+	for x = 1, mapwidth do
+		map[x][1] = Tile:new({name = 'Tree', char = 'T', block_move = true, block_sight = true, color = {b=0,g=255,r=0}, x = x, y = 1})
+		map[x][mapheight] = Tile:new({name = 'Tree', char = 'T', block_move = true, block_sight = true, color = {b=0,g=255,r=0}, x = x, y = mapheight})
+	end
+	for y = 1, mapheight do
+		map[1][y] = Tile:new({name = 'Tree', char = 'T', block_move = true, block_sight = true, color = {b=0,g=255,r=0}, x = 1, y = y})
+		map[mapwidth][y] = Tile:new({name = 'Tree', char = 'T', block_move = true, block_sight = true, color = {b=0,g=255,r=0}, x = mapwidth, y = y})
+	end
+	
+	--- place stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, mapwidth-7)
+		local y1 = math.random(1, mapheight-7)
+		local x2 = math.random(1, mapwidth-7)
+		local y2 = math.random(1, mapheight-7)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs
+	
+	return stairs
 
 end
 

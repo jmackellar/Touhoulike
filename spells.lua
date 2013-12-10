@@ -126,8 +126,10 @@ function fantasy_seal(sx, sy, range, stat)
 			table.insert(ascii_effects, {char = d2, time = (range + i), delay = i * 4, x = xx, y = sy-i, color = color})
 			table.insert(ascii_effects, {char = d2, time = (range + i), delay = i * 4, x = xx, y = sy+i, color = color})
 			--- check for monsters hit
-			if map[xx][sy-i]:get_holding() then table.insert(mons, {x=xx, y=sy-i}) end
-			if map[xx][sy+i]:get_holding() then table.insert(mons, {x=xx, y=sy+i}) end
+			if xx > 1 and xx < map_width and sy-i > 1 and sy+i < map_height then
+				if map[xx][sy-i]:get_holding() then map[xx][sy-i]:get_holding():take_dam(dam, 'bomb', 'whut') end
+				if map[xx][sy+i]:get_holding() then map[xx][sy+i]:get_holding():take_dam(dam, 'bomb', 'whut') end
+			end
 		end
 		for yy = sy-i+1, sy+i-1 do
 			--- hit effects
@@ -136,9 +138,11 @@ function fantasy_seal(sx, sy, range, stat)
 			--- disssipate effects
 			table.insert(ascii_effects, {char = d2, time = (range + i), delay = i * 4, x = sx-i, y = yy, color = color})
 			table.insert(ascii_effects, {char = d2, time = (range + i), delay = i * 4, x = sx+i, y = yy, color = color})	
-			--- check for monstesr hit
-			if map[sx-i][yy]:get_holding() then table.insert(mons, {x=sx-i, y=yy}) end
-			if map[sx+i][yy]:get_holding() then table.insert(mons, {x=sx+i, y=yy}) end
+			--- check for monsters hit
+			if yy > 1 and yy < map_height and sx-i > 1 and sx+i < map_height then
+				if map[sx-i][yy]:get_holding() then map[sx-i][yy]:get_holding():take_dam(dam, 'bomb', 'whut') end
+				if map[sx+i][yy]:get_holding() then map[sx+i][yy]:get_holding():take_dam(dam, 'bomb', 'whut') end
+			end
 		end	
 		
 	end

@@ -9,9 +9,9 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = 22, y = 20, func = function (dir) map_human_village(dir) end, name = 'Human Village', persist = false, dark = false},
 						{x = 43, y = 15, func = function (dir) map_easy_cavern(dir) end, name = 'Easy Cavern', persist = true, mon_gen = 1, dark = true},
 						{x = 21, y = 8, func = function (dir) map_sdm(dir) end, name = 'Scarlet Devil Mansion', persist = true, mon_gen = 3, dark = true},
-						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Forest', persist = false, mon_gen = 2, dark = false},
+						{x = 39, y = 24, func = function (dir) map_youkai_dungeon(dir) end, name = 'Youkai Forest', persist = true, mon_gen = 2, dark = false},
 						{x = 21, y = 18, func = function (dir) map_kourindou(dir) end, name = 'Kourindou', persist = false, dark = false},
-						{x = 24, y = 28, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = false, dark = false},	
+						{x = 24, y = 28, func = function (dir) map_eientei(dir) end, name = 'Bamboo Forest', persist = true, dark = false},	
 						{x = 35, y = 9, func = function (dir) map_makai_entrance(dir) end, name = 'Eerie Cave', persist = true, dark = true},
 						{x = 40, y = 27, func = function (dir) map_moriya_shrine(dir) end, name = 'Moriya Shrine', persist = false, dark = false},
 						{x = 29, y = 3, func = function (dir) map_underground_ruins(dir) end, name = 'Underground Ruins', persist = true, mon_gen = 3, dark = true},
@@ -251,18 +251,23 @@ function map_underground_ruins(dir)
 	level.name = 'Underground Ruins'
 	
 	if not load_map() then
-		if level.depth > 1 and level.depth < 6 then
-			level_connection = {up = function (dir) map_underground_ruins(dir) end, down = function (dir) map_underground_ruins(dir) end}
+		if level.depth > 1 and level.depth < 7 then			
 			map_gen_variety(map_width, map_height, true, true)
-		elseif level.depth == 1 then
-			level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) map_underground_ruins(dir) end}
+		elseif level.depth == 1 then			
 			map_gen_variety(map_width, map_height, true, true)
-		elseif level.depth == 7 then
-			level_connection = {up = function (dir) map_underground_ruins(dir) end, down = function (dir) end}
+		elseif level.depth == 7 then			
 			map_gen_variety(map_width, map_height, false, true)
 		end
 		monster_maker(math.random(10,15))
 		item_maker(math.random(10,15))
+	end
+	
+	if level.depth > 1 and level.depth < 7 then 
+		level_connection = {up = function (dir) map_underground_ruins(dir) end, down = function (dir) map_underground_ruins(dir) end}
+	elseif level.depth == 1 then
+		level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) map_underground_ruins(dir) end}
+	else
+		level_connection = {up = function (dir) map_underground_ruins(dir) end, down = function (dir) end}
 	end
 	
 	place_player_on_stairs(dir)

@@ -487,7 +487,7 @@ function aoe_danmaku_dam(x, y, range, delay)
 			
 			table.insert(ascii_effects, {char = '#', time = 5, delay = delay, x = xx, y = yy, color = function () love.graphics.setColor(0, 100, 255, 255) end})
 			if xx > 1 and xx < map_width and yy > 1 and yy < map_height then
-				if map[xx][yy]:get_holding() then
+				if map[xx][yy]:get_holding() and map[xx][yy]:get_holding():get_team() ~= 0 then
 					local dam = math.random(player_stats.int * 2, player_stats.int * 3)
 					map[xx][yy]:get_holding():take_dam(dam, 'danmaku', 'whut')
 				end
@@ -560,7 +560,7 @@ function danmaku_fire(dx, dy)
 			d = d + 1
 			
 			if map[x][y]:get_block_move() then air = false end
-			if map[x][y]:get_holding() then 
+			if map[x][y]:get_holding() and map[x][y]:get_holding():get_team() ~= 0 then 
 				air = false 
 				local dam = math.floor(math.random(player_stats.int * 4, player_stats.int * 5) * ((((player_skills.danmaku + 1) * 2) * 0.01) + 1))
 				map[x][y]:get_holding():take_dam(dam, 'danmaku', 'whut')			
@@ -3095,6 +3095,16 @@ function Creature:levelup()
 
 end
 
+function Creature:tile_occupied_by_mon(x, y)
+
+	local occ = false
+	if map[x][y]:get_holding() and map[x][y]:get_holding() ~= player then
+		occ = true
+	end
+	return occ
+
+end
+
 function Creature:ai_melee()
 
 	local moved = false
@@ -3112,14 +3122,18 @@ function Creature:ai_melee()
 		
 		--- move and bump player
 		if not moved then
-			if path_to_player[self.x-1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, 0) moved = true end
-			if path_to_player[self.x+1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, 0) moved = true end
-			if path_to_player[self.x][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 0, -1) moved = true end
-			if path_to_player[self.x][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 0, 1) moved = true end
-			if path_to_player[self.x-1][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, -1) moved = true end
-			if path_to_player[self.x-1][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, 1) moved = true end
-			if path_to_player[self.x+1][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, -1) moved = true end
-			if path_to_player[self.x+1][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, 1) moved = true end
+			if path_to_player[self.x-1][self.y] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x-1, self.y) then Creature.move(self, -1, 0) moved = true end
+			if path_to_player[self.x+1][self.y] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x+1, self.y) then Creature.move(self, 1, 0) moved = true end
+			if path_to_player[self.x][self.y-1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x, self.y-1) then Creature.move(self, 0, -1) moved = true end
+			if path_to_player[self.x][self.y+1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x, self.y+1) then Creature.move(self, 0, 1) moved = true end
+			if path_to_player[self.x-1][self.y-1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x-1, self.y-1) then Creature.move(self, -1, -1) moved = true end
+			if path_to_player[self.x-1][self.y+1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x-1, self.y+1) then Creature.move(self, -1, 1) moved = true end
+			if path_to_player[self.x+1][self.y-1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x+1, self.y-1) then Creature.move(self, 1, -1) moved = true end
+			if path_to_player[self.x+1][self.y+1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x+1, self.y+1) then Creature.move(self, 1, 1) moved = true end
+		end
+		
+		if not moved then 
+			Creature.move(self, math.random(-1,1), math.random(-1,1))
 		end
 		
 	else
@@ -3297,14 +3311,14 @@ function Creature:ai_normal()
 		
 		--- move and bump player
 		if not moved then
-			if path_to_player[self.x-1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, 0) moved = true end
-			if path_to_player[self.x+1][self.y] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, 0) moved = true end
-			if path_to_player[self.x][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 0, -1) moved = true end
-			if path_to_player[self.x][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 0, 1) moved = true end
-			if path_to_player[self.x-1][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, -1) moved = true end
-			if path_to_player[self.x-1][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, -1, 1) moved = true end
-			if path_to_player[self.x+1][self.y-1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, -1) moved = true end
-			if path_to_player[self.x+1][self.y+1] < path_to_player[self.x][self.y] and not moved then Creature.move(self, 1, 1) moved = true end
+			if path_to_player[self.x-1][self.y] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x-1, self.y) then Creature.move(self, -1, 0) moved = true end
+			if path_to_player[self.x+1][self.y] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x+1, self.y) then Creature.move(self, 1, 0) moved = true end
+			if path_to_player[self.x][self.y-1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x, self.y-1) then Creature.move(self, 0, -1) moved = true end
+			if path_to_player[self.x][self.y+1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x, self.y+1) then Creature.move(self, 0, 1) moved = true end
+			if path_to_player[self.x-1][self.y-1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x-1, self.y-1) then Creature.move(self, -1, -1) moved = true end
+			if path_to_player[self.x-1][self.y+1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x-1, self.y+1) then Creature.move(self, -1, 1) moved = true end
+			if path_to_player[self.x+1][self.y-1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x+1, self.y-1) then Creature.move(self, 1, -1) moved = true end
+			if path_to_player[self.x+1][self.y+1] < path_to_player[self.x][self.y] and not moved and not Creature.tile_occupied_by_mon(self,self.x+1, self.y+1) then Creature.move(self, 1, 1) moved = true end
 		end
 		
 	else

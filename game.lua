@@ -183,9 +183,9 @@ function game:draw()
 	end
 	
 	--- debug coordinate view
-	love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS() .. "   Mut:" .. player_mut_level)
+	---love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS() .. "   Mut:" .. player_mut_level)
 	--- normal caption text
-	---love.graphics.setCaption("Touhoulike")
+	love.graphics.setCaption("TouhouLike V:0.0.1")
 	
 end
 
@@ -242,7 +242,7 @@ function game:keypressed(key)
 				
 				if key == 'c' then spells_open = true end
 				if key == 'v' then map_use_tile() end	
-				if key == '/' then muts_open = true end
+				if key == ']' then muts_open = true end
 				
 				if key == 'x' then skills_open = true end
 				if key == 'z' then feats_open = true end
@@ -2614,7 +2614,7 @@ function draw_inventory()
 	
 		if inventory_action == 'look' then
 			message = message .. alphabet[i] .. ": "
-		elseif inventory_action == 'drop' or inventory_action == 'apply' or inventory_action == 'sell' or inventory_action == 'read' or inventory_action == 'eat' or inventory_action == 'wear' or inventory_action == 'wield' or inventory_action == 'quaff' or inventory_action == 'cook' then
+		elseif inventory_action == 'drop' or inventory_action == 'identify_s' or inventory_action == 'apply' or inventory_action == 'sell' or inventory_action == 'read' or inventory_action == 'eat' or inventory_action == 'wear' or inventory_action == 'wield' or inventory_action == 'quaff' or inventory_action == 'cook' then
 			if inventory_to_drop[alphabet[i]] then
 				message = message .. '[*] '
 			else
@@ -2935,7 +2935,7 @@ end
 
 function Creature:ai_take_turn(moved)
 
-	self.turn_cd = self.turn_cd - 1
+	if self.turn_cd > 0 then self.turn_cd = self.turn_cd - 1 end
 	self.hp_regen_timer = self.hp_regen_timer - 1
 	self.mana_regen_timer = self.mana_regen_timer - 1
 	self.food_tick = self.food_tick - 1
@@ -3019,6 +3019,7 @@ function Creature:ai_take_turn(moved)
 				
 				if player_mods[i]['torch'] then
 					map_unlit_all()
+					player_fov()
 				end
 				
 				table.remove(player_mods, i)

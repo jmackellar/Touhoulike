@@ -2,6 +2,7 @@ overworld_levels = {	{x = -1, y = -1, func = function (dir) map_overworld(dir) e
 						{x = -1, y = -1, func = function (dir) map_eientei(dir) end, name = 'Eientei', persist = true, dark = false},
 						{x = -1, y = -1, func = function (dir) map_muenzuka(dir) end, name = 'Muenzuka', persist = true, dark = false},
 						{x = -1, y = -1, func = function (dir) map_garden_of_the_sun(dir) end, name = 'Garden of the Sun', persist = true, dark = false},
+						{x = -1, y = -1, func = function (dir) map_random_overworld_encounter('down') end, name = 'Wilderness', persist = true, dark = false,},
 						{x = 41, y = 15, func = function (dir) map_hakurei_shrine('down') end, name = 'Hakurei Shrine', persist = true, dark = false,},
 						{x = 17, y = 11, func = function (dir) map_kirisame_house(dir) end, name = 'Marisa Kirisame\'s house', persist = true, dark = false,},
 						{x = 25, y = 15, func = function (dir) map_margatroid_house(dir) end, name = 'Alice Margatroid\'s house', persist = true, dark = false},
@@ -302,6 +303,7 @@ function map_random_overworld_encounter()
 	
 	overworld_coords = { x = player:get_x(), y = player:get_y() }
 
+	--- surround map with trees
 	for x = 1, map_width do
 		for y = 1, map_height do
 			if x == 1 or x == map_width then
@@ -314,17 +316,37 @@ function map_random_overworld_encounter()
 		end
 	end
 	
+	--- random upstairs
 	x = math.random(2, map_width-1)
 	y = math.random(2, map_height)
 	map[x][y] = Tile:new({name = 'UStairs', x = x, y = y})
 	
+	--- random player
 	x = math.random(2, map_width-1)
 	y = math.random(2, map_height)
 	map_new_place_player(x, y)
 	
+	--- random monsters around player
+	local dice = math.random(1, 3) 
 	for i = 1, # game_monsters do
-		if game_monsters[i].name == 'Wild Dog' then
-			dog = game_monsters[i]
+		if dice == 1 then
+			if game_monsters[i].name == 'Wild Dog' then
+				dog = game_monsters[i]
+				message_add('You are surrounded by a large pack of wild dogs!') 
+				break
+			end
+		elseif dice == 2 then
+			if game_monsters[i].name == 'Little Oni' then
+				dog = game_monsters[i]
+				message_add('You are surrounded by clan of little onis!') 
+				break
+			end
+		elseif dice == 3 then
+			if game_monsters[i].name == 'Spirit' then
+				dog = game_monsters[i]
+				message_add('Spirits from the netherworld have surrounded you!') 
+				break
+			end
 		end
 	end
 	if not dog then dog = game_monsters[# game_monsters] end
@@ -404,17 +426,21 @@ function map_eientei(dir)
 	level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) map_eientei(dir) end}
 
 	if level.depth == 1 then
-		level.name = 'Bamboo Forest'
-		map_gen_bamboo(map_width, map_height, true, true)
 		level_connection = {up = function (dir) map_overworld(dir) end, down = function (dir) map_eientei(dir) end}
-		monster_maker(math.random(20,30))
-		item_maker(math.random(10,20))
-	elseif level.depth > 1 and level.depth <= 3 then
 		level.name = 'Bamboo Forest'
-		map_gen_bamboo(map_width, map_height, true, true)
+		if not load_map() then			
+			map_gen_bamboo(map_width, map_height, true, true)			
+			monster_maker(math.random(20,30))
+			item_maker(math.random(10,20))
+		end
+	elseif level.depth > 1 and level.depth <= 3 then
 		level_connection = {up = function (dir) map_eientei(dir) end, down = function (dir) map_eientei(dir) end}
-		monster_maker(math.random(20,30))
-		item_maker(math.random(10,20))
+		level.name = 'Bamboo Forest'
+		if not load_map() then			
+			map_gen_bamboo(map_width, map_height, true, true)			
+			monster_maker(math.random(20,30))
+			item_maker(math.random(10,20))
+		end
 	elseif level.depth == 4 then
 		--- yard
 		level.name = 'Eientei'
@@ -525,11 +551,13 @@ function map_youkai_dungeon(dir)
 	
 	local dstairs = true
 	if level.depth == 10 then dstairs = false end
-		
-	map_gen_forest(map_width, map_height, true, dstairs)
-	monster_maker(math.random(15,25))
-	item_maker(math.random(10,20))
-	place_player_on_stairs(dir)
+	
+	if not load_map() then
+		map_gen_forest(map_width, map_height, true, dstairs)
+		monster_maker(math.random(15,25))
+		item_maker(math.random(10,20))
+		place_player_on_stairs(dir)
+	end
 	
 	if level.depth == 1 then
 		--- Minoriko Aki

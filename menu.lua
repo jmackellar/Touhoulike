@@ -35,6 +35,7 @@ function menu:draw()
 	elseif state == 'char' then char_draw() 
 	elseif state == 'enter' then enter_draw() 
 	elseif state == 'feat' then feat_draw() end
+	love.graphics.setCaption("TouhouLike V:0.0.1")
 end
 
 function menu:keypressed(key)

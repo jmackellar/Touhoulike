@@ -36,6 +36,7 @@ function menu:draw()
 	elseif state == 'enter' then enter_draw() 
 	elseif state == 'feat' then feat_draw() end
 	love.graphics.setCaption("TouhouLike V:0.0.1")
+	love.graphics.print("TouhouLike V:0.0.1 by Jesse MacKellar", 2, 751)
 end
 
 function menu:keypressed(key)
@@ -50,7 +51,7 @@ function feat_draw()
 	love.graphics.draw(bg, 0, 0)
 	
 	local start_x = 100
-	local start_y = 100
+	local start_y = 150
 	local height = 30
 	local width = 600
 	local message = ""
@@ -109,9 +110,9 @@ function enter_draw()
 	local width = font:getWidth(text)
 	
 	love.graphics.setColor(0, 0, 0, 255)
-	love.graphics.rectangle('fill', 400 - width/2 - 10, 0, width + 20, 18)
+	love.graphics.rectangle('fill', 512 - width/2 - 10, 0, width + 20, 18)
 	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.print(text, 400 - width/2, 2)
+	love.graphics.print(text, 512 - width/2, 2)
 	
 end
 
@@ -123,7 +124,7 @@ function char_draw()
 
 	--- menu art
 	love.graphics.draw(bg, 0, 0)
-	love.graphics.draw(title, 344, 10)
+	--love.graphics.draw(title, 344, 10)
 
 	--- options
 	local start_x = 98
@@ -187,7 +188,7 @@ function main_draw()
 
 	--- menu art
 	love.graphics.draw(bg, 0, 0)
-	love.graphics.draw(title, 344, 10)
+	--love.graphics.draw(title, 344, 10)
 
 	--- options
 	local start_x = 98

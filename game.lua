@@ -14,7 +14,7 @@ map_special_rooms = {}
 map_canvas = love.graphics.newCanvas(800, 600)
 map_back_canvas = love.graphics.newCanvas(800, 600)
 
-char_width = 14
+char_width = 16
 
 player = {}
 player_level = 1
@@ -111,7 +111,7 @@ world_total_turn = 0
 world_see_distance = 8
 
 alphabet = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'}
-game_font = love.graphics.newFont("media/coolvetica.ttf", 14)
+game_font = love.graphics.newFont("media/coolvetica.ttf", 16)
 
 intro_open = false
 player_dead = false
@@ -1303,6 +1303,7 @@ function turn_machine()
 		take_turns()		
 		world_time_machine()
 		mon_gen_machine()
+		message_turns()
 		if player:get_turn_cd() <= 1 then			
 			player:levelup()
 			next_turn = false
@@ -1398,9 +1399,17 @@ end
 
 function message_add(msg)
 
-	table.insert(messages, 1, msg)
+	table.insert(messages, 1, {text = msg, turn = -1, color = function () love.graphics.setColor(255, 255, 255, 255) end})
 	if # messages > 25 then
 		table.remove(messages, # messages)
+	end
+
+end
+
+function message_turns()
+
+	for i = 1, # messages do
+		messages[i].turn = messages[i].turn + 1
 	end
 
 end
@@ -1969,7 +1978,7 @@ function draw_intro()
 	local start_x = 0
 	local start_y = 0
 	local width = 325
-	local height = 265
+	local height = 307
 	
 	love.graphics.setColor(0, 0, 0, 255)
 	love.graphics.rectangle('fill', start_x, start_y, width, height)
@@ -2055,8 +2064,8 @@ function draw_help()
 
 	local start_x = 0
 	local start_y = 0
-	local width = 650
-	local height = 471
+	local width = 736
+	local height = 528
 	local font = love.graphics.getFont()
 	local tw = 0
 	
@@ -2299,9 +2308,9 @@ end
 function player_message()
 
 	local start_x = 0
-	local start_y = 470
-	local width = 650
-	local height = 130
+	local start_y = 528
+	local width = 1024
+	local height = 240
 	
 	love.graphics.setColor(0, 0, 0, 255)
 	love.graphics.rectangle('fill', start_x, start_y, width, height)
@@ -2310,8 +2319,17 @@ function player_message()
 	
 	if # messages > 0 then
 		for i = 1, # messages do
-			love.graphics.print(messages[i], start_x + 10, start_y + height - (i * 20))
-			if i >= 6 then break end
+			messages[i].color()
+			love.graphics.print(messages[i].text, start_x + 10, start_y + height - (i * 20))
+			if messages[i].turn == 1 then
+				love.graphics.setColor(0, 0, 0, 130)
+			elseif messages[i].turn > 1 then
+				love.graphics.setColor(0, 0, 0, 200)
+			else
+				love.graphics.setColor(0, 0, 0, 0)
+			end
+			love.graphics.rectangle('fill', start_x + 8, start_y + height - (i * 20) + 3, width - 16, 17)
+			if i >= 12 then break end
 		end
 	end
 	
@@ -2319,14 +2337,16 @@ end
 
 function player_hud()
 
-	local start_x = 650
+	local start_x = 736
 	local start_y = 0
-	local width = 150
-	local height = 600
+	local width = 288
+	local height = 528
 	local font = love.graphics.getFont()
 	local tw = 0
 	local per = 0
 	local sun = 1
+	local chars = {}
+	local add = true
 	
 	love.graphics.setColor(0, 0, 0, 255)
 	love.graphics.rectangle('fill', start_x, start_y, width, height)
@@ -2351,30 +2371,30 @@ function player_hud()
 	--- stats
 	tw = font:getWidth("STR : ")
 	love.graphics.setColor(204, 155, 63, 255)
-	love.graphics.print("STR : ", start_x + 10, start_y + 65)
-	love.graphics.print("DEX : ", start_x + 10, start_y + 80)
-	love.graphics.print("INT : ", start_x + 70, start_y + 65)
-	love.graphics.print("CON : ", start_x + 70, start_y + 80)
+	love.graphics.print("STR : ", start_x + 140, start_y + 10)
+	love.graphics.print("DEX : ", start_x + 140, start_y + 25)
+	love.graphics.print("INT : ", start_x + 210, start_y + 10)
+	love.graphics.print("CON : ", start_x + 210, start_y + 25)
 	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.print(player_stats.str, start_x + 10 + tw, start_y + 65)
-	love.graphics.print(player_stats.dex, start_x + 10 + tw, start_y + 80)
-	love.graphics.print(player_stats.int, start_x + 70 + tw, start_y + 65)
-	love.graphics.print(player_stats.con, start_x + 70 + tw, start_y + 80)
+	love.graphics.print(player_stats.str, start_x + 140 + tw, start_y + 10)
+	love.graphics.print(player_stats.dex, start_x + 140 + tw, start_y + 25)
+	love.graphics.print(player_stats.int, start_x + 210 + tw, start_y + 10)
+	love.graphics.print(player_stats.con, start_x + 210 + tw, start_y + 25)
 	
 	--- armor
 	love.graphics.setColor(204, 155, 63, 255)
-	love.graphics.print("Armor : ", start_x + 10, start_y + 110)
+	love.graphics.print("AC : ", start_x + 140, start_y + 40)
 	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.print(player:get_armor(), start_x + 10 + font:getWidth("Armor : "), start_y + 110)
+	love.graphics.print(player:get_armor(), start_x + 140 + font:getWidth("AC : "), start_y + 40)
 	--- evasion
 	love.graphics.setColor(204, 155, 63, 255)
-	love.graphics.print("Evasion : ", start_x + 10, start_y + 125)
+	love.graphics.print("EV : ", start_x + 210, start_y + 40)
 	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.print(player:get_evasion() + player_feat_search('evasion'), start_x + 10 + font:getWidth("Evasion : "), start_y + 125)
+	love.graphics.print(player:get_evasion() + player_feat_search('evasion'), start_x + 210 + font:getWidth("EV : "), start_y + 40)
 	
 	--- HP
 	love.graphics.setColor(204, 155, 63, 255)
-	love.graphics.print("HP : ", start_x + 10, start_y + 155)
+	love.graphics.print("HP : ", start_x + 10, start_y + 70)
 	love.graphics.setColor(255, 255, 255, 255)
 	per = (player:get_hp_cur() / player:get_hp_max()) * 100
 	if per >= 70 then
@@ -2386,11 +2406,14 @@ function player_hud()
 	else
 		love.graphics.setColor(222, 95, 95, 255)
 	end
-	love.graphics.print(player:get_hp_cur() .. "/" .. player:get_hp_max(), start_x + 10 + font:getWidth("HP : "), start_y + 155)
+	love.graphics.print(player:get_hp_cur() .. "/" .. player:get_hp_max(), start_x + 10 + font:getWidth("HP : "), start_y + 70)	
+	--- HP bar
+	love.graphics.rectangle('fill', start_x + 140, start_y + 73, 120 * (player:get_hp_cur() / player:get_hp_max()), 11)
 	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.rectangle('line', start_x + 140, start_y + 73, 120, 11)
 	--- Mana
 	love.graphics.setColor(204, 155, 63, 255)
-	love.graphics.print("MP : ", start_x + 10, start_y + 170)
+	love.graphics.print("MP : ", start_x + 10, start_y + 85)
 	love.graphics.setColor(255, 255, 255, 255)
 	per = (player:get_mana_cur() / player:get_mana_max()) * 100
 	if per >= 70 then
@@ -2402,28 +2425,57 @@ function player_hud()
 	else
 		love.graphics.setColor(222, 95, 95, 255)
 	end
-	love.graphics.print(player:get_mana_cur() .. "/" .. player:get_mana_max(), start_x + 10 + font:getWidth("MP : "), start_y + 170)
+	love.graphics.print(player:get_mana_cur() .. "/" .. player:get_mana_max(), start_x + 10 + font:getWidth("MP : "), start_y + 85)
+	--- Mana bar
+	love.graphics.rectangle('fill', start_x + 140, start_y + 88, 120 * (player:get_mana_cur() / player:get_mana_max()), 11)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.rectangle('line', start_x + 140, start_y + 88, 120, 11)
 	love.graphics.setColor(255, 255, 255, 255)
 	
 	--- is the player hungry or starving yet?
 	if player_food.level <= player_food.hungry and player_food.level > player_food.starving then
-		love.graphics.print('Hungry', start_x + 10, start_y + 200)
+		love.graphics.print('Hungry', start_x + 10, start_y + 115)
 	elseif player_food.level <= player_food.starving and player_food.level > player_food.weak then
-		love.graphics.print('Starving', start_x + 10, start_y + 200)
+		love.graphics.print('Starving', start_x + 10, start_y + 115)
 	elseif player_food.level <= player_food.weak then
-		love.graphics.print('Weak', start_x + 10, start_y + 200)
+		love.graphics.print('Weak', start_x + 10, start_y + 115)
 	end
 	
 	--- encumbrance
 	if player_encumbrance == 1 then
-		love.graphics.print("Burdened", start_x + 10, start_y + 215)
+		love.graphics.print("Burdened", start_x + 10, start_y + 130)
 	elseif player_encumbrance == 2 then
-		love.graphics.print("Strained", start_x + 10, start_y + 215)
+		love.graphics.print("Strained", start_x + 10, start_y + 130)
 	end
 	
 	--- modifiers
 	for i = 1, # player_mods do
-		love.graphics.print(player_mods[i].name, start_x + 10, start_y + 230 + ((i - 1) * 15))
+		love.graphics.print(player_mods[i].name, start_x + 10, start_y + 145 + ((i - 1) * 15))
+	end
+	
+	--- monster legend
+	for x = player:get_x() - 10, player:get_x() + 10 do
+		for y = player:get_y() - 10, player:get_y() + 10 do
+			if x > 1 and x < map_width and y > 1 and y < map_height then
+				--- monster
+				if map[x][y]:get_holding() and map[x][y]:get_holding() ~= player and map[x][y]:get_lit() then
+					add = true
+					for i = 1, # chars do
+						if chars[i].char == map[x][y]:get_holding():get_char() and chars[i].name == map[x][y]:get_holding():get_name() then
+							add = false
+							break
+						end
+					end
+					if add then table.insert(chars, {char = map[x][y]:get_holding():get_char(), name = map[x][y]:get_holding():get_name(), color = map[x][y]:get_holding():get_color()}) end
+				end
+			end
+		end
+	end
+	for i = 1, # chars do
+		chars[i].color()
+		love.graphics.print(chars[i].char, start_x + 140, start_y + 145 + ((i - 1) * 15))
+		love.graphics.setColor(255, 255, 255, 255)
+		love.graphics.print(" -  " .. chars[i].name, start_x + 140 + font:getWidth(chars[i].char), start_y + 145 + ((i - 1) * 15))
 	end
 	
 	--- stance
@@ -3856,6 +3908,7 @@ function Creature:get_char() return self.char end
 function Creature:get_corpse() return self.corpse end
 function Creature:get_identify() return self.identify end
 function Creature:get_ai() return self.ai end
+function Creature:get_color() return self.color end
 	
 Item = Class('Item')
 function Item:initialize(arg)

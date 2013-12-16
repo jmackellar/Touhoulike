@@ -51,6 +51,7 @@ player_feats = {	{name = 'Polearm Proficiency', desc = 'Increases damage done by
 					{name = 'Mana Battery', desc = 'Regenerates mana at a faster rate', have = false, manaregen = 2},
 					{name = 'Nimble', desc = 'Increases evasion from physical attacks', have = false, evasion = 5},
 					{name = 'Accurate', desc = 'Increases accuracy when hitting with physical attacks', have = false, accuracy = 5},
+					{name = 'Cooking', desc = 'Decreases the chance of ruining food when cooking.', have = false, cook = 45},
 					}
 					
 player_muts = { }
@@ -1316,7 +1317,7 @@ function world_time_machine()
 
 	world_time_turn = world_time_turn + 1
 	world_total_turn = world_total_turn + 1
-	if world_time_turn > 350 then
+	if world_time_turn > 200 then
 		world_time_turn = 0
 		world_time = world_time + 1
 		if world_time > 24 then
@@ -1421,7 +1422,7 @@ function cook_food(food)
 	local item = false
 	local gain = 0
 	
-	if dice <= player_skills.cooking ^ 2 then
+	if dice <= (player_skills.cooking ^ 2) + player_feat_search('cook') + 10 then
 		good = true
 	end
 	
@@ -2000,8 +2001,8 @@ function draw_feats_gain()
 
 	local start_x = 0
 	local start_y = 0
-	local width = 650
-	local height = 470
+	local width = 736
+	local height = 528
 	local font = love.graphics.getFont()
 	local tw = 0
 	local index = 1
@@ -2084,8 +2085,8 @@ function draw_muts()
 
 	local start_x = 0
 	local start_y = 0
-	local width = 650
-	local height = 470
+	local width = 736
+	local height = 528
 	local font = love.graphics.getFont()
 	local tw = 0
 	local index = 1
@@ -2111,8 +2112,8 @@ function draw_quests()
 
 	local start_x = 0
 	local start_y = 0
-	local width = 650
-	local height = 470
+	local width = 736
+	local height = 528
 	local font = love.graphics.getFont()
 	local index = 2
 	
@@ -2156,8 +2157,8 @@ function draw_feats()
 
 	local start_x = 0
 	local start_y = 0
-	local width = 650
-	local height = 470
+	local width = 736
+	local height = 528
 	local font = love.graphics.getFont()
 	local tw = 0
 	local index = 1
@@ -2185,8 +2186,8 @@ function draw_skills()
 
 	local start_x = 0
 	local start_y = 0
-	local width = 650
-	local height = 470
+	local width = 736
+	local height = 528
 	local index = 1
 	local font = love.graphics.getFont()
 	local tw = 0
@@ -3006,10 +3007,7 @@ function Creature:ai_take_turn(moved)
 				if player_stance == 1 then self.turn_cd = self.turn_cd + 0 end
 				if player_stance == 2 then self.turn_cd = self.turn_cd + 0 end
 				if player_stance == 4 then self.turn_cd = self.turn_cd - 0 end
-				if player_stance == 5 then self.turn_cd = self.turn_cd - 0 end
-				--- encumbrance speed changes
-				self.turn_cd = self.turn_cd + player_encumbrance * 3
-				
+				if player_stance == 5 then self.turn_cd = self.turn_cd - 0 end				
 				--- feat hp regen
 				self.hp_regen_timer = self.hp_regen_timer - player_feat_search('hpregen')
 				--- feat mana regen
@@ -3018,7 +3016,7 @@ function Creature:ai_take_turn(moved)
 			if self.name ~= "Player" then
 			
 				--- enemy speed
-				self.turn_cd = self.speed + ((player:get_speed() - player_stats.dex - player_mod_get('speed') - player_feat_search('speed')) * -1)
+				self.turn_cd = self.speed + ((player:get_speed() - player_stats.dex - player_mod_get('speed') - player_feat_search('speed') + (player_encumbrance * 2)) * -1)
 			
 				--- enemy ai
 				if self.ai == 'wander' then

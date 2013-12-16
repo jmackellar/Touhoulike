@@ -1114,6 +1114,15 @@ function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
 	for x = 1, mapwidth do
 		for y = 1, mapheight do
 			map[x][y] = Tile:new({name = 'Wall', x = x, y = y})
+			if math.random(1, 100) <= 5 then
+				if math.random(1, 3) == 1 then
+					map[x][y] = Tile:new({name = 'Web Covered Wall', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '#', x = x, y = y})
+				elseif math.random(1, 3) == 2 then
+					map[x][y] = Tile:new({name = 'Painting', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '*', x = x, y = y})
+				else
+					map[x][y] = Tile:new({name = 'Tapestry', color = {r=112,g=221,b=224}, block_sight = true, block_move = true, char = '*', x = x, y = y})
+				end
+			end
 		end
 	end
 	
@@ -1142,7 +1151,7 @@ function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
 			--- room type
 			--- ROLL THE DIE ---
 			--- ROLLLLLLLLAN ---
-			dice = math.random(1, 8)
+			dice = math.random(1, 7)
 			
 			--- square
 			if dice == 1 then
@@ -1179,8 +1188,9 @@ function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
 						if math.floor(dy) < 1 then break end
 						if math.floor(dx) < rooms[i].sx or math.floor(dx) > rooms[i].sx + rooms[i].w then break end
 						if math.floor(dy) < rooms[i].sy or math.floor(dy) > rooms[i].sy + rooms[i].h then break end
-						map[math.floor(dx)][math.floor(dy)] = Tile:new({name = 'Floor', x = math.floor(dx), y = math.floor(dy)})
+						map[math.floor(dx)][math.floor(dy)] = Tile:new({name = 'Cavern Floor', block_sight = false, block_move = false, tunnel = true, char = ' .', color = {r=230,g=223,b=211}, x = math.floor(dx), y = math.floor(dy)})
 					until dist > math.random(1, 5)
+					map[math.floor(dx)][math.floor(dy)] = Tile:new({name = 'Cavern Wall', block_sight = true, block_move = true, char = '#', color = {r=201,g=184,b=151}, x = math.floor(dx), y = math.floor(dy)})
 				
 				end
 				rooms[i]['cx'] = x
@@ -1208,7 +1218,7 @@ function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
 							map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy}) 
 							on = false
 						else
-							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy, tunnel = true})
+							map[xx][yy] = Tile:new({name = 'Statue', color = {r=173,g=173,b=172}, char = 'O', block_sight = true, block_move = true, x = xx, y = yy, tunnel = true})
 							on = true
 						end
 						
@@ -1220,7 +1230,7 @@ function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
 				placed = true
 				
 			--- maze
-			elseif dice == 5 or dice == 8 then
+			elseif dice == 5 or dice == 7 then
 				print('placing maze')
 				
 				--- fill the area with floors and random walls
@@ -1284,81 +1294,6 @@ function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
 				rooms[i]['cy'] = y
 				placed = true
 				
-			--- chambers
-			elseif dice == 7 then
-				print('placing chambers')
-				
-				--- initial open room
-				for xx = rooms[i].sx, rooms[i].sx + rooms[i].w do
-					for yy = rooms[i].sy, rooms[i].sy + rooms[i].h do
-						map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy})
-						if xx == rooms[i].sx or xx == rooms[i].sx + rooms[i].w then
-							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy})
-						end
-						if yy == rooms[i].sy or yy == rooms[i].sy + rooms[i].h then
-							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy})
-						end
-					end
-				end
-				
-				--- chamber fortress in center
-				for xx = rooms[i].sx + 3, rooms[i].sx + rooms[i].w - 3 do
-					for yy = rooms[i].sy + 3, rooms[i].sy + rooms[i].h - 3 do
-					
-						if xx == rooms[i].sx + 3 or xx == rooms[i].sx + rooms[i].w - 3 then
-							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy, tunnel = true})
-						end
-						if yy == rooms[i].sy + 3 or yy == rooms[i].sy + rooms[i].h - 3 then
-							map[xx][yy] = Tile:new({name = 'Wall', x = xx, y = yy, tunnel = true})
-						end
-						
-					end
-				end
-				
-				--- main chamber door
-				if math.random(1, 2) == 1 then
-					dx = math.random(rooms[i].sx + 4, rooms[i].sx + rooms[i].w - 4)
-					if math.random(1, 2) == 1 then
-						map[dx][rooms[i].sy + 3] = Tile:new({name = 'Floor', x = dx, y = rooms[i].sy + 3})
-					else
-						map[dx][rooms[i].sy + rooms[i].h - 3] = Tile:new({name = 'Floor', x = dx, y = rooms[i].sy + rooms[i].h - 3})
-					end
-				else
-					dy = math.random(rooms[i].sy + 4, rooms[i].sy + rooms[i].h - 4)
-					if math.random(1, 2) == 1 then
-						map[rooms[i].sx + 3][dy] = Tile:new({name = 'Floor', x = rooms[i].sx + 3, y = dy})
-					else
-						map[rooms[i].sx + rooms[i].w - 3][dy] = Tile:new({name = 'Floor', x = rooms[i].sx + rooms[i].w - 3, y = dy})
-					end
-				end
-				
-				--- divide the chamber up
-				local walls = 0
-				local door = false
-				local prob = 0
-				
-				repeat
-					dx = math.random(rooms[i].sx + 6, rooms[i].sx + rooms[i].w - 6)
-					if map[dx][rooms[i].sy + 3]:get_block_move() and not map[dx-1][rooms[i].sy + 4]:get_block_move() 
-					   and not map[dx+1][rooms[i].sy + 4]:get_block_move() and not map[dx-2][rooms[i].sy + 4]:get_block_move()
-					   and not map[dx+2][rooms[i].sy + 4]:get_block_move() then
-						for yy = rooms[i].sy + 4, rooms[i].sy + rooms[i].h - 4 do
-							map[dx][yy] = Tile:new({name = 'Wall', x = dx, y = yy, tunnel = true})
-							prob = prob + 15
-							if yy > rooms[i].sy + 4 and yy < rooms[i].sy + rooms[i].h - 4 and not door and math.random(1, 100) <= 45 + prob then
-								map[dx][yy] = Tile:new({name = 'Floor', x = dx, y = yy})
-								door = true
-							end
-						end
-						walls = walls + 1
-						door = false
-					end
-				until walls >= 3
-				
-				rooms[i]['cx'] = x
-				rooms[i]['cy'] = y
-				placed = true
-			
 			end
 			
 		until placed
@@ -1393,6 +1328,26 @@ function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
 		end
 	
 	until rmp >= 4
+	
+	--- decoration, shelves and stuff
+	placed = 0
+	repeat
+	
+		x = math.random(2, map_width-1)
+		y = math.random(2, map_height-1)
+		
+		if map_get_surrounding_blocked(x, y) == 3 or map_get_surrounding_blocked(x, y) == 4 then
+			placed = placed + 1
+			if math.random(1, 3) == 1 then
+				map[x][y] = Tile:new({name = 'Shelf', block_move = true, block_sight = true, char = ':::', color = {r=150,g=98,b=0}, x = x, y = y, tunnel = true})
+			elseif math.random(1, 3) == 2 then
+				map[x][y] = Tile:new({name = 'Table', block_move = true, block_sight = true, char = '()', color = {r=150,g=98,b=0}, x = x, y = y, tunnel = true})
+			else
+				map[x][y] = Tile:new({name = 'Bookcase', block_move = true, block_sight = true, char = '||', color = {r=150,g=98,b=0}, x = x, y = y, tunnel = true})
+			end
+		end
+	
+	until placed >= math.random(13, 23)
 	
 	--- place tunnels between rooms
 	for num = 1, 3 do
@@ -1487,6 +1442,31 @@ function map_gen_variety(mapwidth, mapheight, dstairsd, ustairsd)
 	for y = 1, mapheight do
 		map[1][y] = Tile:new({name = 'Wall', x = 1, y = y})
 		map[mapwidth][y] = Tile:new({name = 'Wall', x = mapwidth, y = y})
+	end
+	
+	--- special levels
+	if math.random(1, 100) <= 150 then
+		--- flooded with water
+		if math.random(1, 2) == 1 then
+			for x = 1, mapwidth do 
+				for y = 1, mapheight do
+					if map[x][y]:get_char() == ' .' then
+						map[x][y] = Tile:new({name = 'Water', x = x, y = y})
+					end
+				end
+			end
+			table.insert(map_special_rooms, {x = 1, y = 1, w = mapwidth, h = mapheight, enter = false, message = "This entire level is flooded with water."})
+		--- foggy level
+		else
+			for x = 1, mapwidth do
+				for y = 1, mapheight do
+					if map[x][y]:get_char() == ' .' then
+						map[x][y] = Tile:new({name = 'Fog', char = "█", color = {r=175, g=175, b=175}, block_sight = true, block_move = false, x = x, y = y})
+					end
+				end
+			end
+			table.insert(map_special_rooms, {x = 1, y = 1, w = mapwidth, h = mapheight, enter = false, message = "This entire level is covered by a thick fog."})
+		end
 	end
 	
 	--- place stairs
@@ -1891,6 +1871,15 @@ function map_gen_rogue(width, height, p_ustairs, p_dstairs, pal)
 	for x = 1, width do
 		for y = 1, height do
 			map[x][y] = Tile:new({name = 'RogueWall', color = wall_color, block_sight = true, block_move = true, char = '#', x = x, y = y})
+			if math.random(1, 100) <= 5 then
+				if math.random(1, 3) == 1 then
+					map[x][y] = Tile:new({name = 'Web Covered Wall', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '#', x = x, y = y})
+				elseif math.random(1, 3) == 2 then
+					map[x][y] = Tile:new({name = 'Painting', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '*', x = x, y = y})
+				else
+					map[x][y] = Tile:new({name = 'Tapestry', color = {r=112,g=221,b=224}, block_sight = true, block_move = true, char = '*', x = x, y = y})
+				end
+			end
 		end
 	end
 	
@@ -1922,10 +1911,48 @@ function map_gen_rogue(width, height, p_ustairs, p_dstairs, pal)
 			for dx = x, x + w do
 				map[dx][y] = Tile:new({name = 'Dwall', x = dx, y = y, color = wall_color, char = '-', block_sight = true, block_move = true})
 				map[dx][y+h] = Tile:new({name = 'Dwall', x = dx, y = y+h, color = wall_color, char = '-', block_sight = true, block_move = true})
+				if math.random(1, 100) <= 5 then
+					if math.random(1, 2) == 1 then
+						if math.random(1, 3) == 1 then
+							map[dx][y] = Tile:new({name = 'Tapestry', color = {r=112,g=221,b=224}, block_sight = true, block_move = true, char = '*', x = dx, y = y})
+						elseif math.random(1, 3) == 2 then
+							map[dx][y] = Tile:new({name = 'Painting', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '*', x = dx, y = y})
+						else
+							map[dx][y] = Tile:new({name = 'Web Covered Wall', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '#', x = dx, y = y})
+						end
+					else
+						if math.random(1, 3) == 1 then
+							map[dx][y+h] = Tile:new({name = 'Tapestry', color = {r=112,g=221,b=224}, block_sight = true, block_move = true, char = '*', x = dx, y = y+h})
+						elseif math.random(1, 3) == 2 then
+							map[dx][y+h] = Tile:new({name = 'Painting', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '*', x = dx, y = y+h})
+						else
+							map[dx][y+h] = Tile:new({name = 'Web Covered Wall', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '#', x = dx, y = y+h})
+						end
+					end
+				end
 			end
 			for dy = y, y + h do
 				map[x][dy] = Tile:new({name = 'Dwall', x = x, y = dy, color = wall_color, char = ' |', block_sight = true, block_move = true})
 				map[x+w][dy] = Tile:new({name = 'Dwall', x = x+w, y = dy, color = wall_color, char = ' |', block_sight = true, block_move = true})
+				if math.random(1, 100) <= 5 then
+					if math.random(1, 2) == 1 then
+						if math.random(1, 3) == 1 then
+							map[x][dy] = Tile:new({name = 'Tapestry', color = {r=112,g=221,b=224}, block_sight = true, block_move = true, char = '*', x = x, y = dy})
+						elseif math.random(1, 3) == 2 then
+							map[x][dy] = Tile:new({name = 'Painting', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '*', x = x, y = dy})
+						else
+							map[x][dy] = Tile:new({name = 'Web Covered Wall', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '#', x = x, y = dy})
+						end
+					else
+						if math.random(1, 3) == 1 then
+							map[x+w][dy] = Tile:new({name = 'Tapestry', color = {r=112,g=221,b=224}, block_sight = true, block_move = true, char = '*', x = x+w, y = dy})
+						elseif math.random(1, 3) == 2 then
+							map[x+w][dy] = Tile:new({name = 'Painting', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '*', x = x+w, y = dy})
+						else
+							map[x+w][dy] = Tile:new({name = 'Web Covered Wall', color = {r=224,g=208,b=112}, block_sight = true, block_move = true, char = '#', x = x+w, y = dy})
+						end
+					end
+				end
 			end
 			map[x][y] = Tile:new({name = 'Dwall', x = x, y = y, color = wall_color, char = '+', block_sight = true, block_move = true})
 			map[x+w][y] = Tile:new({name = 'Dwall', x = x+w, y = y, color = wall_color, char = '+', block_sight = true, block_move = true})
@@ -2012,6 +2039,26 @@ function map_gen_rogue(width, height, p_ustairs, p_dstairs, pal)
 			
 		end
 	end
+	
+	--- decoration, shelves and stuff
+	placed = 0
+	repeat
+	
+		x = math.random(2, map_width-1)
+		y = math.random(2, map_height-1)
+		
+		if map_get_surrounding_blocked(x, y) == 3 or map_get_surrounding_blocked(x, y) == 4 then
+			placed = placed + 1
+			if math.random(1, 3) == 1 then
+				map[x][y] = Tile:new({name = 'Shelf', block_move = true, block_sight = true, char = ':::', color = {r=150,g=98,b=0}, x = x, y = y})
+			elseif math.random(1, 3) == 2 then
+				map[x][y] = Tile:new({name = 'Table', block_move = true, block_sight = true, char = '()', color = {r=150,g=98,b=0}, x = x, y = y})
+			else
+				map[x][y] = Tile:new({name = 'Bookcase', block_move = true, block_sight = true, char = '||', color = {r=150,g=98,b=0}, x = x, y = y})
+			end
+		end
+	
+	until placed >= math.random(13, 23)
 
 	--- place corridors between rooms, and add in stairs when appropriate
 	for i = 1, # rooms - 1 do

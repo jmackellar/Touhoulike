@@ -49,7 +49,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Potion of Harming', quaff = true, potion = true, pname = 'Unknown Potion', char = '!', prob = 57, affect = function () local dice = math.random(25, 55) player:take_dam(dice, 'pure', 'Potion of Harming') end, message = "That burns!"},
 				{name = 'Scroll of Enlightenment', reads = true, scroll = true, pname = 'Unknown Golden Scroll', char = '?', prob = 59, affect = function() enlightenment() end, message = "You feel more knowledgeable about the unknown."},
 				{name = 'Fish', edible = true, cook = true, nutrition = 100, char = '%', prob = 60},
-				{name = 'Broom', slot = 'hand', weptype = 'stick', apply = true, weight = 2, afunc = function () end, message = "You sweep the ground.", damage = 10, char = ')', prob = 65},
+				{name = 'Fan', slot = 'hand', weptype = 'stick', apply = true, weight = 2, afunc = function () fan_remove_fog() end, message = "The breeze feels cool on your skin.", damage = 10, char = ')', prob = 65},
 				{name = 'Cloth Skirt', slot = 'legs', armor = 2, char = ']', color = function () love.graphics.setColor(204, 202, 186, 255) end, prob = 70},
 				{name = 'Cloth Shirt', slot = 'torso', armor = 1, char = ']', color = function () love.graphics.setColor(204, 202, 186, 255) end, prob = 75},
 				{name = 'Gohei Stick', slot = 'hand', weptype = 'shinto', damage = 15, char = ')', prob = 80},
@@ -67,6 +67,27 @@ game_items = {	--- items never randomly generated
 		
 known_potions = {}
 known_scrolls = {}
+
+function fan_remove_fog()
+
+	local message = "You wave the fan around."
+	for x = player:get_x() - 8, player:get_x() + 8 do
+		for y = player:get_y() - 8, player:get_y() + 8 do
+			if x > 1 and x < map_width and y > 1 and y < map_height and map[x][y]:get_name() == 'Fog' then
+				message = "You wave the fan around.  You blow some fog away!"
+				local holding = map[x][y]:get_holding()
+				local items = map[x][y]:get_items()
+				map[x][y] = Tile:new({name = 'Floor', x = x, y = y})
+				map[x][y]:set_holding(holding)
+				map[x][y]:set_items(items)				
+			end
+		end
+	end
+	map_back_canvas_draw()
+	player_fov()
+	message_add(message)
+
+end
 
 function cure_mutation()
 

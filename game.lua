@@ -4361,6 +4361,8 @@ function starting_inventory()
 							}
 		player_equipment.torso = shop_find_game_item('Leather Vest')
 		player_equipment.hand = shop_find_game_item('Katana')
+		player_skills.longsword = 2
+		player_skills.fighting = 1
 	elseif choice == 'Reimu Hakurei B' then
 		local pot = random_potion()
 		local scroll = random_scroll()
@@ -4373,6 +4375,8 @@ function starting_inventory()
 							}
 		player_equipment.torso = shop_find_game_item('Sarashi')
 		player_equipment.hand = shop_find_game_item('Big Stick')
+		player_skills.danmaku = 2
+		player_skills.polearm = 1
 	elseif choice == 'Reimu Hakurei C' then
 		table.insert(known_potions, 'Potion of Mana')
 		player_inventory = {	{item = Item:new(game_items[# game_items - 2]), quantity = 1}, 
@@ -4381,6 +4385,9 @@ function starting_inventory()
 							}
 		player_equipment.torso = shop_find_game_item('Leather Vest')
 		player_equipment.hand = shop_find_game_item('Big Stick')
+		player_skills.fighting = 1
+		player_skills.evasion = 1
+		player_skills.cooking = 1
 	elseif choice == 'Reimu Hakurei D' then
 		player_inventory = {	{item = Item:new(game_items[# game_items - 2]), quantity = 3}, 
 								{item = Item:new(game_items[# game_items - 1]), quantity = 5},
@@ -4389,6 +4396,8 @@ function starting_inventory()
 							}
 		player_gold = math.random(150, 250)
 		player_equipment.hand = shop_find_game_item('Naginata')
+		player_skills.polearm = 2
+		player_skills.evasion = 2
 		give_random_mut()
 		give_random_mut()
 		give_random_mut()

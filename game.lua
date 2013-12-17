@@ -3740,7 +3740,6 @@ function Creature:fight(x, y)
 		if player_equipment.hand then
 			if player_skills[player_equipment.hand:get_weptype()] then
 				damage = math.floor(damage * (1.005 * (player_skills[player_equipment.hand:get_weptype()] + 1)))
-				player_skills[player_equipment.hand:get_weptype()] = player_skills[player_equipment.hand:get_weptype()] + 0.01
 			end
 		end
 		

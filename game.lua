@@ -3015,12 +3015,6 @@ function map_special_rooms_check()
 
 end
 
-function check_for_quest()
-
-
-
-end
-
 Creature = Class('Creature')
 function Creature:initialize(arg)
 
@@ -4323,6 +4317,17 @@ function starting_inventory()
 							}
 		player_equipment.torso = shop_find_game_item('Leather Vest')
 		player_equipment.hand = shop_find_game_item('Big Stick')
+	elseif choice == 'Reimu Hakurei D' then
+		player_inventory = {	{item = Item:new(game_items[# game_items - 2]), quantity = 3}, 
+								{item = Item:new(game_items[# game_items - 1]), quantity = 5},
+								{item = Item:new(shop_find_game_item('Leather Vest')), quantity = 1},
+								{item = Item:new(shop_find_game_item('Leather Shoes')), quantity = 1},
+							}
+		player_gold = math.random(150, 250)
+		player_equipment.hand = shop_find_game_item('Naginata')
+		give_random_mut()
+		give_random_mut()
+		give_random_mut()
 	end
 	
 end

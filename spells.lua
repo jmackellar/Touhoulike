@@ -11,6 +11,9 @@ game_spells = {	{name = 'Omamori of Health', mp_cost = 100, func = function () p
 				{name = 'Border of Danmaku', mp_cost = 75, func = function () border_shoot(player:get_x(), player:get_y()) end},
 				{name = 'Border Jumper', mp_cost = 15, func = function () border_jumper(player:get_x(), player:get_y(), 8) end},
 				{name = 'Border Bomb', mp_cost = 125, func = function () fantasy_seal(player:get_x()+player_last_move.x*-3, player:get_y()+player_last_move.y*-3, 2, 'int') end},
+				{name = 'Youkai Heal', mp_cost = 100, func = function () player:heal(15 * # player_muts) end},
+				{name = 'Youkai Power', mp_cost = 50, func = function () add_modifier({name = 'Youkai Power', turn = 60, damage = 5 * # player_muts}) end, level = 2},
+				{name = 'Embrace Youkai', mp_cost = 25, func = function () player_mut_level = player_mut_level + math.random(15, 35) end, level = 4},
 				}
 				
 function border_jumper(sx, sy, range)

@@ -15,6 +15,10 @@ game_characters = {	{name = 'Reimu Hakurei A', stats = {name = 'Player', char = 
 					starting_spells = { game_spells[11], game_spells[6], game_spells[12], },
 					player_spells_learn = { {spell = game_spells[13], level = 3} },
 					},
-					
+					{name = 'Reimu Hakurei D', stats = {name = 'Player', char = '@', evasion = 5, team = 0, x = 24, y = 14, speed = 8, hp_max = 425, mana_max = 250, base_damage = {50, 60}},
+					player_stats = { str = 6, dex = 8, int = 5, con = 6 },
+					starting_spells = { game_spells[14], },
+					player_spells_learn = { {spell = game_spells[15], level = 2}, {spell = game_spells[16], level = 4}, },
+					},					
 				}
 				

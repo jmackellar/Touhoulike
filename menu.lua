@@ -8,6 +8,7 @@ local main_options = {	'New Game',
 local char_options = {	'Reimu Hakurei A',
 						'Reimu Hakurei B',
 						'Reimu Hakurei C',
+						'Reimu Hakurei D',
 						}
 						
 local title = love.graphics.newImage("media/title.png")
@@ -16,6 +17,7 @@ local bg = love.graphics.newImage("media/bg.png")
 local reimu_a = love.graphics.newImage("media/reimua.png")
 local reimu_b = love.graphics.newImage("media/reimub.png")
 local reimu_c = love.graphics.newImage("media/reimuc.png")
+local reimu_d = love.graphics.newImage("media/reimud.png")
 						
 choice = ''
 
@@ -137,6 +139,8 @@ function char_draw()
 		love.graphics.draw(reimu_b, start_x + 150, start_y + 5)
 	elseif option == 3 then
 		love.graphics.draw(reimu_c, start_x + 150, start_y + 5)
+	elseif option == 4 then
+		love.graphics.draw(reimu_d, start_x + 150, start_y + 5)
 	end
 	
 	--- options

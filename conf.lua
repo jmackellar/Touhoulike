@@ -1,5 +1,5 @@
 function love.conf(t)
-	t.console = true
+	t.console = false
 	t.identity = 'Touhoulike'
 	t.screen.width = 1024
 	t.screen.height = 768

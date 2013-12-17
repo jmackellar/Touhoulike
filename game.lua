@@ -35,10 +35,10 @@ player_stats = { str = 6,
 				 int = 5,
 				 con = 7,}
 	
-player_skills_training = { fighting = true, evasion = false, danmaku = false, cooking = false, shinto = false, polearm = false, longsword = false, shortblade = false, axe = false}
-player_skills_key = { fighting = 'a', shinto = 'b', polearm = 'c', longsword = 'd', shortblade = 'e', axe = 'f', danmaku = 'g', evasion = 'h', cooking = 'i' }
-player_skills = { fighting = 0, evasion = 0, danmaku = 0, cooking = 0, shinto = 0, polearm = 0, longsword = 0, shortblade = 0, axe = 0 }
-player_skills_amnt = 9
+player_skills_training = { fighting = true, evasion = false, danmaku = false, cooking = false, shinto = false, polearm = false, longsword = false, armor = false, shortblade = false, axe = false}
+player_skills_key = { fighting = 'a', shinto = 'b', polearm = 'c', longsword = 'd', shortblade = 'e', axe = 'f', danmaku = 'g', evasion = 'h', armor = 'i', cooking = 'j' }
+player_skills = { fighting = 0, evasion = 0, danmaku = 0, cooking = 0, shinto = 0, polearm = 0, longsword = 0, shortblade = 0, axe = 0, armor = 0 }
+player_skills_amnt = 10
 skills_open = false
 
 feats_open = false
@@ -196,6 +196,10 @@ function game:draw()
 end
 
 function game:keypressed(key)
+
+	if love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift') then
+		return
+	end
 
 	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
 		if not inventory_open and not bash_dir and not quests_open and not muts_open and not player_dead and not intro_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
@@ -3786,7 +3790,7 @@ function Creature:take_dam(dam, dtype, name)
 		if player_equipment.torso then armor = armor + player_equipment.torso:get_armor() end
 		if player_equipment.legs then armor = armor + player_equipment.legs:get_armor() end
 		if player_equipment.feet then armor = armor + player_equipment.feet:get_armor() end
-		armor = armor + player_mod_get('armor')
+		armor = armor + player_mod_get('armor') + math.floor(player_skills.armor) 
 		
 		--- damage changes due to stances
 		if player_stance == 1 then
@@ -4363,6 +4367,7 @@ function starting_inventory()
 		player_equipment.hand = shop_find_game_item('Katana')
 		player_skills.longsword = 2
 		player_skills.fighting = 1
+		player_skills.armor = 1
 	elseif choice == 'Reimu Hakurei B' then
 		local pot = random_potion()
 		local scroll = random_scroll()

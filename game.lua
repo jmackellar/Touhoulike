@@ -119,6 +119,8 @@ player_dead = false
 
 quests_open = false
 
+bash_dir = false
+
 function game:enter()
 	
 	if not love.filesystem.exists("player.lua") then
@@ -193,7 +195,7 @@ end
 function game:keypressed(key)
 
 	if player:get_turn_cd() <= 1 and not danmaku and # ascii_effects == 0 then
-		if not inventory_open and not quests_open and not muts_open and not player_dead and not intro_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
+		if not inventory_open and not bash_dir and not quests_open and not muts_open and not player_dead and not intro_open and not look_open and not help_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open and not feats_open then
 			
 			--- keypad movement
 			if key == 'kp8' then player:move(0, -1) next_turn = true end
@@ -251,6 +253,8 @@ function game:keypressed(key)
 				if key == '[' then quests_open = true end
 
 				if key == 'f' then danmaku_dir = true message_add("Fire danmaku in which direction? ESC to cancel.") end
+				
+				if key == 's' then bash_dir = true message_add("Bash in which direction?  ESC to cancel.") end
 			end
 			
 		elseif inventory_open and inventory_action == 'look' then
@@ -298,6 +302,8 @@ function game:keypressed(key)
 			if key then muts_open = false end
 		elseif quests_open then
 			if key then quests_open = false end
+		elseif bash_dir then 
+			if key then bash_key(key) end
 		elseif player_dead then
 			if key == 'return' or key == 'escape' or key == 'kpenter' then love.event.push('quit') end
 			
@@ -371,7 +377,7 @@ function game:update(dt)
 	stair_cd = stair_cd - 1
 	player_move_cd = player_move_cd - 1
 	
-	if not inventory_open and not quests_open and not muts_open and not player_dead and not intro_open and not feats_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
+	if not inventory_open and not bash_dir and not quests_open and not muts_open and not player_dead and not intro_open and not feats_open and not feats_gain_open and not pickup_many_items and not spells_open and not shop_window and not danmaku_dir and not skills_open then
 		if player:get_turn_cd() <= 1 and player_move_cd < 1 and stair_cd <= 1 and not danmaku and # ascii_effects == 0 then
 			--- up and down stairs in levels
 			if (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) and love.keyboard.isDown('.') and map[player:get_x()][player:get_y()]:get_name() == 'DStairs' then stair_machine('down') end
@@ -635,6 +641,71 @@ function enemy_danmaku_fire(sx, sy, dx, dy, bullets, dam, name)
 	danmaku = {x = sx, y = sy, dx = dx, dy = dy, ex = ex, ey = ey, cd = 3, char = '*', color = function () love.graphics.setColor(0, 255, 100, 255) end}
 	for i = 1, bullets - 1 do
 		table.insert(danmaku_add, {x = sx, y = sy, dx = dx, dy = dy, ex = ex, ey = ey, cd = 3, char = '*', color = function () love.graphics.setColor(0, 255, 100, 255) end})
+	end
+
+end
+
+function bash_key(key)
+
+	local dx = 0
+	local dy = 0
+	local x = 0
+	local y = 0
+
+	--- keypad movement
+	if key == 'kp8' then dy = -1 end
+	if key == 'kp2' then dy = 1 end
+	if key == 'kp4' then dx = -1 end
+	if key == 'kp6' then dx = 1 end
+	if key == 'kp7' then dy = -1 dx = -1 end
+	if key == 'kp9' then dy = -1 dx = 1 end
+	if key == 'kp1' then dy = 1 dx = -1 end
+	if key == 'kp3' then dy = 1 dx = 1 end
+	--- vi keys
+	if key == 'k' then dy = -1 end
+	if key == 'j' then dy = 1 end
+	if key == 'h' then dx = -1 end
+	if key == 'l' then dx = 1 end
+	if key == 'y' then dy = -1 dx = -1 end
+	if key == 'u' then dy = -1 dx = 1 end
+	if key == 'b' then dy = 1 dx = -1 end
+	if key == 'n' then dy = 1 dx = 1 end
+	--- movement keys
+	if key == 'up' then dy = -1 end
+	if key == 'down' then dy = 1 end
+	if key == 'left' then dx = -1 end
+	if key == 'right' then dx = 1 end
+	
+	x = player:get_x() + dx
+	y = player:get_y() + dy
+	
+	if map[x][y]:get_block_move() then
+		if map[x][y]:get_name() == 'Table' or map[x][y]:get_name() == 'Shelf' or map[x][y]:get_name() == 'Bookcase' then
+			if math.random(1, 100) <= 25 + player_stats.str then
+				message_add("You bash the " .. map[x][y]:get_name() .. " into little pieces.")
+				map[x][y] = Tile:new({name = 'Floor', x = x, y = y})
+				map_back_canvas_draw()
+				player_fov()
+			else
+				message_add("WHAAAM")
+			end
+		else
+			if math.random(1, 100) <= 75 then
+				message_add("WHAAAM")
+			else
+				message_add("Ouch!  That hurt!")
+				player:take_dam(35, 'pure', 'kicking a wall')
+			end
+		end
+		bash_dir = false
+	else
+		message_add("There isn't anything there to bash.")
+		bash_dir = false
+	end
+	
+	if key == 'escape' or key == 'return' or key == 'kpenter' then
+		bash_dir = false
+		message_add("Never mind")
 	end
 
 end

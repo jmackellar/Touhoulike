@@ -684,6 +684,7 @@ function bash_key(key)
 			if math.random(1, 100) <= 25 + player_stats.str then
 				message_add("You bash the " .. map[x][y]:get_name() .. " into little pieces.")
 				map[x][y] = Tile:new({name = 'Floor', x = x, y = y})
+				if math.random(1, 100) <= 10 then map[x][y]:set_items({Item:new(game_items[#game_items])}) end
 				map_back_canvas_draw()
 				player_fov()
 			else
@@ -4201,6 +4202,34 @@ function map_setup(width, height)
 	
 end
 
+function random_scroll()
+
+	local scrolls = {}
+	
+	for i = 1, # game_items do
+		if game_items[i].scroll then
+			table.insert(scrolls, game_items[i])
+		end
+	end
+	
+	return scrolls[math.random(1, # scrolls)]
+
+end
+
+function random_potion()
+
+	local pots = {}
+
+	for i = 1, # game_items do
+		if game_items[i].potion then
+			table.insert(pots, game_items[i])
+		end
+	end
+	
+	return pots[math.random(1, # pots)]
+	
+end
+
 function load_coords_map()
 
 	map_setup(map_width, map_height)
@@ -4267,12 +4296,34 @@ end
 
 function starting_inventory()
 
-	player_inventory = {	{item = Item:new(game_items[# game_items - 2]), quantity = 1}, 
-							{item = Item:new(game_items[# game_items - 1]), quantity = 3},
-						}
-	player_equipment.torso = shop_find_game_item('Sarashi')
-	player_equipment.hand = shop_find_game_item('Big Stick')
-	player_equipment.feet = shop_find_game_item('Leather Shoes')
+	if choice == 'Reimu Hakurei A' then
+		player_inventory = {	{item = Item:new(game_items[# game_items - 2]), quantity = 1}, 
+								{item = Item:new(game_items[# game_items - 1]), quantity = 3},
+								{item = Item:new(shop_find_game_item('Dagger')), quantity = 1},
+							}
+		player_equipment.torso = shop_find_game_item('Leather Vest')
+		player_equipment.hand = shop_find_game_item('Katana')
+	elseif choice == 'Reimu Hakurei B' then
+		local pot = random_potion()
+		local scroll = random_scroll()
+		table.insert(known_potions, pot.name)
+		table.insert(known_scrolls, scroll.name)
+		player_inventory = {	{item = Item:new(game_items[# game_items - 2]), quantity = 1}, 
+								{item = Item:new(game_items[# game_items - 1]), quantity = 3},
+								{item = Item:new(pot), quantity = 1},
+								{item = Item:new(scroll), quantity = 1},
+							}
+		player_equipment.torso = shop_find_game_item('Sarashi')
+		player_equipment.hand = shop_find_game_item('Big Stick')
+	elseif choice == 'Reimu Hakurei C' then
+		table.insert(known_potions, 'Potion of Mana')
+		player_inventory = {	{item = Item:new(game_items[# game_items - 2]), quantity = 1}, 
+								{item = Item:new(game_items[# game_items - 1]), quantity = 3},
+								{item = Item:new(shop_find_game_item('Potion of Mana')), quantity = 2},
+							}
+		player_equipment.torso = shop_find_game_item('Leather Vest')
+		player_equipment.hand = shop_find_game_item('Big Stick')
+	end
 	
 end
 

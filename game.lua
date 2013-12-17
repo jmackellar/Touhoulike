@@ -35,7 +35,10 @@ player_stats = { str = 6,
 				 int = 5,
 				 con = 7,}
 	
+player_skills_training = { fighting = true, evasion = false, danmaku = false, cooking = false, shinto = false, polearm = false, longsword = false, shortblade = false, axe = false}
+player_skills_key = { fighting = 'a', shinto = 'b', polearm = 'c', longsword = 'd', shortblade = 'e', axe = 'f', danmaku = 'g', evasion = 'h', cooking = 'i' }
 player_skills = { fighting = 0, evasion = 0, danmaku = 0, cooking = 0, shinto = 0, polearm = 0, longsword = 0, shortblade = 0, axe = 0 }
+player_skills_amnt = 9
 skills_open = false
 
 feats_open = false
@@ -289,7 +292,7 @@ function game:keypressed(key)
 		elseif shop_window then
 			shop_key(key)
 		elseif skills_open then
-			if key then skills_open = false end
+			if key then skills_key(key) end
 		elseif feats_open then
 			if key then feats_open = false end
 		elseif feats_gain_open then	
@@ -571,7 +574,6 @@ function danmaku_fire(dx, dy)
 				air = false 
 				local dam = math.floor(math.random(player_stats.int * 4, player_stats.int * 5) * ((((player_skills.danmaku + 1) * 2) * 0.01) + 1))
 				map[x][y]:get_holding():take_dam(dam, 'danmaku', 'whut')			
-				player_skills.danmaku = player_skills.danmaku + 0.001
 			end
 			
 			if d == 8 then
@@ -645,6 +647,42 @@ function enemy_danmaku_fire(sx, sy, dx, dy, bullets, dam, name)
 
 end
 
+function skills_key(key)
+
+	local val = nil
+
+	for i = 1, player_skills_amnt do
+		if key == alphabet[i] then
+			
+			for k, v in pairs(player_skills_training) do
+				player_skills_training[k] = false
+			end
+			
+			for k, v in pairs(player_skills_key) do
+				if v == alphabet[i] then
+					val = k
+					break
+				end
+			end
+			
+			for k, v in pairs(player_skills_training) do
+				if k == val then
+					player_skills_training[k] = true
+					break
+				end
+			end
+			
+			break
+			
+		end
+	end
+
+	if key == 'escape' or key == 'return' or key == 'kpenter' then
+		skills_open = false
+	end
+
+end
+
 function bash_key(key)
 
 	local dx = 0
@@ -699,6 +737,7 @@ function bash_key(key)
 			end
 		end
 		bash_dir = false
+		next_turn = true
 	else
 		message_add("There isn't anything there to bash.")
 		bash_dir = false
@@ -707,7 +746,7 @@ function bash_key(key)
 	if key == 'escape' or key == 'return' or key == 'kpenter' then
 		bash_dir = false
 		message_add("Never mind")
-	end
+	end	
 
 end
 
@@ -1526,8 +1565,6 @@ function cook_food(food)
 		
 	end
 	
-	player_skills.cooking = player_skills.cooking + gain
-	
 	return item
 
 end
@@ -1876,6 +1913,28 @@ function stair_machine(dir)
 		stair_cd = 3
 	end		
 	
+end
+
+function exp_to_skill(xp)
+
+	local xp = (xp * .01)
+	local val = nil
+	
+	for k, v in pairs(player_skills_training) do
+		if player_skills_training[k] then
+			val = k
+			break
+		end
+	end
+	
+	for k, v in pairs(player_skills) do
+		if k == val then
+			xp = xp / (v + 1)
+			player_skills[k] = player_skills[k] + xp
+			break
+		end
+	end
+
 end
 
 function get_mut_check()
@@ -2269,21 +2328,29 @@ function draw_skills()
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.rectangle('line', start_x+2, start_y+2, width-2, height-2)
 	
-	love.graphics.print("Skills: Press any key to return", start_x + 4, start_y + 4)
+	love.graphics.print("Skills: Press ESC to return.", start_x + 4, start_y + 4)
 	
 	
-	for k, v in pairs(player_skills) do
-	
-		index = index + 1
-		--- key
-		love.graphics.setColor(204, 155, 63, 255)
-		love.graphics.print(k .. " : ", start_x + 10, start_y + index * 16)
-		--- value
-		love.graphics.setColor(255, 255, 255, 255)
-		tw = font:getWidth(k .. " : ")
-		love.graphics.print(v, start_x + 10 + tw, start_y + index * 16)
-	
-	end
+	repeat
+		for k, v in pairs(player_skills) do
+		
+			if player_skills_key[k] == alphabet[index] then
+				index = index + 1				
+				if player_skills_training[k] then
+					love.graphics.setColor(100, 100, 100, 255)
+					love.graphics.rectangle('fill', start_x + 8, start_y + index * 16 + 2, font:getWidth(player_skills_key[k] .. " -  " .. k .. " :  " .. math.floor(v * 100 + 0.5) / 100) + 4, 15)
+				end
+				--- key
+				love.graphics.setColor(204, 155, 63, 255)
+				love.graphics.print(player_skills_key[k] .. " -  " .. k .. " : ", start_x + 10, start_y + index * 16)
+				--- value
+				love.graphics.setColor(255, 255, 255, 255)
+				tw = font:getWidth(player_skills_key[k] .. " - " .. k .. " : ")
+				love.graphics.print(" " .. math.floor(v * 100 + 0.5) / 100, start_x + 10 + tw, start_y + index * 16)
+			end
+
+		end
+	until index >= player_skills_amnt
 
 end
 
@@ -3669,7 +3736,6 @@ function Creature:fight(x, y)
 		--- changes from player skill
 		--- fighting skill
 		damage = math.floor(damage * (1 + (player_skills.fighting * 0.001)))
-		player_skills.fighting = player_skills.fighting + 0.01
 		--- weapon skill
 		if player_equipment.hand then
 			if player_skills[player_equipment.hand:get_weptype()] then
@@ -3743,7 +3809,6 @@ function Creature:take_dam(dam, dtype, name)
 		if player_stance == 1 and dtype == 'phys' then
 			if math.random(1, 100) <= 20 then
 				dam = 0
-				player_skills.evasion = player_skills.evasion + 0.01
 			end		
 		end
 		
@@ -3751,7 +3816,6 @@ function Creature:take_dam(dam, dtype, name)
 		local evasion = player_skills.evasion + self.evasion + player_feat_search('evasion')
 		if math.random(1, 100) <= player_skills.evasion + 1 * 2 and dtype == 'phys' then
 			dam = 0
-			player_skills.evasion = player_skills.evasion + 0.01
 		end
 		
 		--- graze
@@ -3877,6 +3941,7 @@ function Creature:take_dam(dam, dtype, name)
 		end
 		map[self.x][self.y]:set_holding(nil)
 		player_exp = player_exp + self.exp
+		exp_to_skill(self.exp)
 	end
 
 end

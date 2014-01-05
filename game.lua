@@ -191,7 +191,7 @@ function game:draw()
 	--- debug coordinate view
 	---love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS() .. "   Mut:" .. player_mut_level)
 	--- normal caption text
-	love.graphics.setCaption("TouhouLike V:0.0.1")
+	love.graphics.setCaption("TouhouLike V:0.0.12")
 	
 end
 
@@ -264,7 +264,7 @@ function game:keypressed(key)
 				if key == 's' then bash_dir = true message_add("Bash in which direction?  ESC to cancel.") end
 			end
 			
-		elseif inventory_open and inventory_action == 'look' then
+		elseif inventory_open and inventory_action == 'look' and key ~= 'lalt' and key ~= 'ralt' then
 			if key then inventory_open = false end
 		elseif inventory_open and inventory_action == 'drop' then
 			drop_item_key(key)
@@ -289,29 +289,29 @@ function game:keypressed(key)
 		elseif inventory_open and inventory_action == 'identify_s' then
 			identify_s_key(key)
 		
-		elseif pickup_many_items then
+		elseif pickup_many_items and key ~= 'lalt' and key ~= 'ralt' then
 			pickup_many_items_key(key)
-		elseif spells_open then
+		elseif spells_open and key ~= 'lalt' and key ~= 'ralt' then
 			spells_key(key)
-		elseif shop_window then
+		elseif shop_window and key ~= 'lalt' and key ~= 'ralt' then
 			shop_key(key)
-		elseif skills_open then
+		elseif skills_open and key ~= 'lalt' and key ~= 'ralt' then
 			if key then skills_key(key) end
-		elseif feats_open then
+		elseif feats_open and key ~= 'lalt' and key ~= 'ralt' then
 			if key then feats_open = false end
-		elseif feats_gain_open then	
+		elseif feats_gain_open and key ~= 'lalt' and key ~= 'ralt' then	
 			feats_gain_key(key)
-		elseif help_open then
+		elseif help_open and key ~= 'lalt' and key ~= 'ralt' then
 			if key then help_open = false end
-		elseif intro_open then
+		elseif intro_open and key ~= 'lalt' and key ~= 'ralt' then
 			if key then intro_open = false end
-		elseif muts_open then
+		elseif muts_open and key ~= 'lalt' and key ~= 'ralt' then
 			if key then muts_open = false end
-		elseif quests_open then
+		elseif quests_open and key ~= 'lalt' and key ~= 'ralt' then
 			if key then quests_open = false end
-		elseif bash_dir then 
+		elseif bash_dir and key ~= 'lalt' and key ~= 'ralt' then 
 			if key then bash_key(key) end
-		elseif player_dead then
+		elseif player_dead and key ~= 'lalt' and key ~= 'ralt' then
 			if key == 'return' or key == 'escape' or key == 'kpenter' then love.event.push('quit') end
 			
 		elseif look_open then

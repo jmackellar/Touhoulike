@@ -865,9 +865,13 @@ function map_easy_cave(dir)
 			if level.depth <= 3 then
 				stairs = map_gen_rogue(map_width, map_height, true, dstairs, 'dungeon')	
 			else
-				if math.random(1, 1) == 1 then
+				local dice = math.random(1, 2)
+				if dice == 1 then
 					stairs = map_gen_bug_level(map_width, map_height, false, true)
 					special_monster_maker('bug')
+				elseif dice == 2 then
+					stairs = map_gen_fairy_level(map_width, map_height, false, true)
+					special_monster_maker('fairy')
 				end
 			end			
 			
@@ -942,6 +946,87 @@ function map_set_all_seen()
 		end
 	end
 
+end
+
+function map_gen_fairy_level(mapwidth, mapheight, dstairsd, ustairsd)
+
+	local rooms = {}
+
+	--- fill the map with water
+	for x = 1, mapwidth do
+		for y = 1, mapheight do
+			map[x][y] = Tile:new({name = 'Water', x = x, y = y})
+		end
+	end
+	
+	--- place islands around in the water
+	for i = 1, 4 do
+		
+		local x = math.random(1, mapwidth)
+		local y = math.random(1, mapheight)
+		
+		table.insert(rooms, {cx = x, cy = y})
+		
+		map[x][y] = Tile:new({name = 'Sand', x = x, y = y, block_sight = false, block_move = false, char = ' ,', color = {r=255,g=255,b=133},})
+		
+		for angle = 1, 360, 1 do
+			local dist = 0
+			local dx = x + 0.5
+			local dy = y + 0.5
+			local xm = math.cos(angle)
+			local ym = math.sin(angle)
+			
+			repeat
+				dx = dx + xm
+				dy = dy + ym
+				dist = dist + 1
+				if math.floor(dx) >= mapwidth then break end
+				if math.floor(dy) >= mapheight then break end
+				if math.floor(dx) <= 1 then break end
+				if math.floor(dy) <= 1 then break end
+				map[math.floor(dx)][math.floor(dy)] = Tile:new({name = 'Sand', block_sight = false, block_move = false, tunnel = true, char = ' ,', color = {r=255,g=255,b=133}, x = math.floor(dx), y = math.floor(dy)})
+			until dist > math.random(1, 5)
+		
+		end
+		
+	end
+	
+	--- surround the map with walls
+	for x = 1, mapwidth do
+		map[x][1] = Tile:new({name = 'Coral Wall', block_sight = true, block_move = true, char = '#', color = {r=133,g=255,b=253}, x = x, y = 1})
+		map[x][mapheight] = Tile:new({name = 'Coral Wall', block_sight = true, block_move = true, char = '#', color = {r=133,g=255,b=253}, x = x, y = mapheight})
+	end
+	for y = 1, mapheight do
+		map[1][y] = Tile:new({name = 'Coral Wall', block_sight = true, block_move = true, char = '#', color = {r=133,g=255,b=253}, x = 1, y = y})
+		map[mapwidth][y] = Tile:new({name = 'Coral Wall', block_sight = true, block_move = true, char = '#', color = {r=133,g=255,b=253}, x = mapwidth, y = y})
+	end
+	
+	--- stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, mapwidth-7)
+		local y1 = math.random(1, mapheight-7)
+		local x2 = math.random(1, mapwidth-7)
+		local y2 = math.random(1, mapheight-7)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs
+	
+	return stairs
+		
 end
 
 function map_gen_bug_level(mapwidth, mapheight, dstairsd, ustairsd)
@@ -1086,6 +1171,28 @@ function map_gen_bug_level(mapwidth, mapheight, dstairsd, ustairsd)
 		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
 	
 	until ustairs and dstairs
+		
+	--- wriggle nightbug
+	local wriggle = game_monsters[12]
+	local placed = false
+	
+	repeat
+	
+		x = math.random(2, map_width - 1)
+		y = math.random(2, map_height - 1)
+		
+		if not map[x][y]:get_block_move() and map[x][y]:get_char() ~= '<' then
+	
+			placed = true
+			wriggle['x'] = x
+			wriggle['y'] = y
+			if check_unique(wriggle) then
+				map[x][y]:set_holding(Creature:new(wriggle))
+			end
+		
+		end
+	
+	until placed
 	
 	return stairs
 	
@@ -2300,7 +2407,7 @@ function special_monster_maker(mon)
 		local monster = map_random_monster(3, false)
 		place = false
 	
-		if mon == 'bug' and monster.corpse == 'bug' then
+		if monster.corpse == mon then
 			
 			repeat
 			

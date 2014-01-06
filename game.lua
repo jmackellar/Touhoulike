@@ -3119,6 +3119,7 @@ function Creature:initialize(arg)
 	self.corpse = arg.corpse or false
 	self.identify = arg.identify or false
 	self.undead = arg.undead or false
+	self.satk = arg.satk or false
 	self.color = arg.color or function () love.graphics.setColor(255, 255, 255, 255) end
 	
 end
@@ -3774,6 +3775,19 @@ function Creature:fight(x, y)
 		local food_cost = 25 + player_feat_search('hunger')
 		if food_cost < 1 then food_cost = 1 end
 		self.food_tick = self.food_tick - food_cost
+		
+	else
+	
+		if map[x][y]:get_holding() == player then
+			--- monster special attack roll
+			if math.random(1, 100) <= 25 then
+				--- poison
+				if self.satk == 'poison' then
+					add_modifier({name = 'Poison', turn = math.random(10, 15), puredam = math.random(2, 3)})
+				end
+			end
+		end
+	
 	end
 	
 	map[x][y]:get_holding():take_dam(damage, 'phys', self.name)

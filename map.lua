@@ -704,8 +704,8 @@ function map_sdm(dir)
 				
 				--- remi
 				local remi = game_monsters[5]
-				remi['x'] = 43
-				remi['y'] = 27
+				remi['x'] = 21
+				remi['y'] = 15
 				if check_unique(remi) then
 					map[43][27]:set_holding(Creature:new(remi))
 					table.insert(unique_dead, remi.name)
@@ -861,17 +861,23 @@ function map_easy_cave(dir)
 		
 			local dstairs = true
 			if level.depth == 4 then dstairs = false end
-			stairs = map_gen_rogue(map_width, map_height, true, dstairs, 'dungeon')	
 			
-			if dir == 'down' then
-				map_new_place_player(stairs.up.x, stairs.up.y)
-			elseif dir == 'up' then
-				map_new_place_player(stairs.down.x, stairs.down.y)
-			end
+			if level.depth <= 3 then
+				stairs = map_gen_rogue(map_width, map_height, true, dstairs, 'dungeon')	
+			else
+				if math.random(1, 1) == 1 then
+					stairs = map_gen_bug_level(map_width, map_height, false, true)
+					special_monster_maker('bug')
+				end
+			end			
 			
 			--- now add in monsters and items to the map
-			monster_maker(math.random(7, 9))
+			if level.depth <= 3 then
+				monster_maker(math.random(7, 9))
+			end
 			item_maker(math.random(4, 7))
+			
+			place_player_on_stairs(dir)
 		
 		--- back on the overworld
 		elseif level.depth < 1 then
@@ -936,6 +942,153 @@ function map_set_all_seen()
 		end
 	end
 
+end
+
+function map_gen_bug_level(mapwidth, mapheight, dstairsd, ustairsd)
+
+	local x = 0
+	local y = 0
+	local rooms = {}
+
+	--- fill the map with walls
+	for x = 1, mapwidth do
+		for y = 1, mapheight do
+			map[x][y] = Tile:new({name = 'Tunneled Wall', x = x, y = y, block_sight = true, block_move = true, char = '#', color = {r=207,g=207,b=155},})
+		end
+	end
+	
+	--- place raycasted rooms randomly
+	for i = 1, 12 do
+	
+		if i <= 8 then
+			x = math.random(10, mapwidth - 10)
+			y = math.random(10, mapheight - 10)
+		else
+			x = math.random(1, 2)
+			y = math.random(1, 2)
+			if x == 1 then x = math.random(2, 10) end
+			if x == 2 then x = math.random(mapwidth - 9, mapwidth) end
+			if y == 1 then y = math.random(2, 10) end
+			if y == 2 then y = math.random(mapheight - 9, mapheight) end
+		end
+		
+		table.insert(rooms, {cx=x, cy=y})
+		
+		map[x][y] = Tile:new({name = 'Tunneled Floor', x = x, y = y, block_sight = false, block_move = false, char = ' .', color = {r=207,g=207,b=155},})
+		
+		for angle = 1, 360, 1 do
+			local dist = 0
+			local dx = x + 0.5
+			local dy = y + 0.5
+			local xm = math.cos(angle)
+			local ym = math.sin(angle)
+			
+			repeat
+				dx = dx + xm
+				dy = dy + ym
+				dist = dist + 1
+				if math.floor(dx) >= mapwidth then break end
+				if math.floor(dy) >= mapheight then break end
+				if math.floor(dx) <= 1 then break end
+				if math.floor(dy) <= 1 then break end
+				map[math.floor(dx)][math.floor(dy)] = Tile:new({name = 'Tunneled Floor', block_sight = false, block_move = false, tunnel = true, char = ' .', color = {r=207,g=207,b=155}, x = math.floor(dx), y = math.floor(dy)})
+			until dist > math.random(1, 5)
+			if math.floor(dx) > 1 and math.floor(dx) < mapwidth and math.floor(dy) > 1 and math.floor(dy) < mapheight then 
+				map[math.floor(dx)][math.floor(dy)] = Tile:new({name = 'Tunneled Wall', block_sight = true, block_move = true, char = '#', color = {r=207,g=207,b=155}, x = math.floor(dx), y = math.floor(dy)})
+			end
+		
+		end
+		
+	end
+	
+	--- tunnels
+	for i = 1, # rooms - 1 do
+		
+		local k = i + 1
+		local xdif = 0
+		local ydif = 0
+		
+		if k > # rooms then
+			k = 1
+		end
+	
+		if math.random(1, 1) == 1 then
+		
+			xdif = 0
+			ydif = 0
+		
+			for xx = math.min(rooms[i].cx, rooms[k].cx), math.max(rooms[i].cx, rooms[k].cx) do
+				if not map[xx + xdif][rooms[i].cy + ydif]:get_tunnel() then
+					map[xx + xdif][rooms[i].cy + ydif] = Tile:new({name = 'Floor', x = xx + xdif, y = rooms[i].cy + ydif})
+				end
+			end
+			
+			for yy = math.min(rooms[i].cy, rooms[k].cy), math.max(rooms[i].cy, rooms[k].cy) do
+				if not map[rooms[k].cx + xdif][yy + ydif]:get_tunnel() then
+					map[rooms[k].cx + xdif][yy + ydif] = Tile:new({name = 'Floor', x = rooms[k].cx + xdif, y = yy + ydif})
+				end
+			end
+			
+		else
+		
+			xdif = 0
+			ydif = 0
+		
+			for yy = math.min(rooms[i].cy, rooms[k].cy), math.max(rooms[i].cy, rooms[k].cy) do
+				if not map[rooms[i].cx + xdif][yy + ydif]:get_tunnel() then
+					map[rooms[i].cx + xdif][yy + ydif] = Tile:new({name = 'Floor', x = rooms[i].cx + xdif, y = yy + ydif})
+				end
+			end
+			
+			xdif = 0
+			ydif = 0
+			
+			for xx = math.min(rooms[i].cx, rooms[k].cx), math.max(rooms[i].cx, rooms[k].cx) do
+				if not map[xx + xdif][rooms[k].cy + ydif]:get_tunnle() then
+					map[xx + xdif][rooms[k].cy + ydif] = Tile:new({name = 'Floor', x = xx + xdif, y = rooms[k].cy + ydif})
+				end
+			end
+			
+		end
+		
+	end
+	
+	--- surround map with walls
+	for x = 1, mapwidth do
+		map[x][1] = Tile:new({name = 'Tunneled Wall', block_sight = true, block_move = true, char = '#', color = {r=207,g=207,b=155}, x = x, y = 1})
+		map[x][mapheight] = Tile:new({name = 'Tunneled Wall', block_sight = true, block_move = true, char = '#', color = {r=207,g=207,b=155}, x = x, y = mapheight})
+	end
+	for y = 1, mapheight do
+		map[1][y] = Tile:new({name = 'Tunneled Wall', block_sight = true, block_move = true, char = '#', color = {r=207,g=207,b=155}, x = 1, y = y})
+		map[mapwidth][y] = Tile:new({name = 'Tunneled Wall', block_sight = true, block_move = true, char = '#', color = {r=207,g=207,b=155}, x = mapwidth, y = y})
+	end
+		
+	--- stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, mapwidth-7)
+		local y1 = math.random(1, mapheight-7)
+		local x2 = math.random(1, mapwidth-7)
+		local y2 = math.random(1, mapheight-7)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs
+	
+	return stairs
+	
 end
 
 function map_gen_garden_of_the_sun(mapwidth, mapheight, dstairsd, ustairsd)
@@ -2122,7 +2275,7 @@ function mon_gen(level)
 			local y = math.random(2, 32)
 			
 			if not map[x][y]:get_block_move() and not map[x][y]:get_lit() then
-				local mon = map_random_monster(player_level)
+				local mon = map_random_monster(player_level, true)
 				mon['x'] = x
 				mon['y'] = y
 				map[x][y]:set_holding(Creature:new(mon))
@@ -2135,6 +2288,42 @@ function mon_gen(level)
 
 end
 
+function special_monster_maker(mon)
+
+	local placed = 0
+	local place = false
+	local x = 0
+	local y = 0
+
+	repeat
+	
+		local monster = map_random_monster(3, false)
+		place = false
+	
+		if mon == 'bug' and monster.corpse == 'bug' then
+			
+			repeat
+			
+				x = math.random(2, map_width - 1)
+				y = math.random(2, map_height - 1)
+				
+				if not map[x][y]:get_block_move() then
+					monster['x'] = x
+					monster['y'] = y
+					map[x][y]:set_holding(Creature:new(monster))
+					placed = placed + 1
+					place = true
+					break
+				end
+			
+			until place
+				
+		end
+	
+	until placed > math.random(40, 50)
+	
+end
+
 function monster_maker(num)
 
 	--- Place monsters
@@ -2145,7 +2334,7 @@ function monster_maker(num)
 		local y = math.random(2, map_height-1)
 		
 		if not map[x][y]:get_block_move() and map[x][y]:get_char() ~= '>' and map[x][y]:get_char() ~= '<' then
-			local monster = map_random_monster(player_level)
+			local monster = map_random_monster(false, true)
 			monster['x'] = x
 			monster['y'] = y
 			map[x][y]:set_holding(Creature:new(monster))
@@ -2189,18 +2378,20 @@ function item_maker(num)
 
 end
 
-function map_random_monster(lvl)
+function map_random_monster(lvl, ow)
 
-	local monlevel = math.floor( (player_level + level.depth) / 2)
+	local monlevel = lvl or math.floor( (player_level + level.depth) / 2)
 	local mons = {}
 	local chance = 0
 	local dice_max = 0
 	local dice = 0
 	
-	for i = 1, # overworld_levels do
-		if overworld_levels[i].name == level.name and overworld_levels[i].mon_gen then
-			monlevel = overworld_levels[i].mon_gen
-			break
+	if ow then
+		for i = 1, # overworld_levels do
+			if overworld_levels[i].name == level.name and overworld_levels[i].mon_gen then
+				monlevel = overworld_levels[i].mon_gen
+				break
+			end
 		end
 	end
 

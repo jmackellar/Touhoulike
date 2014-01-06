@@ -1025,6 +1025,28 @@ function map_gen_fairy_level(mapwidth, mapheight, dstairsd, ustairsd)
 	
 	until ustairs and dstairs
 	
+	--- cirno 
+	local cirno = game_monsters[13]
+	local placed = false
+	
+	repeat
+	
+		x = math.random(2, map_width - 1)
+		y = math.random(2, map_height - 1)
+		
+		if not map[x][y]:get_block_move() and map[x][y]:get_char() ~= '<' then
+	
+			placed = true
+			cirno['x'] = x
+			cirno['y'] = y
+			if check_unique(cirno) then
+				map[x][y]:set_holding(Creature:new(cirno))
+			end
+		
+		end
+	
+	until placed
+	
 	return stairs
 		
 end

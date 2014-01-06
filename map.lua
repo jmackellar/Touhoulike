@@ -2385,11 +2385,22 @@ end
 
 function mon_gen_machine()
 
+	local mon_level = 0
+
 	for i = 1, # overworld_levels do
 		if overworld_levels[i].name == level.name and overworld_levels[i].mon_gen then
-			mon_gen(overworld_levels[i].mon_gen)
+			mon_level = overworld_levels[i].mon_gen
 		end
 	end
+	
+	if math.random(1, 7) == 1 then
+		mon_level = mon_level + 1
+		if math.random(1, 7) == 1 then
+			mon_level = mon_level + 1
+		end
+	end
+		
+	mon_gen(mon_level)
 
 end
 
@@ -2404,7 +2415,7 @@ function mon_gen(level)
 			local y = math.random(2, 32)
 			
 			if not map[x][y]:get_block_move() and not map[x][y]:get_lit() then
-				local mon = map_random_monster(player_level, true)
+				local mon = map_random_monster(level, false)
 				mon['x'] = x
 				mon['y'] = y
 				map[x][y]:set_holding(Creature:new(mon))
@@ -2521,6 +2532,13 @@ function map_random_monster(lvl, ow)
 				monlevel = overworld_levels[i].mon_gen
 				break
 			end
+		end
+	end
+	
+	if math.random(1, 7) == 1 then
+		monlevel = monlevel + 1
+		if math.random(1, 7) == 1 then
+			monlevel = monlevel + 1
 		end
 	end
 

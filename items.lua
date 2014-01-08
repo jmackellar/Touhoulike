@@ -22,6 +22,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Rabbit Corpse', edible = true, nutrition = 25, corpse = 'rabbit', color = function () love.graphics.setColor(255, 255, 255, 255) end, weight = 15, char = '%', prob = 0},
 				--- items randomly generated
 				{name = 'Potion of Cure Mutation', quaff = true, potion = true, char = '!', prob = 5, pname = 'Unknown Golden Potion', affect = function () cure_mutation() end, message = "You feel more in touch with the human world."},
+				{name = 'Ninja Tabi', slot = 'feet', armor = 1, color = function () love.graphics.setColor(25, 25, 25, 255) end, weight = 0, char = '[', prob = 15, evasion = 2},
 				{name = 'Miko Outfit', slot = 'torso', armor = 2, color = function () love.graphics.setColor(255, 0, 0, 255) end, weight = 5, char = ']', prob = 20},				
 				{name = 'Scroll of Magic Mapping', reads = true, scroll = true, pname = 'Unknown Scroll', char = '?', prob = 29, affect = function() for x = 1, map_width do for y = 1, map_height do map[x][y]:set_seen() end end end, message = "An image of the surrounding area forms in your mind."},
 				{name = 'Silk Dress', slot = 'legs', armor = 3, weight = 6, color = function () love.graphics.setColor(255, 140, 198, 255) end, char = ']', prob = 30},
@@ -45,7 +46,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Scroll of Remove Armor', reads = true, scroll = true, mut = 15, pname = 'Unknown Scroll', char = '?', prob = 44, affect = function () player:armor_change(math.random(-1, -1)) end, message = "Your skin glows red for a moment."},
 				{name = 'Scroll of Remove Damage', reads = true, scroll = true, mut = 15, pname = 'Unknown Scroll', char = '?', prob = 45, affect = function () player:base_dam_change(math.random(-10, -5)) end, message = "Your hands glow red for a moment."},
 				{name = 'Robe', slot = 'torso', armor = 2, weight = 5, color = function () love.graphics.setColor(204, 186, 195, 255) end, char = ']', prob = 55},
-				{name = 'Sarashi', slot = 'torso', armor = 1, weight = 1, color = function () love.graphics.setColor(255, 255, 255, 255) end, char = ']', prob = 56},
+				{name = 'Sarashi', slot = 'torso', evasion = 1, armor = 1, weight = 1, color = function () love.graphics.setColor(255, 255, 255, 255) end, char = ']', prob = 56},
 				{name = 'Potion of Harming', quaff = true, potion = true, pname = 'Unknown Potion', char = '!', prob = 57, affect = function () local dice = math.random(25, 55) player:take_dam(dice, 'pure', 'Potion of Harming') end, message = "That burns!"},
 				{name = 'Scroll of Enlightenment', reads = true, scroll = true, pname = 'Unknown Golden Scroll', char = '?', prob = 59, affect = function() enlightenment() end, message = "You feel more knowledgeable about the unknown."},
 				{name = 'Fish', edible = true, cook = true, nutrition = 100, char = '%', prob = 60},

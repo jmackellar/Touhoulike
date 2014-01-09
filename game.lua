@@ -2994,7 +2994,7 @@ end
 function player_fov()
 
 	local dark = false
-	local dist = world_see_distance
+	local dist = world_see_distance + player_mod_get('vision')
 
 	if level.name ~= 'Overworld' then 
 		--- check if the level is dark or not
@@ -3781,9 +3781,18 @@ function Creature:fight(x, y)
 		if map[x][y]:get_holding() == player then
 			--- monster special attack roll
 			if math.random(1, 100) <= 25 then
-				--- poison
 				if self.satk == 'poison' then
 					add_modifier({name = 'Poison', turn = math.random(10, 15), puredam = math.random(2, 3)})
+					message_add("You've been poisoned by the " .. self.name .. ".")
+				elseif self.satk == 'slow' then
+					add_modifier({name = 'Slow', turn = math.random(10, 15), speed = -1})
+					message_add("The hit from the " .. self.name .. " slows you down.")
+				elseif self.satk == 'mut' then
+					player_mut_level = player_mut_level + math.random(1, 10)
+					message_add("You feel yourself lose touch with the human world.")
+				elseif self.satk == 'blind' then
+					add_modifier({name = 'Blind', turn = math.random(10, 15), vision = -3})
+					message_add("You've been blinded by the " .. self.name .. ".")
 				end
 			end
 		end
@@ -4027,6 +4036,12 @@ function Creature:draw_ascii(x, y)
 	end
 	
 end	
+
+function Creature:add_turn_cd(amnt)
+
+	self.turn_cd = self.turn_cd + amnt
+	
+end
 
 function Creature:set_x(num) self.x = num end
 function Creature:set_y(num) self.y = num end
@@ -4378,7 +4393,7 @@ function starting_inventory()
 								{item = Item:new(shop_find_game_item('Dagger')), quantity = 1},
 							}
 		player_equipment.torso = shop_find_game_item('Leather Vest')
-		player_equipment.hand = shop_find_game_item('Katana')
+		player_equipment.hand = shop_find_game_item('Curved Sword')
 		player_skills.longsword = 2
 		player_skills.fighting = 1
 		player_skills.armor = 1

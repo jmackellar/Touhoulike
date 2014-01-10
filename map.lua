@@ -555,9 +555,10 @@ function map_youkai_dungeon(dir)
 	if not load_map() then
 		map_gen_forest(map_width, map_height, true, dstairs)
 		monster_maker(math.random(15,25))
-		item_maker(math.random(10,20))
-		place_player_on_stairs(dir)
+		item_maker(math.random(10,20))		
 	end
+	
+	place_player_on_stairs(dir)
 	
 	if level.depth == 1 then
 		--- Minoriko Aki

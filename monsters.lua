@@ -12,6 +12,7 @@ game_monsters = {	--- unique monsters
 					{name = 'Kaguya Houraisan', armor = 16, speed = 1, unique = true, rand_gen = false, satk = 'mut', base_damage = {235, 255}, hp_max = 5000, exp = 250, char = 'K', color = function () love.graphics.setColor(247, 183, 228, 255) end, level = 8},
 					{name = 'Wriggle Nightbug', armor = 3, speed = 1, unique = true, satk = 'blind', rand_gen = false, base_daamage = {20, 25}, hp_max = 600, exp = 100, char = 'W', color = function () love.graphics.setColor(255, 255, 255, 255) end, level = 1},
 					{name = 'Cirno', armor = 3, speed = 2, unique = true, rand_gen = false, satk = 'slow', base_damage = {15, 20}, hp_max = 550, exp = 100, char = 'C', color = function () love.graphics.setColor(133, 255, 253, 255) end, level = 1 },
+					{name = 'Kisume', armor = 10, speed = 1, unique = true, rand_gen = false, base_damage = {30, 35}, hp_max = 600, exp = 125, char = 'K', color = function () love.graphics.setColor(158, 151, 119, 255) end, level = 1},
 					--- randomly generated monsters
 					{name = 'Brown Mold', armor = 0, base_damage = {25, 35}, rand_gen = true, speed = 1, evasion = 0, hp_max = 75, exp = 5, char = 'm', ai = 'sessile', color = function () love.graphics.setColor(205, 153, 63, 255) end, level = 1},
 					{name = 'Small Fairy', armor = 0, base_damage = {15, 20}, rand_gen = true, speed = 1, evasion = 7, corpse = 'fairy', hp_max = 185, exp = 10, char = 'f', color = function () love.graphics.setColor(130, 135, 180, 255) end, level = 1}, 	

@@ -793,10 +793,12 @@ function map_easy_cavern(dir)
 	if not load_map() then
 		
 		if level.depth > 0 then
-			if level.depth < 8 then
+			if level.depth ~= 4 and level.depth ~= 8 then
 				stairs = map_gen_cave(map_width, map_height, true, true)
-			else
+			elseif level.depth == 8 then
 				stairs = map_gen_cave(map_width, map_height, false, true)
+			elseif level.depth == 4 then
+				stairs = map_gen_blow_hole(map_width, map_height, true, true)
 			end
 			if dir == 'down' then
 				map_new_place_player(stairs.up.x, stairs.up.y)
@@ -805,7 +807,13 @@ function map_easy_cavern(dir)
 			end
 			
 			--- now add in monsters and items to the map
-			monster_maker(math.random(7, 9))
+			if level.depth ~= 4 and level.depth ~= 8 then
+				monster_maker(math.random(7, 9))
+			elseif level.depth == 4 then
+				monster_maker(math.random(15, 22))
+			elseif level.depth == 8 then
+				monster_maker(math.random(20, 27))
+			end
 			item_maker(math.random(4, 7))
 			
 		--- back on the overworld
@@ -946,6 +954,88 @@ function map_set_all_seen()
 			map[x][y]:set_seen()		
 		end
 	end
+
+end
+
+function map_gen_blow_hole(mapwidth, mapheight, dstairsd, ustairsd)
+
+
+	--- fill the map with walls
+	for x = 1, mapwidth do
+		for y = 1, mapheight do
+			map[x][y] = Tile:new({name = 'Wall', x = x, y = y})
+		end
+	end
+	
+	--- carve out the tunnel from the left
+	local y = math.floor(mapheight / 2)
+	for x = 4, mapwidth - 4 do
+		map[x][y] = Tile:new({name = 'Floor', x = x, y = y})
+		if math.random(1, 100) <= 55 then map[x][y-1] = Tile:new({name = 'Floor', x = x, y = y-1}) end
+		if math.random(1, 100) <= 55 then map[x][y+1] = Tile:new({name = 'Floor', x = x, y = y+1}) end
+		
+		if math.random(1, 100) <= 25 then
+			y = y + math.random(-1, 1)
+		end
+	end
+	
+	--- carve out another tunnel from the top
+	local x = math.floor(mapwidth / 2)
+	for y = 4, mapheight - 4 do
+		map[x][y] = Tile:new({name = 'Floor', x = x, y = y})
+		if math.random(1, 100) <= 55 then map[x][y-1] = Tile:new({name = 'Floor', x = x, y = y-1}) end
+		if math.random(1, 100) <= 55 then map[x][y+1] = Tile:new({name = 'Floor', x = x, y = y+1}) end
+		
+		if math.random(1, 100) <= 25 then
+			x = x + math.random(-1, 1)
+		end
+	end
+	
+	--- stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, mapwidth-7)
+		local y1 = math.random(1, mapheight-7)
+		local x2 = math.random(1, mapwidth-7)
+		local y2 = math.random(1, mapheight-7)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs
+	
+	--- kisume
+	local kisume = game_monsters[14]
+	local placed = false
+	
+	repeat
+	
+		x = math.random(2, map_width - 1)
+		y = math.random(2, map_height - 1)
+		
+		if not map[x][y]:get_block_move() and map[x][y]:get_char() ~= '<' then
+	
+			placed = true
+			kisume['x'] = x
+			kisume['y'] = y
+			map[x][y]:set_holding(Creature:new(kisume))
+		
+		end
+	
+	until placed
+	
+	return stairs
 
 end
 

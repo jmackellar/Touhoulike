@@ -14,6 +14,7 @@ game_monsters = {	--- unique monsters
 					{name = 'Cirno', armor = 3, speed = 2, unique = true, rand_gen = false, satk = 'slow', base_damage = {15, 20}, hp_max = 550, exp = 100, char = 'C', color = function () love.graphics.setColor(133, 255, 253, 255) end, level = 1 },
 					{name = 'Kisume', armor = 10, speed = 1, unique = true, rand_gen = false, base_damage = {30, 35}, hp_max = 600, exp = 125, char = 'K', color = function () love.graphics.setColor(158, 151, 119, 255) end, level = 1},
 					{name = 'Letty Whiterock', armor = 2, speed = 1, satk = 'slow', unique = true, rand_gen = false, base_damage = {35, 38}, hp_max = 700, exp = 125, char = 'L', color = function () love.graphics.setColor(255, 255, 255, 255) end, level = 1},
+					{name = 'Rumia', armor = 2, speed = 1, unique = true, satk = 'blind', aura = 'rumia', rand_gen = false, base_damage = {35, 40}, hp_max = 750, exp = 130, char = 'R', color = function () love.graphics.setColor(100, 100, 100, 255) end, level = 1},
 					--- randomly generated monsters
 					{name = 'Brown Mold', armor = 0, base_damage = {25, 35}, rand_gen = true, speed = 1, evasion = 0, hp_max = 75, exp = 5, char = 'm', ai = 'sessile', color = function () love.graphics.setColor(205, 153, 63, 255) end, level = 1},
 					{name = 'Small Fairy', armor = 0, base_damage = {15, 20}, rand_gen = true, speed = 1, evasion = 7, corpse = 'fairy', hp_max = 185, exp = 10, char = 'f', color = function () love.graphics.setColor(130, 135, 180, 255) end, level = 1}, 	

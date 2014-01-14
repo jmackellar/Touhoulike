@@ -1470,11 +1470,19 @@ end
 function take_turns()
 
 	local mons_moved = {}
+	
+	for x = 1, map_width do
+		for y = 1, map_height do
+			map[x][y]:set_darkness(false)
+		end
+	end
 
 	for x = 1, map_width do
 		for y = 1, map_height do
-		
+				
 			if map[x][y]:get_holding() and map[x][y]:get_holding() ~= player then
+			
+				map[x][y]:get_holding():aura_update()
 			
 				local move = true
 				for i = 1, # mons_moved do
@@ -2994,7 +3002,7 @@ end
 function player_fov()
 
 	local dark = false
-	local dist = world_see_distance + player_mod_get('vision')
+	local dist = world_see_distance
 
 	if level.name ~= 'Overworld' then 
 		--- check if the level is dark or not
@@ -3010,7 +3018,7 @@ function player_fov()
 			dist = 2
 		end
 		
-		dist = dist + player_mod_get('torch')
+		dist = dist + player_mod_get('torch') + player_mod_get('vision')
 		if dist > 5 then dist = 5 end
 		
 		dist = dist + player_feat_search('sight')
@@ -3120,8 +3128,29 @@ function Creature:initialize(arg)
 	self.identify = arg.identify or false
 	self.undead = arg.undead or false
 	self.satk = arg.satk or false
+	self.aura = arg.aura or false
 	self.color = arg.color or function () love.graphics.setColor(255, 255, 255, 255) end
 	
+end
+
+function Creature:aura_update()
+
+	if self.aura == 'rumia' then
+		map[self.x][self.y]:set_darkness(true)
+		map[self.x][self.y-2]:set_darkness(true)
+		map[self.x][self.y+2]:set_darkness(true)
+		map[self.x-2][self.y]:set_darkness(true)
+		map[self.x+2][self.y]:set_darkness(true)
+		map[self.x-1][self.y-1]:set_darkness(true)
+		map[self.x-1][self.y]:set_darkness(true)
+		map[self.x-1][self.y+1]:set_darkness(true)
+		map[self.x][self.y-1]:set_darkness(true)
+		map[self.x][self.y+1]:set_darkness(true)
+		map[self.x+1][self.y-1]:set_darkness(true)
+		map[self.x+1][self.y]:set_darkness(true)
+		map[self.x+1][self.y+1]:set_darkness(true)
+	end
+
 end
 
 function Creature:ai_take_turn(moved)
@@ -4192,6 +4221,7 @@ function Tile:initialize(arg)
 	self.y = arg.y or 1
 	self.items = arg.items or nil
 	self.tunnel = arg.tunnel or false
+	self.darkness = arg.darkness or false
 	self.color = arg.color or {r=255, g=255, b=255}
 	
 	if self.name == 'Floor' then
@@ -4234,6 +4264,16 @@ function Tile:initialize(arg)
 	end
 end
 
+function Tile:draw_darkness()
+
+	if self.darkness then
+		love.graphics.setColor(0, 0, 0, 255)
+		love.graphics.rectangle('fill', ascii_draw_point(self.x), ascii_draw_point(self.y), char_width, char_width)
+		love.graphics.setColor(255, 255, 255, 255)
+	end
+	
+end
+
 function Tile:draw_ascii()
 
 	love.graphics.setColor(self.color.r, self.color.g, self.color.b, 255)
@@ -4254,6 +4294,7 @@ function Tile:set_seen() self.seen = true end
 function Tile:set_lit() self.lit = true end
 function Tile:set_unlit() self.lit = false end
 function Tile:set_self(slf) self = slf end
+function Tile:set_darkness(foo) self.darkness = foo end
 
 function Tile:get_holding() return self.holding end
 function Tile:get_block_move() return self.block_move end

@@ -796,7 +796,13 @@ function map_easy_cavern(dir)
 			if level.depth ~= 4 and level.depth ~= 8 then
 				stairs = map_gen_cave(map_width, map_height, true, true)
 			elseif level.depth == 8 then
-				stairs = map_gen_snow_letty(map_width, map_height, false, true)
+				if math.random(1, 2) == 1 then
+					stairs = map_gen_rumia(map_width, map_height, false, true)
+					monster_maker(math.random(25, 30))
+				else
+					stairs = map_gen_snow_letty(map_width, map_height, false, true)
+					special_monster_maker('spirit')
+				end
 			elseif level.depth == 4 then
 				stairs = map_gen_blow_hole(map_width, map_height, true, true)
 			end
@@ -810,9 +816,7 @@ function map_easy_cavern(dir)
 			if level.depth ~= 4 and level.depth ~= 8 then
 				monster_maker(math.random(7, 9))
 			elseif level.depth == 4 then
-				monster_maker(math.random(15, 22))
-			elseif level.depth == 8 then
-				special_monster_maker('spirit')
+				monster_maker(math.random(15, 22))				
 			end
 			item_maker(math.random(4, 7))
 			
@@ -953,6 +957,34 @@ function map_set_all_seen()
 			map[x][y]:set_seen()		
 		end
 	end
+
+end
+
+function map_gen_rumia(mapwidth, mapheight, dstairsd, ustairsd)
+
+	stairs = map_gen_rogue(mapwidth, mapheight, ustairsd, dstairsd, 'dungeon')
+	
+	--- rumia
+	local rumia = game_monsters[16]
+	local placed = false
+	
+	repeat
+	
+		x = math.random(2, map_width - 1)
+		y = math.random(2, map_height - 1)
+		
+		if not map[x][y]:get_block_move() and map[x][y]:get_char() ~= '<' then
+	
+			placed = true
+			rumia['x'] = x
+			rumia['y'] = y
+			map[x][y]:set_holding(Creature:new(rumia))
+		
+		end
+	
+	until placed
+	
+	return stairs
 
 end
 
@@ -2923,6 +2955,8 @@ function map_draw()
 					map[x][y]:get_items()[1]:draw(x, y)
 				end
 			end
+			
+			map[x][y]:draw_darkness()
 		
 		end
 	end

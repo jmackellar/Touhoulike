@@ -796,7 +796,7 @@ function map_easy_cavern(dir)
 			if level.depth ~= 4 and level.depth ~= 8 then
 				stairs = map_gen_cave(map_width, map_height, true, true)
 			elseif level.depth == 8 then
-				stairs = map_gen_cave(map_width, map_height, false, true)
+				stairs = map_gen_snow_letty(map_width, map_height, false, true)
 			elseif level.depth == 4 then
 				stairs = map_gen_blow_hole(map_width, map_height, true, true)
 			end
@@ -812,7 +812,7 @@ function map_easy_cavern(dir)
 			elseif level.depth == 4 then
 				monster_maker(math.random(15, 22))
 			elseif level.depth == 8 then
-				monster_maker(math.random(20, 27))
+				special_monster_maker('spirit')
 			end
 			item_maker(math.random(4, 7))
 			
@@ -869,8 +869,7 @@ function map_easy_cave(dir)
 		if level.depth > 0 then
 		
 			local dstairs = true
-			if level.depth == 4 then dstairs = false end
-			
+			if level.depth == 4 then dstairs = false end		
 			if level.depth <= 3 then
 				stairs = map_gen_rogue(map_width, map_height, true, dstairs, 'dungeon')	
 			else
@@ -954,6 +953,151 @@ function map_set_all_seen()
 			map[x][y]:set_seen()		
 		end
 	end
+
+end
+
+function map_gen_snow_letty(mapwidth, mapheight, dstairsd, ustairsd)
+
+	--- fill the map with snow
+	for x = 1, mapwidth do
+		for y = 1, mapheight do
+			if math.random(1, 100) <= 75 then
+				map[x][y] = Tile:new({name = 'Snow', char = ' ,',  block_move = false, block_sight = false, x = x, y = y})
+			else
+				map[x][y] = Tile:new({name = 'Grass', char = ' .', block_move = false, block_sight = false, x = x, y = y, color = {r=0,g=255,b=0}})
+			end
+		end
+	end
+	
+	--- place some houses around the map
+	local rooms = {}
+	for i = 1, math.random(4, 6) do
+		local x = math.random(10, mapwidth - 10)
+		local y = math.random(10, mapheight - 10)
+		local w = math.random(4, 9)
+		local h = math.random(4, 9)
+		
+		local place = true
+		for k = 1, # rooms do
+			if x >= rooms[k].x and x <= rooms[k].x + rooms[k].w and y >= rooms[k].y and y <= rooms[k].y + rooms[k].h then
+				place = false
+			end
+		end
+		
+		if place then
+			table.insert(rooms, {x = x, y = y, w = w, h = h})
+		
+			for xx = x, x + w do
+				for yy = y, y + h do
+					map[xx][yy] = Tile:new({name = 'Floor', x = xx, y = yy})
+				end
+			end
+			
+			for xx = x, x + w do
+				map[xx][y] = Tile:new({name = 'Wall', x = xx, y = y})
+				map[xx][y+h] = Tile:new({name = 'Wall', x = xx, y = y+h})
+			end
+			for yy = y, y + h do
+				map[x][yy] = Tile:new({name = 'Wall', x = x, y = yy})
+				map[x+w][yy] = Tile:new({name = 'Wall', x = x+w, y = yy})
+			end
+			
+			local xx = math.random(x+1, x+w-1)
+			local dice = math.random(1, 2)
+			if dice == 1 then
+				map[xx][y] = Tile:new({name = 'Floor', x = xx, y = y})
+			else
+				map[xx][y+h] = Tile:new({name = 'Floor', x = xx, y = y+h})
+			end
+
+			local yy = math.random(y+1, y+h-1)
+			local dice = math.random(1, 2)
+			if dice == 1 then
+				map[x][yy] = Tile:new({name = 'Floor', x = x, y = yy})
+			else
+				map[x+w][yy] = Tile:new({name = 'Floor', x = x+w, y = yy})
+			end
+		else
+			i = i - 1
+		end
+	end
+	
+	--- place some trees around the map, not in houses
+	local placed = 0
+	repeat
+	
+		local x = math.random(2, mapwidth-1)
+		local y = math.random(2, mapheight-1)
+		
+		local place = true
+		for i = 1, # rooms do
+			if x >= rooms[i].x and x <= rooms[i].x + rooms[i].w and y >= rooms[i].y and y <= rooms[i].y + rooms[i].h then
+				place = false
+			end
+		end
+		
+		if place then
+			map[x][y] = Tile:new({name = 'Winter Tree', char = 'T', block_move = true, block_sight = true, x = x, y = y, color = {r=201,g=164,b=98}})
+			placed = placed + 1
+		end
+	
+	until placed >= math.random(40, 50)
+	
+	--- surround the map with walls
+	for x = 1, mapwidth do
+		map[x][1] = Tile:new({name = 'Wall', x = x, y = 1})
+		map[x][mapheight] = Tile:new({name = 'Wall', x = x, y = mapheight})
+	end
+	for y = 1, mapheight do
+		map[1][y] = Tile:new({name = 'Wall', x = 1, y = y})
+		map[mapwidth][y] = Tile:new({name = 'Wall', x = mapwidth, y = y})
+	end
+	
+	--- stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, mapwidth-7)
+		local y1 = math.random(1, mapheight-7)
+		local x2 = math.random(1, mapwidth-7)
+		local y2 = math.random(1, mapheight-7)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs
+	
+	--- letty
+	local letty = game_monsters[15]
+	local placed = false
+	
+	repeat
+	
+		x = math.random(2, map_width - 1)
+		y = math.random(2, map_height - 1)
+		
+		if not map[x][y]:get_block_move() and map[x][y]:get_char() ~= '<' then
+	
+			placed = true
+			letty['x'] = x
+			letty['y'] = y
+			map[x][y]:set_holding(Creature:new(letty))
+		
+		end
+	
+	until placed
+	
+	return stairs
 
 end
 

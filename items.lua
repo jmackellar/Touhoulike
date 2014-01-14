@@ -20,6 +20,7 @@ game_items = {	--- items never randomly generated
 				{name = 'Bug Corpse', edible = true, nutrition = 5, corpse = 'bug', weight = 2, char = '%', prob = 0},
 				{name = 'Oni Corpse', edible = true, nutrition = 25, corpse = 'oni', color = function () love.graphics.setColor(255, 0, 0, 255) end, weight = 30, char = '%', prob = 0},
 				{name = 'Rabbit Corpse', edible = true, nutrition = 25, corpse = 'rabbit', color = function () love.graphics.setColor(255, 255, 255, 255) end, weight = 15, char = '%', prob = 0},
+				{name = 'Spirit Corpse', edible = true, nutrition = 1, corpse = 'spirit', color = function () love.graphics.setColor(255, 255, 255, 255) end, weight = 1, char = '%', prob = 0},
 				--- items randomly generated
 				{name = 'Potion of Cure Mutation', quaff = true, potion = true, char = '!', prob = 5, pname = 'Unknown Golden Potion', affect = function () cure_mutation() end, message = "You feel more in touch with the human world."},
 				{name = 'Ninja Tabi', slot = 'feet', armor = 1, color = function () love.graphics.setColor(25, 25, 25, 255) end, weight = 0, char = '[', prob = 15, evasion = 2},

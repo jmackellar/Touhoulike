@@ -962,7 +962,65 @@ end
 
 function map_gen_rumia(mapwidth, mapheight, dstairsd, ustairsd)
 
-	stairs = map_gen_rogue(mapwidth, mapheight, ustairsd, dstairsd, 'dungeon')
+	--- fill the map with grass
+	for x = 1, mapwidth do
+		for y = 1, mapheight do
+			map[x][y] = Tile:new({name = 'Grass', char = ' .', color = {r=0,g=255,b=0}, block_move = false, block_sight = false, x = x, y = y})
+		end
+	end
+	
+	--- surround the map with walls
+	for x = 1, mapwidth do
+		map[x][1] = Tile:new({name = 'Wall', x = x, y = 1})
+		map[x][mapheight] = Tile:new({name = 'Wall', x = x, y = mapheight})
+	end
+	for y = 1, mapheight do
+		map[1][y] = Tile:new({name = 'Wall', x = 1, y = y})
+		map[mapwidth][y] = Tile:new({name = 'Wall', x = mapwidth, y = y})
+	end
+	
+	--- place dark molds around
+	local placed = 0
+	repeat
+	
+		local mold = game_monsters[34]
+		local x = math.random(1, mapwidth)
+		local y = math.random(1, mapheight)
+		
+		if mold.name == 'Dark Mold' and not map[x][y]:get_holding() then
+			mold['x'] = x
+			mold['y'] = y
+			map[x][y]:set_holding(Creature:new(mold))
+			placed = placed + 1
+		elseif mold.name ~= 'Dark Mold' then
+			placed = 1000
+		end
+	
+	until placed >= math.random(10, 15)
+
+	--- stairs
+	local ustairs = false
+	local dstairs = false
+	local stairs = {}
+	repeat
+	
+		local x1 = math.random(1, mapwidth-7)
+		local y1 = math.random(1, mapheight-7)
+		local x2 = math.random(1, mapwidth-7)
+		local y2 = math.random(1, mapheight-7)
+		
+		if not map[x1][y1]:get_block_move() and not map[x2][y2]:get_block_move() then
+			if x1 ~= x2 and y1 ~= y2 then
+				if ustairsd then map[x1][y1] = Tile:new({name = 'UStairs', x = x1, y = y1}) end
+				if dstairsd then map[x2][y2] = Tile:new({name = 'DStairs', x = x2, y = y2}) end
+				ustairs = true
+				dstairs = true
+			end
+		end
+		
+		stairs = {up = {x = x1, y = y1}, down = {x = x2, y = y2}}
+	
+	until ustairs and dstairs
 	
 	--- rumia
 	local rumia = game_monsters[16]

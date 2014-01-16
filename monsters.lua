@@ -33,6 +33,7 @@ game_monsters = {	--- unique monsters
 					{name = 'Fairy', armor = 2, base_damage = {25, 30}, rand_gen = true, speed = 0, evasion = 8, corpse = 'fairy', hp_max = 275, exp = 30, char = 'f', level = 2, color = function () love.graphics.setColor(0, 255, 0, 255) end},
 					{name = 'Little Oni Shaman', armor = 4, base_damage = {45, 55}, speed = 1, rand_gen = true, ai = 'ranged', corpse = 'oni', hp_max = 300, exp = 45, char = 'o', level = 3, color = function () love.graphics.setColor(255, 0, 100, 255) end,},
 					{name = 'Toad', armor = 7, base_damage = {50, 60}, rand_gen = true, speed = 1, ai = 'melee', hp_max = 350, exp = 50, char = 't', level = 3, color = function () love.graphics.setColor(0, 255, 0, 255) end,},
+					{name = 'Dark Mold', armor = 0, base_damage = {60, 80}, aura = 'rumia', rand_gen = true, speed = 1, ai = 'sessile', evasion = 0, hp_max = 250, exp = 60, char = 'm', level = 3, color = function () love.graphics.setColor(0, 0, 0, 255) end,},
 					{name = 'Rabbit', armor = 8, base_damage = {55, 65}, rand_gen = true, speed = 1, evasion = 6, ai = 'melee', corpse = 'rabbit', hp_max = 375, exp = 60, char = 'r', level = 4, color = function () love.graphics.setColor(255, 255, 255, 255) end,},
 					{name = 'Rabbit Boss', armor = 9, base_damage = {65, 75}, rand_gen = true, speed = 1, evasion = 6, hp_max = 450, corpse = 'rabbit', exp = 65, char = 'r', level = 4, color = function () love.graphics.setColor(150, 150, 150, 255) end,},
 				}

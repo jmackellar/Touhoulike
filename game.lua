@@ -3136,19 +3136,13 @@ end
 function Creature:aura_update()
 
 	if self.aura == 'rumia' then
-		map[self.x][self.y]:set_darkness(true)
-		map[self.x][self.y-2]:set_darkness(true)
-		map[self.x][self.y+2]:set_darkness(true)
-		map[self.x-2][self.y]:set_darkness(true)
-		map[self.x+2][self.y]:set_darkness(true)
-		map[self.x-1][self.y-1]:set_darkness(true)
-		map[self.x-1][self.y]:set_darkness(true)
-		map[self.x-1][self.y+1]:set_darkness(true)
-		map[self.x][self.y-1]:set_darkness(true)
-		map[self.x][self.y+1]:set_darkness(true)
-		map[self.x+1][self.y-1]:set_darkness(true)
-		map[self.x+1][self.y]:set_darkness(true)
-		map[self.x+1][self.y+1]:set_darkness(true)
+		for x = self.x - 1, self.x + 1 do
+			for y = self.y - 1, self.y + 1 do
+				if x > 1 and y > 1 and x < map_width and y < map_height then
+					map[x][y]:set_darkness(true)
+				end
+			end
+		end
 	end
 
 end

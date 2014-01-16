@@ -18,6 +18,9 @@ local reimu_a = love.graphics.newImage("media/reimua.png")
 local reimu_b = love.graphics.newImage("media/reimub.png")
 local reimu_c = love.graphics.newImage("media/reimuc.png")
 local reimu_d = love.graphics.newImage("media/reimud.png")
+
+love.graphics.setFont(love.graphics.newFont())
+local font = love.graphics.getFont()
 						
 choice = ''
 
@@ -37,8 +40,8 @@ function menu:draw()
 	elseif state == 'char' then char_draw() 
 	elseif state == 'enter' then enter_draw() 
 	elseif state == 'feat' then feat_draw() end
-	love.graphics.setCaption("TouhouLike V:0.0.12")
-	love.graphics.print("TouhouLike V:0.0.12 by Jesse MacKellar", 2, 751)
+	love.graphics.setCaption("TouhouLike V:0.0.13")
+	love.graphics.print("TouhouLike V:0.0.13 by Jesse MacKellar", 2, 751)
 end
 
 function menu:keypressed(key)
@@ -106,9 +109,7 @@ end
 function enter_draw()
 	love.graphics.draw(bg, 0, 0)
 	
-	local text = 'Press any key to continue'
-	love.graphics.setFont(love.graphics.newFont())
-	local font = love.graphics.getFont()
+	local text = 'Press any key to continue'	
 	local width = font:getWidth(text)
 	
 	love.graphics.setColor(0, 0, 0, 255)
@@ -148,8 +149,6 @@ function char_draw()
 	love.graphics.rectangle('fill', start_x - 10, start_y + 15 - 10, 127, 65)
 	love.graphics.setColor(255, 255, 255, 255)
 	
-	love.graphics.setFont(love.graphics.newFont())
-	local font = love.graphics.getFont()
 	for i = 1, # char_options do
 		if option == i then
 			--- character names

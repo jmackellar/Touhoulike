@@ -191,7 +191,7 @@ function game:draw()
 	--- debug coordinate view
 	---love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS() .. "   Mut:" .. player_mut_level)
 	--- normal caption text
-	love.graphics.setCaption("TouhouLike V:0.0.12")
+	love.graphics.setCaption("TouhouLike V:0.0.13")
 	
 end
 

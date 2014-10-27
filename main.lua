@@ -8,7 +8,7 @@ menu = {}
 
 function love.load()
 
-	love.graphics.setCaption("Touhoulike")
+	love.window.setTitle("Touhoulike")
 	Gamestate.registerEvents()
 	Gamestate.switch(menu)
 

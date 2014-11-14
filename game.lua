@@ -191,7 +191,7 @@ function game:draw()
 	--- debug coordinate view
 	---love.graphics.setCaption("(" .. player:get_x() .. "," .. player:get_y() .. ")" .. "   FPS:" .. love.timer.getFPS() .. "   Mut:" .. player_mut_level)
 	--- normal caption text
-	love.graphics.setCaption("TouhouLike V:0.0.13")
+	love.window.setTitle("TouhouLike V:0.0.13")
 	
 end
 
@@ -3983,7 +3983,7 @@ function Creature:take_dam(dam, dtype, name)
 			--- player dead, delete all save files
 			player_dead = true
 			message_add("You die...")
-			local files = love.filesystem.enumerate("")
+			local files = love.filesystem.getDirectoryItems("")
 			for k, file in ipairs(files) do	
 				love.filesystem.remove(file)
 			end

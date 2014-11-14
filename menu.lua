@@ -40,7 +40,7 @@ function menu:draw()
 	elseif state == 'char' then char_draw() 
 	elseif state == 'enter' then enter_draw() 
 	elseif state == 'feat' then feat_draw() end
-	love.graphics.setCaption("TouhouLike V:0.0.13")
+	love.window.setTitle("TouhouLike V:0.0.13")
 	love.graphics.print("TouhouLike V:0.0.13 by Jesse MacKellar", 2, 751)
 end
 
@@ -177,7 +177,7 @@ function char_key(key)
 	if option > # char_options then option = # char_options end
 	
 	if key == 'return' or key == 'kpenter' then		
-		local files = love.filesystem.enumerate("")
+		local files = love.filesystem.getDirectoryItems("")
 		for k, file in ipairs(files) do	
 			love.filesystem.remove(file)
 		end

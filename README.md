@@ -1,4 +1,4 @@
-Touhou Jingoku ~Dream in Dreary Dark~
+Touhou Jingoku \~Dream in Dreary Dark\~
 
 An openworld Touhou Project roguelike.  Play as any character in your own slice of Gensokyo.
 

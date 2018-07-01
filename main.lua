@@ -392,12 +392,108 @@ local monsters = {
         ai = 'simple',
         yen = 100,
         },
+    marisakirisame = {
+        name = 'Marisa Kirisame',
+        type = 'marisakirisame',
+        char = '@',
+        bg = ROT.Color.fromString('white'),
+        fg = ROT.Color.fromString('black'),
+        bgString = 'white',
+        fgString = 'black',
+        maxHealth = 50,
+        curPower = 1,
+        meleeDamageMin = 8,
+        meleeDamageMax = 12,
+        danmakuDamageMin = 6,
+        danmakuDamageMax = 10,
+        armorMin = 3,
+        armorMax = 6,
+        accuracy = 8,
+        evasion = 4,
+        speed = 120,
+        canFireDanmaku = true,
+        exp = 200,
+        alert = false, 
+        ai = 'simple',
+        yen = 1000,
+        faction = 'forestofmagic',
+        pnoun = true,
+        chat = {
+            'The fairies have been getting stronger lately.',
+            'I can make magical potions from mushrooms found in the forest for you.',
+            'Youkai have started moving into the caverns south of here.',
+            },
+        },
+    alicemargatroid = {
+        name = 'Alice Margatroid',
+        type = 'alicemargatroid',
+        char = '@',
+        bg = ROT.Color.fromString('navy'),
+        fg = ROT.Color.fromString('pink'),
+        bgString = 'navy',
+        fgString = 'pink',
+        maxHealth = 50,
+        curPower = 1,
+        meleeDamageMin = 8,
+        meleeDamageMax = 12,
+        danmakuDamageMin = 6,
+        danmakuDamageMax = 10,
+        armorMin = 3,
+        armorMax = 6,
+        accuracy = 8,
+        evasion = 4,
+        speed = 90,
+        canFireDanmaku = true,
+        exp = 200,
+        alert = false,
+        ai = 'simple',
+        yen = 1000,
+        faction = 'forestofmagic',
+        pnoun = true,
+        chat = {
+            'The forest has been getting dangerous lately.',
+            '*sigh* I\'ve ran out of thread to make more dolls.',
+            'Theres a cavern full of dangerous youkai to the north-east of here.',
+            },
+        },
+    reimuhakurei = {
+        name = 'Reimu Hakurei',
+        type = 'reimuhakurei',
+        char = '@',
+        bg = ROT.Color.fromString('red'),
+        fg = ROT.Color.fromString('white'),
+        bgString = 'red',
+        fgString = 'white',
+        maxHealth = 50,
+        curPower = 1,
+        meleeDamageMin = 8,
+        meleeDamageMax = 12,
+        danmakuDamageMin = 6,
+        danmakuDamageMax = 10,
+        armorMin = 3,
+        armorMax = 6,
+        accuracy = 8,
+        evasion = 4,
+        speed = 100,
+        canFireDanmaku = true,
+        exp = 200,
+        alert = false,
+        ai = 'simple',
+        yen = 100,
+        faction = 'forestofmagic',
+        pnoun = true,
+        chat = {
+            'The youkai have started to ignore spellcard rules lately.',
+            'Be careful around the youkai in the forest.',
+            'Would you like to make an offering to the Hakurei Shrine?',
+            },
+        },
     }
 
 
 --[[ Actors ]]--
 
-local actor = ROT.Class:extend("actor", {speed, x, y, char, fg, bg, maxHealth, curHealth, name, maxPower, curPower, strength, knowledge, spirit, yen, class, exp, level, type, fgString, bgString, meleeDamageMin, meleeDamageMax, danmakuDamageMax, danmakuDamageMin, armorMin, armorMax, evasion, canFireDanmaku, accuracy, ai, alert, id, species})
+local actor = ROT.Class:extend("actor", {speed, x, y, char, fg, bg, maxHealth, curHealth, name, maxPower, curPower, strength, knowledge, spirit, yen, class, exp, level, type, fgString, bgString, meleeDamageMin, meleeDamageMax, danmakuDamageMax, danmakuDamageMin, armorMin, armorMax, evasion, canFireDanmaku, accuracy, ai, alert, id, species, faction, pnoun})
 function actor:init(flags)
 	self.name = flags.name or 'Testie'
 	self.speed = flags.speed or 100
@@ -433,6 +529,8 @@ function actor:init(flags)
     self.ai = flags.ai or 'simple'
     self.id = tostring(love.math.random(11111, 99999))
     self.species = flags.species or 'Youkai'
+    self.faction = flags.faction or 'neutral'
+    self.pnoun = flags.pnoun or false
 end
 function actor:move(dx, dy)
     if map[self.x + dx][self.y + dy].val < 1 then
@@ -488,6 +586,15 @@ function actor:takeDamage(dam)
     if self.type == 'player' then 
         amin = amin + getStat('armorMin')
         amax = amax + getStat('armorMax')
+    else
+        if self.faction == player.faction then 
+            self.faction = 'neutral' 
+            if not self.pnoun then 
+                table.insert(messages, 1, 'You anger the ' .. self.name .. '.')
+            else
+                table.insert(messages, 1, 'You anger ' .. self.name .. '.')
+            end
+        end
     end
     self.curHealth = self.curHealth - math.max(1, dam - love.math.random(self.armorMin, self.armorMax))
     if self.curHealth < 1 then 
@@ -522,34 +629,49 @@ function actor:melee(target)
     local ev = target.evasion
     local sdmin = self.meleeDamageMin
     local sdmax = self.meleeDamageMax
-    if self.type == 'player' then 
-        sa = sa + getStat('accuracy')
-        sdmin = sdmin + getStat('meleeDamageMin')
-        sdmax = sdmax + getStat('meleeDamageMax')
-    elseif target.type == 'player' then 
-        ev = ev + getStat('evasion')
-    end
-    if love.math.random(1, 20) + sa >= love.math.random(1, 20) + ev then 
-        target:takeDamage(love.math.random(sdmin, sdmax))
+    if self.faction ~= target.faction then 
         if self.type == 'player' then 
-            local msg = 'You hit the '.. target.name .. '!'
-            if target.curHealth < 1 then 
-                msg = msg .. '  The ' .. target.name .. ' dies!'
-                player.exp = player.exp + target.exp
-            end
-            table.insert(messages, 1, msg)
+            sa = sa + getStat('accuracy')
+            sdmin = sdmin + getStat('meleeDamageMin')
+            sdmax = sdmax + getStat('meleeDamageMax')
         elseif target.type == 'player' then 
-            local msg = 'The ' .. self.name .. ' hits you!'
-            if target.curHealth < 1 then 
-                msg = msg .. '  You die...'
-            end
-            table.insert(messages, 1, msg)
+            ev = ev + getStat('evasion')
         end
-    else
-        if self.type == 'player' then 
-            table.insert(messages, 1, 'You miss the ' .. target.name .. '!')
-        elseif target.type == 'player' then 
-            table.insert(messages, 1, 'The ' .. self.name .. ' misses you!')
+        if love.math.random(1, 20) + sa >= love.math.random(1, 20) + ev then 
+            target:takeDamage(love.math.random(sdmin, sdmax))
+            if self.type == 'player' then 
+                local noun = ''
+                if not target.pnoun then noun = ' the ' end
+                local msg = 'You hit '.. noun .. target.name .. '!'
+                if target.curHealth < 1 then 
+                    if not target.pnoun then noun = ' The ' else noun = ' ' end
+                    msg = msg .. noun .. target.name .. ' dies!'
+                    player.exp = player.exp + target.exp
+                end
+                table.insert(messages, 1, msg)
+            elseif target.type == 'player' then 
+                local noun = ''
+                if not self.pnoun then noun = 'The ' end
+                local msg = noun .. self.name .. ' hits you!'
+                if target.curHealth < 1 then 
+                    msg = msg .. '  You die...'
+                end
+                table.insert(messages, 1, msg)
+            end
+        else
+            local noun = ''
+            if not target.pnoun then noun = ' the ' end
+            if self.type == 'player' then 
+                table.insert(messages, 1, 'You miss ' .. noun .. target.name .. '!')
+            elseif target.type == 'player' then 
+                if not self.pnoun then noun = 'The ' else noun = '' end
+                table.insert(messages, 1, noun .. self.name .. ' misses you!')
+            end
+        end
+    elseif self == player and self.faction == target.faction then 
+        local chat = monsters[target.type].chat
+        if chat and # chat > 0 then 
+            table.insert(messages, 1, "'" .. chat[love.math.random(1, # chat)] .. "'")
         end
     end
 end
@@ -567,15 +689,20 @@ function actor:simpleAI()
     local dx = 0
     local dy = 0
     if self.alert then 
-        if self.x < player.x then 
-            dx = 1 
-        elseif self.x > player.x then 
-            dx = -1
-        end
-        if self.y < player.y then 
-            dy = 1
-        elseif self.y > player.y then 
-            dy = -1
+        if self.faction ~= player.faction then 
+            if self.x < player.x then 
+                dx = 1 
+            elseif self.x > player.x then 
+                dx = -1
+            end
+            if self.y < player.y then 
+                dy = 1
+            elseif self.y > player.y then 
+                dy = -1
+            end
+        else 
+            dx = love.math.random(-1, 1)
+            dy = love.math.random(-1, 1)
         end
         if not self:move(dx, dy) then
             self:endTurn()
@@ -641,9 +768,12 @@ function actor:takeDanmakuDamage(d)
             end
             table.insert(messages, 1, msg)
         else 
-            local msg = 'The ' .. self.name .. ' is hit by danmaku!'
+            local noun = ''
+            if not self.pnoun then noun = 'The ' end
+            local msg = noun .. self.name .. ' is hit by danmaku!'
             if self.curHealth < 1 then 
-                msg = msg .. '  The ' .. self.name .. ' dies!'
+                if not self.pnoun then noun = ' The ' else noun = '' end
+                msg = msg .. noun .. self.name .. ' dies!'
             end
             table.insert(messages, 1, msg)
         end
@@ -651,7 +781,9 @@ function actor:takeDanmakuDamage(d)
         if self == player then 
             table.insert(messages, 1, 'You dodge the danmaku!')
         else
-            table.insert(messages, 1, 'The ' .. self.name .. ' dodges the danmaku!')
+            local noun = '' 
+            if not self.pnoun then noun = 'The ' end
+            table.insert(messages, 1, noun .. self.name .. ' dodges the danmaku!')
         end
     end
 end
@@ -1170,6 +1302,7 @@ function love.keypressed(key, isrepeat)
                         armorMax = 5,
                         accuracy = 10,
                         evasion = 6,
+                        faction = 'forestofmagic',
                     }
                 )
                 state = 'game'
@@ -1206,6 +1339,8 @@ function love.keypressed(key, isrepeat)
                     armorMax = 4,
                     accuracy = 10,
                     evasion = 7,
+                    faction = 'forestofmagic',
+                    speed = 120,
                 })
                 state = 'game'
                 mapChangeLocation('marisashouse', false, true, true)
@@ -1241,6 +1376,8 @@ function love.keypressed(key, isrepeat)
                     armorMax = 4,
                     accuracy = 10,
                     evasion = 7,
+                    faction = 'forestofmagic',
+                    speed = 90,
                 })
                 state = 'game'
                 mapChangeLocation('aliceshouse', false, true, true)
@@ -1521,7 +1658,7 @@ function drawHud()
     end
     for i = 1, # mons do
         if y < 37 then
-            display:write(mons[i].char, 3, y, mons[i].fg, mons[i].bg)
+            display:write(mons[i].char, 4, y, mons[i].fg, mons[i].bg)
             display:drawText(6, y, '%b{black}%c{white}'..mons[i].name)
             y = y + 1
         end
@@ -1955,6 +2092,12 @@ function mapAlicesHouse(prev, prevfloor)
             dropItem(newItem('threadedneedle'), 43, 12)
             dropItem(newItem('bluedress'), 43, 13)
             dropItem(newItem('dollmakersgloves'), 42, 13)
+        else
+            local m = actor:new(monsters.alicemargatroid)
+            m.x = 45
+            m.y = 15
+            table.insert(actors, m)
+            scheduler:add(m, true)
         end
     end
 end
@@ -1972,6 +2115,12 @@ function mapMarisasHouse(prev, prevfloor)
             dropItem(newItem('uruchimai'), 49, 14)
             dropItem(newItem('uruchimai'), 47, 15)
             dropItem(newItem('magiclantern'), 49, 13)
+        else 
+            local m = actor:new(monsters.marisakirisame)
+            m.x = 48
+            m.y = 14
+            table.insert(actors, m)
+            scheduler:add(m, true)
         end
     end
 end
@@ -1989,6 +2138,12 @@ function mapHakureiShrine(prev, prevfloor)
             dropItem(newItem('uruchimai'), 55, 18)
             dropItem(newItem('uruchimai'), 55, 19)
             dropItem(newItem('uruchimai'), 55, 20)
+        else
+            local m = actor:new(monsters.reimuhakurei)
+            m.x = 56
+            m.y = 15
+            table.insert(actors, m)
+            scheduler:add(m, true)
         end
     end
 end
@@ -2005,6 +2160,7 @@ function mapLoad(name)
                 a.x = mons[i].x
                 a.y = mons[i].y 
                 a.curHealth = mons[i].curHealth 
+                a.faction = mons[i].faction
                 scheduler:add(a, true)
                 table.insert(actors, a)
             end
@@ -2064,7 +2220,7 @@ function saveMap()
     for i = 1, # actors do 
         local a = actors[i]
         if a.type ~= 'player' then 
-            tosave = tosave .. 'table.insert(monsters, {name = \'' .. a.type .. '\', x = ' .. a.x .. ', y = ' .. a.y .. ', curHealth = ' .. a.curHealth .. ', alert = ' .. tostring(a.alert) .. '})\n'
+            tosave = tosave .. 'table.insert(monsters, {name = \'' .. a.type .. '\', x = ' .. a.x .. ', y = ' .. a.y .. ', curHealth = ' .. a.curHealth .. ', alert = ' .. tostring(a.alert) .. ', faction = \'' .. a.faction .. '\'})\n'
         end
     end
     --- save items 
@@ -2219,6 +2375,7 @@ function savePlayer()
     tosave = tosave .. 'player[\''..'danmakuDamageMin' ..'\'] = ' .. player.danmakuDamageMin .. '\n'
     tosave = tosave .. 'player[\''..'evasion' ..'\'] = ' .. player.evasion .. '\n'
     tosave = tosave .. 'player[\''..'species' ..'\'] = \'' .. player.species .. '\'\n'
+    tosave = tosave .. 'player[\''..'faction'..'\'] = \'' .. player.faction .. '\'\n'
     --- inventory 
     tosave = tosave .. 'local inventory = { }\n'
     for i = 1, # inventory do 

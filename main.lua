@@ -1041,7 +1041,9 @@ function love.keypressed(key, isrepeat)
                         table.insert(messages, 1, '...You wake up stretching your arms out.  You feel well rested.')
                     elseif getDefinitationOfTile(player.x, player.y).object and getDefinitationOfTile(player.x, player.y).object.id == 'levelup' then
                         if getDefinitationOfTile(player.x, player.y).object.name == player.name then
-                            table.insert(messages, 1, 'This is where you would level up once it\'s implemented.')
+                            playerMenu = 'levelup'
+                            menuSelect = 1
+                            redraw = true
                         else 
                             table.insert(messages, 1, 'You aren\'t quite sure how to use this '.. getDefinitationOfTile(player.x, player.y).object.desc .. '.')
                         end 
@@ -1082,6 +1084,51 @@ function love.keypressed(key, isrepeat)
                 if key == '/' and (love.keyboard.isDown('lshift') or love.keyboard.isDown('rshift')) then 
                     playerMenu = 'help'
                     redraw = true
+                end
+            elseif playerMenu == 'levelup' then 
+                if key == 'space' or key == 'escape' then 
+                    playerMenu = false 
+                    redraw = true 
+                end
+                if key == 'return' then 
+                    local options = {'Health', 'Power', 'Strength', 'Knowledge', 'Spirit', 'Accuracy', 'Evasion'}
+                    if player.exp >= 0 + ((player.level-1)^3)*10 then 
+                        player.level = player.level + 1
+                        player.exp = player.exp - (100 + ((player.level-1)^3)*10)
+                        playerMenu = false 
+                        redraw = true 
+                        table.insert(messages, 1, 'You feel more powerful!')
+                        player.endTurn()
+                        if options[menuSelect] == 'Health' then 
+                            player.maxHealth = player.maxHealth + 5
+                        elseif options[menuSelect] == 'Power' then 
+                            player.maxPower = player.maxPower + 0.15
+                        elseif options[menuSelect] == 'Strength' then 
+                            player.strength = player.strength + 1
+                        elseif options[menuSelect] == 'Knowledge' then 
+                            player.knowledge = player.knowledge + 1
+                        elseif options[menuSelect] == 'Spirit' then 
+                            player.spirit = player.spirit + 1
+                        elseif options[menuSelect] == 'Accuracy' then 
+                            player.accuracy = player.accuracy + 1
+                        elseif options[menuSelect] == 'Evasion' then 
+                            player.evasion = player.evasion + 1
+                        end
+                    end
+                end
+                if key == 'j' then 
+                    menuSelect = menuSelect + 1 
+                    redraw = true
+                    if menuSelect > 7 then 
+                        menuSelect = 1
+                    end
+                end
+                if key == 'k' then 
+                    menuSelect = menuSelect - 1 
+                    redraw = true
+                    if menuSelect < 1 then 
+                        menuSelect = 7 
+                    end
                 end
             elseif playerMenu == 'danmaku' then 
                 if key == 'j' then
@@ -1477,6 +1524,51 @@ function drawPlayerMenu()
         end
         display:drawText(58 - 13, sy + # inventory + 1, '%b{black}%c{white}[enter] Use/Equip  [d] Drop')
         display:drawText(54, sy - 2, '%b{black}%c{white}Inventory')
+    elseif playerMenu == 'levelup' then 
+        drawFrame(50, 10, 49, 14)
+        display:drawText(71, 10, '%b{black}%c{white}Levelup')
+        if player.exp >= 100 + ((player.level-1)^3) * 10 then 
+            display:drawText(53, 13, '%b{black}%c{gold}Current Level : %c{springgreen}' .. player.level .. ' -> ' .. player.level + 1)
+            display:drawText(53, 14, '%b{black}%c{gold}Required Exp  : %c{white}' .. 100 + ((player.level-1)^3) * 10)
+        else
+            display:drawText(53, 13, '%b{black}%c{gold}Current Level : %c{white}' .. player.level)
+            display:drawText(53, 14, '%b{black}%c{gold}Required Exp  : %c{red}' .. 100 + ((player.level-1)^3) * 10)
+        end
+        display:drawText(53, 16, '%b{black}%c{gold}Class : %c{white}' .. player.class)
+        local options = {'Health', 'Power', 'Strength', 'Knowledge', 'Spirit', 'Accuracy', 'Evasion'}
+        local y = 13
+        for i = 1, # options do 
+            if i == menuSelect then 
+                local c = 'springgreen'
+                if player.exp < 100 + ((player.level-1)^3) * 10 then 
+                    c = 'red'
+                end
+                if options[i] == 'Health' then 
+                    display:drawText(53, 18, '%b{black}%c{goldenrod}Max Health : %c{'..c ..'}' .. player.maxHealth .. ' -> ' .. player.maxHealth + 5)
+                elseif options[i] == 'Power' then
+                    display:drawText(53, 18, '%b{black}%c{goldenrod}Max Power : %c{'..c ..'}' .. player.maxPower .. ' -> ' .. player.maxPower + 0.15)
+                elseif options[i] == 'Strength' then 
+                    display:drawText(53, 18, '%b{black}%c{goldenrod}Strength : %c{'..c ..'}' .. player.strength .. ' -> ' .. player.strength + 1)
+                elseif options[i] == 'Knowledge' then
+                    display:drawText(53, 18, '%b{black}%c{goldenrod}Knowledge : %c{'..c ..'}' .. player.knowledge .. ' -> ' .. player.knowledge + 1)
+                elseif options[i] == 'Spirit' then 
+                    display:drawText(53, 18, '%b{black}%c{goldenrod}Spirit : %c{'..c ..'}' .. player.spirit .. ' -> ' .. player.spirit + 1)
+                elseif options[i] == 'Accuracy' then 
+                    display:drawText(53, 18, '%b{black}%c{goldenrod}Accuracy : %c{'..c ..'}' .. player.accuracy .. ' -> ' .. player.accuracy + 1)
+                elseif options[i] == 'Evasion' then 
+                    display:drawText(53, 18, '%b{black}%c{goldenrod}Evasion : %c{'..c ..'}' .. player.evasion .. ' -> ' .. player.evasion + 1)
+                end
+            end
+            if menuSelect == i then 
+                display:drawText(79, y, '%b{white}%c{white}XXXXXXXXXXXXXXXXX')
+                display:drawText(83, y, '%b{white}%c{black}'..options[i])
+            else
+                display:drawText(83, y, '%b{black}%c{white}'..options[i])
+            end
+            if i == 2 then y = y + 1 end 
+            if i == 5 then y = y + 1 end 
+            y = y + 1
+        end
     elseif playerMenu == 'equipment' then 
         local sy = 11
         local sx = 58

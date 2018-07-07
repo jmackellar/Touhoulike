@@ -278,7 +278,7 @@ local items = {
     --- Food
     ------------------------
     uruchimai = {
-        name = 'Uruchi Mai',
+        name = 'Rice Ball',
         type = 'uruchimai',
         level = 1,
         desc = '%c{moccasin}Ordinary white rice.\n\n%c{goldenrod}Nutrition %c{white}100',

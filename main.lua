@@ -1535,6 +1535,7 @@ function drawPlayerMenu()
             display:drawText(53, 14, '%b{black}%c{gold}Required Exp  : %c{red}' .. 100 + ((player.level-1)^3) * 10)
         end
         display:drawText(53, 16, '%b{black}%c{gold}Class : %c{white}' .. player.class)
+        display:drawText(52, 24, '%b{black}%c{white}[enter] Increase Stat  [space] Close')
         local options = {'Health', 'Power', 'Strength', 'Knowledge', 'Spirit', 'Accuracy', 'Evasion'}
         local y = 13
         for i = 1, # options do 

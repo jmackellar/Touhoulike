@@ -713,30 +713,6 @@ function actor:simpleAI()
 end
 function actor:endTurn() 
     if self == player then
-        playerRegenTimer = playerRegenTimer - 1 
-        if playerRegenTimer < 1 then 
-            player.curHealth = math.min(player.maxHealth, player.curHealth + 1)
-            if player.species == 'Human' then
-                playerRegenTimer = math.max(10, 40 - player.strength / 3)
-            else
-                playerRegenTimer = math.max(10, 40 - player.spirit / 3)
-            end
-        end
-        playerHungerTimer = playerHungerTimer - 1 
-        if playerHungerTimer < 1 then 
-            playerHungerTimer = 30 + math.ceil(player.spirit / 3)
-            if player.species == 'Human' then
-                playerHunger = playerHunger - 1
-                if playerHunger <= 100 and playerHunger >= 90 then 
-                    table.insert(messages, 1, 'You are begining to feel hungry.')
-                elseif playerHunger <= 50 and playerHunger >= 40 then
-                    table.insert(messages, 1, "You feel like you're starving!")
-                end
-            end
-        end
-        if playerHunger < 10 then
-            player.curHealth = player.curHealth - 1
-        end
         redraw = true
     end
     actorsTurn = scheduler:next() 
@@ -2263,6 +2239,34 @@ function advanceTime(t, dontmulti)
         t = 10
     end
     date.minute = date.minute + t
+    if math.floor(date.minute) > math.floor(date.minute - t) then     
+        for i = math.floor(date.minute - t), math.floor(date.minute) do
+            playerRegenTimer = playerRegenTimer - 1 
+            if playerRegenTimer < 1 then 
+                player.curHealth = math.min(player.maxHealth, player.curHealth + 1)
+                if player.species == 'Human' then
+                    playerRegenTimer = math.max(1, 7 - player.strength / 3)
+                else
+                    playerRegenTimer = math.max(1, 7 - player.spirit / 3)
+                end
+            end
+            playerHungerTimer = playerHungerTimer - 1 
+            if playerHungerTimer < 1 then 
+                playerHungerTimer = 1 + math.ceil(player.spirit / 3)
+                if player.species == 'Human' then
+                    playerHunger = playerHunger - 1
+                    if playerHunger <= 100 and playerHunger >= 90 then 
+                        table.insert(messages, 1, 'You are begining to feel hungry.')
+                    elseif playerHunger <= 50 and playerHunger >= 40 then
+                        table.insert(messages, 1, "You feel like you're starving!")
+                    end
+                end
+            end
+            if playerHunger < 10 then
+                player.curHealth = math.max(player.curHealth - 1, 0)
+            end
+        end
+    end
     if date.minute >= 60 then 
         date.hour = date.hour + 1 
         date.minute = 0 

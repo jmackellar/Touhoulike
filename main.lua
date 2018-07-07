@@ -796,7 +796,23 @@ function actor:fireDanmaku(dx, dy)
         dmin = dmin + getStat('danmakuDamageMin')
         dmax = dmax + getStat('danmakuDamageMax')
     end
-    table.insert(danmaku, {type = self.type, x = self.x, y = self.y, t = 0, dx = dx, dy = dy, accuracy = accuracy, dmin = dmin, dmax = dmax, char = '*', fg = ROT.Color.fromString('skyblue'), bg = ROT.Color.fromString('black')})
+    for i = 1, math.floor(self.curPower) + 1 do
+        local char = '*'
+        local color = ROT.Color.fromString('skyblue')
+        if self == player then 
+            if self.name == 'Reimu Hakurei' then 
+                char = string.char(223)
+                color = ROT.Color.fromString('indianred')
+            elseif self.name == 'Marisa Kirisame' then 
+                char = string.char(15)
+                color = ROT.Color.fromString('lightskyblue')
+            elseif self.name == 'Alice Margatroid' then 
+                char = string.char(4)
+                color = ROT.Color.fromString('yellow')
+            end
+        end
+        table.insert(danmaku, {type = self.type, delay = (i-1)/20, x = self.x, y = self.y, t = 0, dx = dx, dy = dy, accuracy = accuracy, dmin = dmin, dmax = dmax, char = char, fg = color, bg = ROT.Color.fromString('black')})
+    end
     self:endTurn()
 end
 function actor:getSpeed() return self.speed end
@@ -1722,19 +1738,22 @@ function updateDanmaku(dt)
     local todelete = false
     for i = # danmaku, 1, -1 do 
         local d = danmaku[i] 
-        d.t = d.t + dt 
-        if d.t >= 0.03 then 
-            redraw = true
-            d.t = 0
-            d.x = d.x + d.dx 
-            d.y = d.y + d.dy
-            if d.x < 0 or d.y < 0 or d.x > 95 or d.y > 34 or map[d.x][d.y].val > 0 then 
-                todelete = true
-            end
-            for ii = # actors, 1, -1 do 
-                if actors[ii].x == d.x and actors[ii].y == d.y and d.type ~= actors[ii].type then 
-                    actors[ii]:takeDanmakuDamage(d)
+        d.delay = d.delay - dt 
+        if d.delay <= 0 then
+            d.t = d.t + dt  
+            if d.t >= 0.03 then 
+                redraw = true
+                d.t = 0
+                d.x = d.x + d.dx 
+                d.y = d.y + d.dy
+                if d.x < 0 or d.y < 0 or d.x > 95 or d.y > 34 or map[d.x][d.y].val > 0 then 
                     todelete = true
+                end
+                for ii = # actors, 1, -1 do 
+                    if actors[ii].x == d.x and actors[ii].y == d.y and d.type ~= actors[ii].type then 
+                        actors[ii]:takeDanmakuDamage(d)
+                        todelete = true
+                    end
                 end
             end
         end

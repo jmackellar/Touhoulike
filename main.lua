@@ -290,6 +290,26 @@ local items = {
     ------------------------
     --- Misc
     ------------------------
+    lifepiece = {
+        name = 'Life Piece',
+        type = 'lifepiece',
+        level = 10000,
+        desc = '',
+        char = string.char(3),
+        fgColor = ROT.Color.fromString('pink'),
+        bgColor = ROT.Color.fromString('black'),
+        noWalkOverText = true,
+        onWalkOver =    function (self)
+                            table.insert(messages, 1, 'You pickup a life piece!')
+                            player.curHealth = math.min(player.maxHealth, player.curHealth + math.ceil(player.maxHealth / 10))
+                            for i = 1, # itemsOnMap do 
+                                if itemsOnMap[i].x == self.x and itemsOnMap[i].y == self.y then 
+                                    table.remove(itemsOnMap, i)
+                                    break 
+                                end
+                            end
+                        end,
+    },
     power = {
         name = 'Power',
         type = 'power',
@@ -635,6 +655,9 @@ function actor:takeDamage(dam)
             end
         end
         if love.math.random(1, 100) <= 20 then 
+            dropItem(newItem('lifepiece'), self.x, self.y)
+        end
+        if love.math.random(1, 100) <= 20 then 
             for i = 1, love.math.random(1, 2) do
                 dropItem(newItem(getRandomItem()), self.x, self.y)
             end
@@ -778,11 +801,7 @@ function actor:endTurn()
     lastTime = scheduler:getTime()
     if actorsTurn == player then
         redraw = true 
-    end
-    if self == player then 
         updateMessages()
-    else
-        updateMessages(true)
     end
     if not map[self.x][self.y].lit then 
         self.alert = false 
@@ -947,6 +966,7 @@ function love.draw()
 end
 
 function love.update(dt)
+    updateMessages(true)
     if state == 'game' then
         updateDanmaku(dt)
         lastredraw = lastredraw + dt 
@@ -2523,27 +2543,29 @@ end
 --[[ Messages ]]--
 
 function updateMessages(dontcountturn)
-    local min = date.minute 
-    if date.minute < 10 then 
-        min = '0' .. math.floor(date.minute) 
-    else 
-        min = math.floor(date.minute)
+    if # messages > 0 then
+        local min = date.minute 
+        if date.minute < 10 then 
+            min = '0' .. math.floor(date.minute) 
+        else 
+            min = math.floor(date.minute)
+        end
+        local hour = date.hour 
+        if hour > 12 then 
+            hour = hour - 12 
+        end
+        local suf = 'a.m.'
+        if date.hour > 11 then 
+            suf = 'p.m.'
+        end
+        local t = tostring(hour) .. ':' .. tostring(min) .. ' ' .. suf 
+        for i = # messages, 1, -1 do 
+            table.insert(messagesDisp, 1, {msg = '<'.. t .. '> '.. messages[i], turn = 0})
+        end
+        messages = { }
     end
-    local hour = date.hour 
-    if hour > 12 then 
-        hour = hour - 12 
-    end
-    local suf = 'a.m.'
-    if date.hour > 11 then 
-        suf = 'p.m.'
-    end
-    local t = tostring(hour) .. ':' .. tostring(min) .. ' ' .. suf 
-    for i = # messages, 1, -1 do 
-        table.insert(messagesDisp, 1, {msg = '<'.. t .. '> '.. messages[i], turn = 0})
-    end
-    messages = { }
-    for i = 1, # messagesDisp do 
-        if not dontcountturn then
+    if not dontcountturn then
+        for i = 1, # messagesDisp do 
             messagesDisp[i].turn = messagesDisp[i].turn + 1
         end
     end

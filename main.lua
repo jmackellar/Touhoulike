@@ -91,7 +91,7 @@ local location = {
             spawnMonstersOverTime = true,
             lightLevel = 2,
             monsterTable = {
-                'littlefairy', 'tinykappa',
+                'littlefairy', 'tinykappa', 'youngoni'
             }
         },    
     }      
@@ -354,12 +354,12 @@ local monsters = {
         curPower = 0.1,
         meleeDamageMin = 2,
         meleeDamageMax = 4,
-        danmakuDamageMin = 2,
-        danmakuDamageMax = 3,
+        danmakuDamageMin = 1,
+        danmakuDamageMax = 2,
         armorMin = 1,
         armorMax = 2,
         evasion = 1,
-        accuracy = 5,
+        accuracy = 4,
         speed = 120,
         canFireDanmaku = true,
         exp = 10,
@@ -375,7 +375,7 @@ local monsters = {
         fg = ROT.Color.fromString('springgreen'),
         bgString = 'black',
         fgString = 'springgreen',
-        maxHealth = 15,
+        maxHealth = 10,
         curPower = 0.1,
         meleeDamageMin = 3,
         meleeDamageMax = 4,
@@ -384,7 +384,7 @@ local monsters = {
         armorMin = 2,
         armorMax = 3,
         evasion = 1,
-        accuracy = 5,
+        accuracy = 4,
         speed = 90,
         canFireDanmaku = true,
         exp = 12,
@@ -392,6 +392,31 @@ local monsters = {
         ai = 'simple',
         yen = 100,
         },
+    youngoni = {
+        name = 'Young Oni',
+        type = 'youngoni',
+        char = 'o',
+        bg = ROT.Color.fromString('black'),
+        fg = ROT.Color.fromString('red'),
+        bgString = 'black',
+        fgString = 'red',
+        maxHealth = 15,
+        curPower = 0.1,
+        meleeDamageMin = 2,
+        meleeDamageMax = 6,
+        danmakuDamageMin = 0,
+        danmakuDamageMax = 1,
+        armorMin = 2,
+        armorMax = 3,
+        evasion = 2,
+        accuracy = 5,
+        speed = 100,
+        canFireDanmaku = false,
+        exp = 15,
+        alert = false,
+        ai = 'simple',
+        yen = 100,
+    },
     marisakirisame = {
         name = 'Marisa Kirisame',
         type = 'marisakirisame',
@@ -522,9 +547,9 @@ function actor:init(flags)
     self.meleeDamageMax = flags.meleeDamageMax or 5
     self.danmakuDamageMin = flags.danmakuDamageMin or 2
     self.danmakuDamageMax = flags.danmakuDamageMax or 4
+    self.canFireDanmaku = flags.canFireDanmaku or false
     self.accuracy = flags.accuracy or 5
     self.evasion = flags.evasion or 3
-    self.canFireDanmaku = flags.canFireDanmaku or true
     self.alert = flags.alert or false 
     self.ai = flags.ai or 'simple'
     self.id = tostring(love.math.random(11111, 99999))
@@ -579,6 +604,7 @@ function actor:move(dx, dy)
             end
         end
     end
+    return false
 end
 function actor:takeDamage(dam)
     local amin = self.armorMin 
@@ -688,9 +714,9 @@ end
 function actor:simpleAI()
     local dx = 0
     local dy = 0
+    local canmove = true 
     if self.alert then 
         if self.faction ~= player.faction then 
-            local canmove = true 
             if self.canFireDanmaku then
                 if player.x > self.x and player.y == self.y then 
                     self:fireDanmaku(1, 0)
@@ -729,14 +755,14 @@ function actor:simpleAI()
                 elseif self.y > player.y then 
                     dy = -1
                 end
-            else
-                self:endTurn()
             end
         else 
             dx = love.math.random(-1, 1)
             dy = love.math.random(-1, 1)
         end
-        if not self:move(dx, dy) then
+        if canmove and not self:move(dx, dy) then
+            self:endTurn()
+        elseif not canmove then 
             self:endTurn()
         end
     else
@@ -757,6 +783,9 @@ function actor:endTurn()
         updateMessages()
     else
         updateMessages(true)
+    end
+    if not map[self.x][self.y].lit then 
+        self.alert = false 
     end
 end
 function actor:takeDanmakuDamage(d)
@@ -1028,7 +1057,7 @@ function love.keypressed(key, isrepeat)
                 updateMessages()
             end
         end
-        if actorsTurn.type == 'player' and not DEBUGeditor then
+        if actorsTurn.type == 'player' and not DEBUGeditor and player.curHealth > 0 then
             if not playerMenu then
                 if key == 'j' then
                     actorsTurn:move(0, 1)

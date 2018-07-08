@@ -690,15 +690,47 @@ function actor:simpleAI()
     local dy = 0
     if self.alert then 
         if self.faction ~= player.faction then 
-            if self.x < player.x then 
-                dx = 1 
-            elseif self.x > player.x then 
-                dx = -1
+            local canmove = true 
+            if self.canFireDanmaku then
+                if player.x > self.x and player.y == self.y then 
+                    self:fireDanmaku(1, 0)
+                    canmove = false
+                elseif player.x < self.x and player.y == self.y then 
+                    self:fireDanmaku(-1, 0)
+                    canmove = false
+                elseif player.y > self.y and player.x == self.x then 
+                    self:fireDanmaku(0, 1)
+                    canmove = false
+                elseif player.y < self.y and player.x == self.x then 
+                    self:fireDanmaku(0, -1)
+                    canmove = false
+                elseif math.atan2(player.y - self.y, player.x - self.x) == math.pi / 4 then 
+                    self:fireDanmaku(1, 1)
+                    canmove = false
+                elseif math.atan2(player.y - self.y, player.x - self.x) == 3 * math.pi / 4 then 
+                    self:fireDanmaku(-1, 1)
+                    canmove = false
+                elseif math.atan2(self.y - player.y, self.x - player.x) == math.pi / 4 then 
+                    self:fireDanmaku(-1, -1)
+                    canmove = false
+                elseif math.atan2(self.y - player.y, self.x - player.x) == 3 * math.pi / 4 then 
+                    self:fireDanmaku(1, -1)
+                    canmove = false
+                end
             end
-            if self.y < player.y then 
-                dy = 1
-            elseif self.y > player.y then 
-                dy = -1
+            if canmove then 
+                if self.x < player.x then 
+                    dx = 1 
+                elseif self.x > player.x then 
+                    dx = -1
+                end
+                if self.y < player.y then 
+                    dy = 1
+                elseif self.y > player.y then 
+                    dy = -1
+                end
+            else
+                self:endTurn()
             end
         else 
             dx = love.math.random(-1, 1)
@@ -773,7 +805,7 @@ function actor:fireDanmaku(dx, dy)
         dmax = dmax + getStat('danmakuDamageMax')
     end
     local char = '*'
-    local color = ROT.Color.fromString('skyblue')
+    local color = ROT.Color.fromString('red')
     if self == player then 
         --- Danmaku visual
         if self.name == 'Reimu Hakurei' then 
@@ -1963,8 +1995,10 @@ function dropItem(item, x, y)
                 for yy = sy - r, sy + r do
                     newspace = true
                     for i = 1, # itemsOnMap do 
-                        if (itemsOnMap[i].x == xx and itemsOnMap[i].y == yy) or map[xx][yy].val > 0 then 
-                            newspace = false  
+                        if xx > 1 and yy > 1 and xx < 95 and yy < 34 then 
+                            if (itemsOnMap[i].x == xx and itemsOnMap[i].y == yy) or map[xx][yy].val > 0 then 
+                                newspace = false  
+                            end
                         end
                     end
                     if newspace and xx > 1 and yy > 1 and xx < 95 and yy < 34 then 

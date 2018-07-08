@@ -178,9 +178,9 @@ local items = {
         name = 'Glowing Omamori',
         type = 'glowingomamori',
         level = 1,
-        desc = '%c{moccasin}A bamboo charm written with a prayer of light wrapped in a floral pink silk.\n\n%c{goldenrod}Off Hand\nLight Source %c{white}4',
+        desc = '%c{moccasin}A bamboo charm written with a prayer of light wrapped in a floral pink silk.\n\n%c{goldenrod}Off Hand\nLight Source %c{white}6',
         equip = 'offhand',
-        stats = {lightsource = 4},
+        stats = {lightsource = 6},
         char = string.char(220),
         fgColor = ROT.Color.fromString('pink'),
         bgColor = ROT.Color.fromString('black'),
@@ -189,9 +189,9 @@ local items = {
         name = 'Magic Lantern',
         type = 'magiclantern',
         level = 1,
-        desc = '%c{moccasin}A golden lantern enchanted with an elusive ever burning flame.\n\n%c{goldenrod}Off Hand]\n%c{goldenrod}Light Source %c{white} 3\n%c{goldenrod}Evasion %c{white}1',
+        desc = '%c{moccasin}A golden lantern enchanted with an elusive ever burning flame.\n\n%c{goldenrod}Off Hand]\n%c{goldenrod}Light Source %c{white} 5\n%c{goldenrod}Evasion %c{white}1',
         equip = 'offhand',
-        stats = {lightsource = 4, evasion = 1},
+        stats = {lightsource = 5, evasion = 1},
         char = string.char(220),
         fgColor = ROT.Color.fromString('gold'),
         bgColor = ROT.Color.fromString('black'),
@@ -267,9 +267,9 @@ local items = {
         name = 'Dollmaker Gloves',
         type = 'dollmakersgloves',
         level = 1,
-        desc = '%c{moccasin}A pair of brown leather gloves worn to illuminate a sewer\'s thread.\n\n%c{goldenrod}Hands %c{white}+0, 1 - 2\n%c{goldenrod}Light Source %c{white}4',
+        desc = '%c{moccasin}A pair of brown leather gloves worn to illuminate a sewer\'s thread.\n\n%c{goldenrod}Hands %c{white}+0, 1 - 2\n%c{goldenrod}Light Source %c{white}6',
         equip = 'hands',
-        stats = {armorMin = 1, armorMax = 2, evasion = 0, lightsource = 4},
+        stats = {armorMin = 1, armorMax = 2, evasion = 0, lightsource = 6},
         char = ')',
         fgColor = ROT.Color.fromString('rosybrown'),
         bgColor = ROT.Color.fromString('black')
@@ -772,23 +772,24 @@ function actor:fireDanmaku(dx, dy)
         dmin = dmin + getStat('danmakuDamageMin')
         dmax = dmax + getStat('danmakuDamageMax')
     end
-    for i = 1, math.floor(self.curPower) + 1 do
-        local char = '*'
-        local color = ROT.Color.fromString('skyblue')
-        if self == player then 
-            if self.name == 'Reimu Hakurei' then 
-                char = string.char(223)
-                color = ROT.Color.fromString('indianred')
-            elseif self.name == 'Marisa Kirisame' then 
-                char = string.char(15)
-                color = ROT.Color.fromString('lightskyblue')
-            elseif self.name == 'Alice Margatroid' then 
-                char = string.char(4)
-                color = ROT.Color.fromString('yellow')
-            end
+    local char = '*'
+    local color = ROT.Color.fromString('skyblue')
+    if self == player then 
+        --- Danmaku visual
+        if self.name == 'Reimu Hakurei' then 
+            char = string.char(223)
+            color = ROT.Color.fromString('indianred')
+        elseif self.name == 'Marisa Kirisame' then 
+            char = string.char(15)
+            color = ROT.Color.fromString('lightskyblue')
+        elseif self.name == 'Alice Margatroid' then 
+            char = string.char(4)
+            color = ROT.Color.fromString('yellow')
         end
-        table.insert(danmaku, {type = self.type, delay = (i-1)/20, x = self.x, y = self.y, t = 0, dx = dx, dy = dy, accuracy = accuracy, dmin = dmin, dmax = dmax, char = char, fg = color, bg = ROT.Color.fromString('black')})
+        --- Shot types
+        fireShotType(dx, dy)
     end
+    table.insert(danmaku, {type = self.type, delay = 0, x = self.x, y = self.y, t = 0, dx = dx, dy = dy, accuracy = accuracy, dmin = dmin, dmax = dmax, char = char, fg = color, bg = ROT.Color.fromString('black')})
     self:endTurn()
 end
 function actor:getSpeed() return self.speed end
@@ -853,10 +854,24 @@ function love.draw()
             local fg = ROT.Color.fromString('white')
             local bg = ROT.Color.fromString('black')
             if menuSelect == i then
+                local title = ''
+                local shottype = ''
                 fg = ROT.Color.fromString('black')
                 bg = ROT.Color.fromString('white')
                 display:write('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', 28 - 15, 12 + i, ROT.Color.fromString('white'), bg)
                 display:write('Back', 26, 12 + # menuCharacter + 3, ROT.Color.fromString('white'), ROT.Color.fromString('black'))
+                if menuCharacter[i] == 'Reimu Hakurei' then 
+                    title = 'Shrine Maiden of Paradise'
+                    shottype = 'Homing Amulet'
+                elseif menuCharacter[i] == 'Marisa Kirisame' then
+                    title = 'Ordinary Magician'
+                    shottype = 'Piercing Laser'
+                elseif menuCharacter[i] == 'Alice Margatroid' then 
+                    title = 'Seven-Colored Puppeteer'
+                    shottype = 'Shanghai Doll'
+                end
+                display:drawText(60, 13, '%c{white}'..title)
+                display:drawText(60, 14, '%c{gold}Shot Type : %c{white}'..shottype)
             elseif menuSelect > # menuCharacter then 
                 display:write('XXXXXXXXXXXX', 22, 12 + # menuCharacter + 3, ROT.Color.fromString('white'), ROT.Color.fromString('white'))
                 display:write('Back', 26, 12 + # menuCharacter + 3, ROT.Color.fromString('black'), ROT.Color.fromString('white'))
@@ -1434,7 +1449,7 @@ end
 function drawDanmaku()
     for i = 1, # danmaku do
         local d = danmaku[i] 
-        display:write(d.char, 27 + d.x, d.y, d.fg, d.bg)
+        display:write(d.char, 27 + math.floor(d.x), math.floor(d.y), d.fg, d.bg)
     end
 end
 
@@ -1804,24 +1819,34 @@ end
 --[[ Danmaku Functions ]]--
 
 function updateDanmaku(dt)
-    local todelete = false
     for i = # danmaku, 1, -1 do 
         local d = danmaku[i] 
+        local todelete = false
         d.delay = d.delay - dt 
         if d.delay <= 0 then
             d.t = d.t + dt  
             if d.t >= 0.03 then 
                 redraw = true
                 d.t = 0
-                d.x = d.x + d.dx 
-                d.y = d.y + d.dy
-                if d.x < 0 or d.y < 0 or d.x > 95 or d.y > 34 or map[d.x][d.y].val > 0 then 
+                if not d.track then 
+                    d.x = d.x + d.dx 
+                    d.y = d.y + d.dy
+                else
+                    local a = math.atan2(d.track.y - player.y, d.track.x - player.x)
+                    local dx = math.cos(a)
+                    local dy = math.sin(a)
+                    d.x = d.x + dx
+                    d.y = d.y + dy
+                end
+                if d.x < 0 or d.y < 0 or d.x > 95 or d.y > 34 or map[math.floor(d.x)][math.floor(d.y)].val > 0 or map[math.ceil(d.x)][math.ceil(d.y)].val > 0 then 
                     todelete = true
                 end
                 for ii = # actors, 1, -1 do 
-                    if actors[ii].x == d.x and actors[ii].y == d.y and d.type ~= actors[ii].type then 
+                    if (actors[ii].x == math.floor(d.x) and actors[ii].y == math.floor(d.y) and d.type ~= actors[ii].type) or (actors[ii].x == math.ceil(d.x) and actors[ii].y == math.ceil(d.y) and d.type ~= actors[ii].type) or (actors[ii].x == math.floor(d.x) and actors[ii].y == math.ceil(d.y) and d.type ~= actors[ii].type) or (actors[ii].x == math.ceil(d.x) and actors[ii].y == math.floor(d.y) and d.type ~= actors[ii].type) then 
                         actors[ii]:takeDanmakuDamage(d)
-                        todelete = true
+                        if not d.pierce then
+                            todelete = true
+                        end
                     end
                 end
             end
@@ -1830,7 +1855,62 @@ function updateDanmaku(dt)
     end
 end
 
+function fireShotType(dx, dy)
+    if player.name == 'Reimu Hakurei' then 
+        fireHomingAmulet()
+    elseif player.name == 'Marisa Kirisame' then 
+        fireLaser(dx, dy, 1)
+    elseif player.name == 'Alice Margatroid' then 
+        fireLaser(dx, dy, 2)
+    end
+end
+
+function fireLaser(dx, dy, t)
+    local shots = math.floor((player.curPower))
+    local char = '-'
+    local color = 'lightskyblue'
+    if t == 2 then 
+        color = 'orange'
+    end
+    if dy ~= 0 and dx == 0 then 
+        char = '|'
+    elseif (dy == -1 and dx == -1) or (dy == 1 and dx == 1) then 
+        char = string.char(92)
+    elseif (dy == -1 and dx == 1) or (dy == 1 and dx == -1) then 
+        char = '/'
+    end
+    if shots > 0 then 
+        for i = 1, shots do 
+            table.insert(danmaku, {type = 'player', pierce = true, track = mon, delay = (i)/20, x = player.x, y = player.y, t = 0, dx = dx, dy = dy, accuracy = player.accuracy + getStat('accuracy'), dmin = player.danmakuDamageMin + getStat('danmakuDamageMin'), dmax = player.danmakuDamageMax + getStat('danmakuDamageMax'), char = char, fg = ROT.Color.fromString(color), bg = ROT.Color.fromString('black')})
+        end
+    end
+end
+
+function fireHomingAmulet()
+    local shots = math.floor((player.curPower))
+    local mon = getClosestMonster(player.x, player.y)
+    if mon and shots > 0 then 
+        for i = 1, shots do 
+            table.insert(danmaku, {type = 'player', track = mon, delay = (i)/20, x = player.x, y = player.y, t = 0, dx = 0, dy = 0, accuracy = player.accuracy + getStat('accuracy'), dmin = player.danmakuDamageMin + getStat('danmakuDamageMin'), dmax = player.danmakuDamageMax + getStat('danmakuDamageMax'), char = string.char(223), fg = ROT.Color.fromString('skyblue'), bg = ROT.Color.fromString('black')})
+        end
+    end
+end
+
 --[[ Item Functions ]]--
+
+function getClosestMonster(x, y)
+    local d = 1000
+    local m = false
+    for i = 1, # actors do 
+        if actors[i] ~= player and actors[i].faction ~= player.faction then 
+            if math.sqrt( (player.y - actors[i].y)^2 + (player.x - actors[i].x)^2 ) <= d then 
+                m = actors[i] 
+                d = math.sqrt( (player.y - actors[i].y)^2 + (player.x - actors[i].x)^2 )
+            end
+        end
+    end
+    return m
+end
 
 function getRandomItem()
     local t = 0

@@ -299,6 +299,41 @@ local items = {
         nutrition = 100,
     },
     ------------------------
+    --- Magical Items
+    ------------------------
+    magicmirror = {
+        name = 'Magic Mirror',
+        type = 'magicmirror',
+        level = 10000,
+        desc = '%c{moccasin}A silver mirror that slightly vibrates with magical energies.\n\n%c{goldenrod}Teleport Home',
+        char = '*',
+        fgColor = ROT.Color.fromString('silver'),
+        bgColor = ROT.Color.fromString('black'),
+        use =   function (self)
+                    saveMap()
+                    actors = { }
+                    itemsOnMap = { }
+                    table.insert(actors, player)
+                    scheduler:add(player, true)
+                    if player.name == 'Reimu Hakurei' then                    
+                        mapChangeLocation('hakureishrine', 'gesnokyo', true, false)
+                        player.x = 56
+                        player.y = 15
+                    elseif player.name == 'Marisa Kirisame' then 
+                        mapChangeLocation('marisashouse', 'gensokyo', true, false)
+                        player.x = 48
+                        player.y = 14
+                    elseif player.name == 'Alice Margatroid' then 
+                        mapChangeLocation('aliceshouse', 'gensokyo', true, false)
+                        player.x = 45
+                        player.y = 15
+                    end
+                    table.insert(messages, 1, 'You gaze into the magic mirror...')
+                    computeFOV()
+                    player:endTurn()
+                end,
+    },
+    ------------------------
     --- Misc
     ------------------------
     lifepiece = {
@@ -1309,6 +1344,9 @@ function love.keypressed(key, isrepeat)
                         table.insert(messages, 1, msg)
                         player:endTurn()
                         playerMenu = false
+                    elseif inventory[menuSelect].use then 
+                        inventory[menuSelect].use(inventory[menuSelect])
+                        playerMenu = false
                     end
                 end
                 if key == 'j' then 
@@ -2285,6 +2323,15 @@ function mapDampCave(prev, prevfloor)
         end
     else
         mapRogue(05, 34)
+        if currentFloor == 10 then 
+            local x = love.math.random(3, 92)
+            local y = love.math.random(3, 31)
+            repeat
+                x = love.math.random(3, 92)
+                y = love.math.random(3, 31)
+            until map[x][y].val < 1
+            dropItem(newItem('magicmirror'), x, y)
+        end
         if prev == 'gensokyo' then
             --- place stairs to gensokyo
             if currentFloor == 1 then

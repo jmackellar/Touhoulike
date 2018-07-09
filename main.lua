@@ -785,8 +785,6 @@ function actor:simpleAI()
         end
         if canmove and not self:move(dx, dy) then
             self:endTurn()
-        elseif not canmove then 
-            self:endTurn()
         end
     else
         if not self:move(love.math.random(-1, 1), love.math.random(-1, 1)) then self:endTurn() end
@@ -803,7 +801,7 @@ function actor:endTurn()
         redraw = true 
         updateMessages()
     end
-    if not map[self.x][self.y].lit then 
+    if self ~= player and not map[self.x][self.y].lit then 
         self.alert = false 
     end
 end

@@ -91,7 +91,7 @@ local location = {
             spawnMonstersOverTime = true,
             lightLevel = 2,
             monsterTable = {
-                'littlefairy', 'tinykappa', 'youngoni'
+                'littlefairy', 'tinykappa', 'youngoni', 'yinyangorb',
             }
         },    
     }      
@@ -483,6 +483,31 @@ local monsters = {
         ai = 'simple',
         yen = 100,
     },
+    yinyangorb = {
+        name = 'Yin Yang Orb',
+        type = 'yinyangorb',
+        char = 'O',
+        bg = ROT.Color.fromString('black'),
+        fg = ROT.Color.fromString('white'),
+        bgString = 'black',
+        fgString = 'white',
+        maxHealth = 10,
+        curPower = 0.1,
+        meleeDamageMin = 0,
+        meleeDamageMax = 0,
+        danmakuDamageMin = 2,
+        danmakuDamageMax = 4,
+        armorMin = 1,
+        armorMax = 2,
+        evasion = 3,
+        accuracy = 6,
+        speed = 100,
+        canFireDanmaku = true,
+        exp = 15,
+        alert = false,
+        ai = 'yinyang',
+        yen = 100,
+    },
     marisakirisame = {
         name = 'Marisa Kirisame',
         type = 'marisakirisame',
@@ -778,6 +803,28 @@ function actor:takeTurn()
     if map[self.x][self.y].lit then self.alert = true end 
     if self.ai == 'simple' then 
         self:simpleAI()
+    elseif self.ai == 'yinyang' then 
+        self:yinyangAI()
+    end
+end
+function actor:yinyangAI()
+    local canmove = true
+    if self.alert and self.faction ~= player.faction then 
+        if self.canFireDanmaku then
+            self:fireDanmaku(1, 1, true)
+            self:fireDanmaku(1, 0, true)
+            self:fireDanmaku(-1, 0, true)
+            self:fireDanmaku(0, 1, true)
+            self:fireDanmaku(0, -1, true)
+            self:fireDanmaku(1, -1, true)
+            self:fireDanmaku(-1, 1, true)
+            self:fireDanmaku(-1, -1, true)
+            self:endTurn()
+        else
+            self:endTurn()
+        end
+    else
+        self:endTurn()
     end
 end
 function actor:simpleAI()
@@ -888,7 +935,7 @@ function actor:takeDanmakuDamage(d)
         end
     end
 end
-function actor:fireDanmaku(dx, dy)
+function actor:fireDanmaku(dx, dy, dontEndTurn)
     local accuracy = self.accuracy 
     local dmin = self.danmakuDamageMin
     local dmax = self.danmakuDamageMax 
@@ -915,7 +962,9 @@ function actor:fireDanmaku(dx, dy)
         fireShotType(dx, dy)
     end
     table.insert(danmaku, {type = self.type, delay = 0, x = self.x, y = self.y, t = 0, dx = dx, dy = dy, accuracy = accuracy, dmin = dmin, dmax = dmax, char = char, fg = color, bg = ROT.Color.fromString('black')})
-    self:endTurn()
+    if not dontEndTurn then
+        self:endTurn()
+    end
 end
 function actor:getSpeed() return self.speed end
 

@@ -1003,7 +1003,7 @@ function actor:getSpeed() return self.speed end
 --[[ Love2D Callbacks ]]--
 
 function love.load()
-	love.window.setTitle('Touhou Jingoku ~Dream in Dreary Dark~')
+	love.window.setTitle('Touhou Jigoku ~Dream in Dreary Dark~')
     love.keyboard.setKeyRepeat(true)
     fieldOfView = ROT.FOV.Precise:new(lightCallback)
     mapSetup(95, 34)
@@ -1035,7 +1035,7 @@ function love.draw()
         --love.graphics.line(224, 542, 1200, 542)
     elseif state == 'menu' then
         display:clear()
-        display:writeCenter('Touhou Jingoku', 10, ROT.Color.fromString('pink'), ROT.Color.fromString('black'))
+        display:writeCenter('Touhou Jigoku', 10, ROT.Color.fromString('pink'), ROT.Color.fromString('black'))
         display:writeCenter('~Dream in Dreary Dark~', 11, ROT.Color.fromString('pink'), ROT.Color.fromString('black'))
         for i = 1, # menuOptions do
             local fg = ROT.Color.fromString('white')

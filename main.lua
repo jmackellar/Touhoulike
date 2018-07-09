@@ -831,14 +831,14 @@ function actor:yinyangAI()
     local canmove = true
     if self.alert and self.faction ~= player.faction then 
         if self.canFireDanmaku then
-            self:fireDanmaku(1, 1, true)
-            self:fireDanmaku(1, 0, true)
-            self:fireDanmaku(-1, 0, true)
-            self:fireDanmaku(0, 1, true)
-            self:fireDanmaku(0, -1, true)
-            self:fireDanmaku(1, -1, true)
-            self:fireDanmaku(-1, 1, true)
-            self:fireDanmaku(-1, -1, true)
+            self:fireDanmaku(0, 1, true, 0)
+            self:fireDanmaku(1, 1, true, 0.05)
+            self:fireDanmaku(1, 0, true, 0.1)
+            self:fireDanmaku(-1, 1, true, 0.15)
+            self:fireDanmaku(0, -1, true, 0.2)
+            self:fireDanmaku(-1, -1, true, 0.25)
+            self:fireDanmaku(-1, 0, true, 0.3)    
+            self:fireDanmaku(1, -1, true, 0.35)          
             self:endTurn()
         else
             self:endTurn()
@@ -955,7 +955,7 @@ function actor:takeDanmakuDamage(d)
         end
     end
 end
-function actor:fireDanmaku(dx, dy, dontEndTurn)
+function actor:fireDanmaku(dx, dy, dontEndTurn, delay)
     local accuracy = self.accuracy 
     local dmin = self.danmakuDamageMin
     local dmax = self.danmakuDamageMax 
@@ -981,7 +981,7 @@ function actor:fireDanmaku(dx, dy, dontEndTurn)
         --- Shot types
         fireShotType(dx, dy)
     end
-    table.insert(danmaku, {type = self.type, delay = 0, x = self.x, y = self.y, t = 0, dx = dx, dy = dy, accuracy = accuracy, dmin = dmin, dmax = dmax, char = char, fg = color, bg = ROT.Color.fromString('black')})
+    table.insert(danmaku, {type = self.type, delay = delay or 0, x = self.x, y = self.y, t = 0, dx = dx, dy = dy, accuracy = accuracy, dmin = dmin, dmax = dmax, char = char, fg = color, bg = ROT.Color.fromString('black')})
     if not dontEndTurn then
         self:endTurn()
     end

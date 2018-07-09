@@ -299,6 +299,26 @@ local items = {
         nutrition = 100,
     },
     ------------------------
+    --- Consumables 
+    ------------------------
+    smallofuda = {
+        name = 'Small Ofuda',
+        type = 'smallofuda',
+        level = 1,
+        desc = '%c{moccasin}A bamboo charm wrapped with paper.  Has an inscription of health written inside it.\n\n%c{goldenrod}Healing %c{white}10',
+        char = '!',
+        fgColor = ROT.Color.fromString('red'),
+        bgColor = ROT.Color.fromString('black'),
+        use =   function (self)
+                    player.curHealth = player.curHealth + 10
+                    table.insert(messages, 1, 'You channel the ofuda\'s energy.  You feel better.')
+                    if player.curHealth > player.maxHealth then 
+                        player.curHealth = player.maxHealth 
+                    end
+                    self.delete = true
+                end,
+    },
+    ------------------------
     --- Magical Items
     ------------------------
     magicmirror = {
@@ -1396,6 +1416,9 @@ function love.keypressed(key, isrepeat)
                     elseif inventory[menuSelect].use then 
                         inventory[menuSelect].use(inventory[menuSelect])
                         playerMenu = false
+                        if inventory[menuSelect].delete then 
+                            table.remove(inventory, menuSelect)
+                        end
                     end
                 end
                 if key == 'j' then 

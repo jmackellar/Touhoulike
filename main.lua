@@ -910,6 +910,9 @@ function actor:endTurn()
     actorsTurn = scheduler:next() 
     advanceTime(scheduler:getTime() - lastTime)
     lastTime = scheduler:getTime()
+    if not actorsTurn then 
+        actorsTurn = player 
+    end
     if actorsTurn == player then
         redraw = true 
         updateMessages()
@@ -952,6 +955,15 @@ function actor:takeDanmakuDamage(d)
             local noun = '' 
             if not self.pnoun then noun = 'The ' end
             table.insert(messages, 1, noun .. self.name .. ' dodges the danmaku!')
+        end
+    end
+    if self.curHealth < 1 and self.type ~= 'player' then 
+        for i = # actors, 1, -1 do
+            if actors[i] == self then 
+                scheduler:remove(actors[i])
+                table.remove(actors, i)
+                break 
+            end
         end
     end
 end

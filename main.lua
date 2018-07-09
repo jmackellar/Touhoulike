@@ -1192,7 +1192,7 @@ function love.keypressed(key, isrepeat)
                         playerMenu = false 
                         redraw = true 
                         table.insert(messages, 1, 'You feel more powerful!')
-                        player.endTurn()
+                        player:endTurn()
                         if options[menuSelect] == 'Health' then 
                             player.maxHealth = player.maxHealth + 5
                         elseif options[menuSelect] == 'Power' then 

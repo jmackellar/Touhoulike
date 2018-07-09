@@ -827,6 +827,7 @@ function actor:takeDanmakuDamage(d)
             local msg = noun .. self.name .. ' is hit by danmaku!'
             if self.curHealth < 1 then 
                 if not self.pnoun then noun = ' The ' else noun = '' end
+                player.exp = player.exp + self.exp
                 msg = msg .. noun .. self.name .. ' dies!'
             end
             table.insert(messages, 1, msg)

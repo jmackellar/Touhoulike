@@ -336,15 +336,15 @@ local items = {
                     table.insert(actors, player)
                     scheduler:add(player, true)
                     if player.name == 'Reimu Hakurei' then                    
-                        mapChangeLocation('hakureishrine', 'gesnokyo', true, false)
+                        mapChangeLocation('hakureishrine', false, true, false)
                         player.x = 56
                         player.y = 15
                     elseif player.name == 'Marisa Kirisame' then 
-                        mapChangeLocation('marisashouse', 'gensokyo', true, false)
+                        mapChangeLocation('marisashouse', false, true, false)
                         player.x = 48
                         player.y = 14
                     elseif player.name == 'Alice Margatroid' then 
-                        mapChangeLocation('aliceshouse', 'gensokyo', true, false)
+                        mapChangeLocation('aliceshouse', false, true, false)
                         player.x = 45
                         player.y = 15
                     end
